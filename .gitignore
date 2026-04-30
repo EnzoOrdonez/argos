@@ -1,0 +1,232 @@
+# =====================================================
+# ARGOS .gitignore
+# =====================================================
+
+# ----------- Secrets and credentials -----------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# ----------- Python -----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+env.bak/
+venv.bak/
+
+# Pytest
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# mypy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Jupyter
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv / poetry
+Pipfile.lock
+poetry.lock
+
+# ----------- Node / JavaScript (for any frontend tooling) -----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.yarn-integrity
+package-lock.json
+
+# ----------- IDEs and editors -----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.iml
+.fleet/
+
+# ----------- ML / Data -----------
+# Trained model files (use Git LFS or model registry instead)
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.bin
+models/*.safetensors
+
+# Datasets (typically too large, store separately)
+data/raw/
+data/processed/
+data/external/
+data/interim/
+*.csv.gz
+*.parquet
+
+# Notebook outputs (consider nbstripout for cleaner commits)
+# *.ipynb  # uncomment if you want to ignore notebooks entirely
+
+# ----------- Logs and runtime -----------
+*.log
+logs/
+log/
+runtime/
+*.pcap
+*.pcapng
+.npm-debug.log
+
+# Wazuh / Elastic / OpenSearch local data
+wazuh-data/
+opensearch-data/
+elastic-data/
+redis-data/
+
+# ----------- Docker / Containers -----------
+*.tar
+.dockerignore.local
+docker-compose.override.yml
+
+# ----------- Terraform / Infrastructure -----------
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+
+# Vagrant
+.vagrant/
+*.box
+
+# ----------- Operating system files -----------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ----------- Project-specific -----------
+# Local lab snapshots
+lab/snapshots/
+lab/local/
+
+# Local rehearsal recordings
+demo/recordings/
+demo/local/
+
+# Generated demo videos (these go to release assets, not git)
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Local evaluation outputs
+evaluation/local-outputs/
+evaluation/temp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Temporary files
+*.tmp
+.cache/

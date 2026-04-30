@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARGOS — Architecture Diagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #0a0e14;
+    --bg-secondary: #11161d;
+    --bg-tertiary: #1a212b;
+    --border: #2a3340;
+    --text-primary: #e6edf3;
+    --text-secondary: #9aa5b4;
+    --text-tertiary: #6b7785;
+    --accent-amber: #d4a849;
+    --accent-red: #c84545;
+    --accent-green: #6b9b5a;
+    --accent-blue: #5a8fc7;
+    --accent-purple: #9874c7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(212, 168, 73, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(90, 143, 199, 0.04) 0%, transparent 40%);
+  }
+
+  .grain {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  header {
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 3rem 2rem;
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    z-index: 2;
+  }
+
+  .header-grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 3rem;
+    align-items: end;
+  }
+
+  .codename {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--accent-amber);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 4rem;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+  }
+
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent-amber);
+  }
+
+  .tagline {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 380px;
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .meta-row { display: flex; gap: 2rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .meta-row > div span:first-child { color: var(--text-tertiary); }
+  .meta-row > div span:last-child { color: var(--text-secondary); margin-left: 0.5rem; }
+
+  main {
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem;
+    z-index: 2;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--accent-amber);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+  }
+
+  .diagram-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .diagram-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 60px; height: 60px;
+    border-top: 1px solid var(--accent-amber);
+    border-left: 1px solid var(--accent-amber);
+    opacity: 0.5;
+  }
+
+  .diagram-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 60px; height: 60px;
+    border-bottom: 1px solid var(--accent-amber);
+    border-right: 1px solid var(--accent-amber);
+    opacity: 0.5;
+  }
+
+  .mermaid {
+    background: transparent !important;
+    text-align: center;
+  }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+
+  .legend-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-amber);
+    padding: 1.25rem 1.5rem;
+    transition: border-left-color 0.2s, transform 0.2s;
+  }
+
+  .legend-card:hover { transform: translateX(3px); }
+  .legend-card.attack { border-left-color: var(--accent-red); }
+  .legend-card.detect { border-left-color: var(--accent-blue); }
+  .legend-card.soar { border-left-color: var(--accent-purple); }
+  .legend-card.llm { border-left-color: var(--accent-green); }
+  .legend-card.viz { border-left-color: var(--accent-amber); }
+
+  .legend-card .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.25em;
+  }
+
+  .legend-card .name {
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin: 0.3rem 0 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .legend-card .desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .flow-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .flow-step {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px dashed var(--border);
+    align-items: start;
+  }
+
+  .flow-step:last-child { border-bottom: none; }
+
+  .flow-num {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: var(--accent-amber);
+    line-height: 1;
+  }
+
+  .flow-content strong {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .flow-content span {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 3rem;
+    margin-top: 4rem;
+    background: var(--bg-secondary);
+  }
+
+  .footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 768px) {
+    header { padding: 2rem 1.5rem; }
+    .header-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .tagline { text-align: left; }
+    h1 { font-size: 2.5rem; }
+    main { padding: 2rem 1.5rem; }
+    .meta-row { flex-direction: column; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <div class="header-grid">
+    <div>
+      <div class="codename">// codename</div>
+      <h1>ARGOS<em>.</em></h1>
+    </div>
+    <div></div>
+    <div class="tagline">
+      Adaptive Ransomware Guard<br>
+      with Orchestrated Surveillance
+    </div>
+  </div>
+  <div class="meta-row" style="max-width:1400px; margin: 1rem auto 0;">
+    <div><span>Course</span><span>Tópicos Avanzados de Ciberseguridad</span></div>
+    <div><span>Term</span><span>2026-1</span></div>
+    <div><span>Team</span><span>4 engineers</span></div>
+    <div><span>Status</span><span style="color:var(--accent-amber)">Kickoff / Wk 1</span></div>
+  </div>
+</header>
+
+<main>
+
+  <div class="section-label">// system architecture</div>
+  <h2 class="section-title">Defense-in-depth ransomware detection &amp; response</h2>
+
+  <div class="diagram-container">
+    <pre class="mermaid">
+flowchart TB
+    subgraph ATK["🎯 ATTACK SIMULATION"]
+        direction LR
+        ART["Atomic Red Team<br/>MITRE TTPs"]
+        CAL["Caldera<br/>Attack chains"]
+        RANSIM["Ransomware Sim<br/>Custom Python"]
+    end
+
+    subgraph ENV["🖥️ VICTIM LAB"]
+        direction LR
+        WIN["Windows VM<br/>Sysmon + Wazuh"]
+        LIN["Linux VM<br/>auditd + Wazuh"]
+        CANARY["🪤 Canary Files<br/>FIM whodata"]
+    end
+
+    WMGR["📡 Wazuh Manager<br/>OpenSearch backend"]
+
+    subgraph DET["🛡️ DETECTION LAYERS — parallel"]
+        direction TB
+        L1["LAYER 1 — Rule-Based<br/>Sigma rules → MITRE ATT&amp;CK<br/>T1486 · T1490 · T1083 · T1562"]
+        L2["LAYER 2 — ML Anomaly<br/>Isolation Forest + One-Class SVM<br/>Entropy · syscalls · I/O patterns"]
+        L3["LAYER 3 — Deception<br/>Canary FIM · Zero-FP design<br/>Ultra-early detection"]
+    end
+
+    subgraph SOAR["⚙️ SOAR — orchestration"]
+        DE["Decision Engine<br/>Score fusion logic"]
+    end
+
+    subgraph LLM["🧠 LAYER 4 — LLM TRIAGE"]
+        direction TB
+        API["FastAPI service"]
+        RAG["Mini-RAG<br/>MITRE · NIST 800-61 · Sigma"]
+        CLIENT["LLMClient interface<br/>vendor-agnostic"]
+        DSEEK["DeepSeek-V3<br/>primary"]
+        QWEN["Qwen2.5-72B<br/>fallback"]
+        OUT["Structured output<br/>technique · severity · runbook"]
+        API --> RAG --> CLIENT
+        CLIENT --> DSEEK & QWEN
+        DSEEK & QWEN --> OUT
+    end
+
+    subgraph RESP["🚨 AUTOMATED RESPONSE"]
+        direction LR
+        ISO["Host isolation"]
+        KILL["Process kill"]
+        SNAP["Disk snapshot"]
+        NOTIFY["Notify team"]
+    end
+
+    subgraph VIS["📊 VISUALIZATION"]
+        direction LR
+        KIB["OpenSearch<br/>Dashboards"]
+        STREAM["Streamlit<br/>Analyst UI"]
+    end
+
+    subgraph MET["📈 METRICS"]
+        direction LR
+        DEMO["Demo headlines<br/>TTD · files · FP"]
+        FOR["Forensics<br/>Timeline · IoCs"]
+        EVAL["Evaluation<br/>P/R/F1 · coverage"]
+    end
+
+    ART --> WIN
+    CAL --> WIN & LIN
+    RANSIM --> WIN & LIN
+    WIN --> WMGR
+    LIN --> WMGR
+    CANARY -.FIM.-> WMGR
+    WMGR --> L1 & L2 & L3
+    L1 & L2 & L3 --> DE
+    DE --> API
+    DE --> RESP
+    OUT --> RESP
+    OUT --> STREAM
+    RESP --> KIB
+    RESP --> MET
+    DE --> KIB
+
+    classDef attack fill:#3a1a1a,stroke:#c84545,stroke-width:1.5px,color:#e6edf3
+    classDef env fill:#3a2e1a,stroke:#d4a849,stroke-width:1.5px,color:#e6edf3
+    classDef detect fill:#1a2a3a,stroke:#5a8fc7,stroke-width:1.5px,color:#e6edf3
+    classDef soar fill:#2a1a3a,stroke:#9874c7,stroke-width:1.5px,color:#e6edf3
+    classDef llm fill:#1a3a2a,stroke:#6b9b5a,stroke-width:1.5px,color:#e6edf3
+    classDef resp fill:#3a1a2e,stroke:#c84545,stroke-width:1.5px,color:#e6edf3
+    classDef vis fill:#1a3a3a,stroke:#5a8fc7,stroke-width:1.5px,color:#e6edf3
+    classDef metric fill:#1f2530,stroke:#6b7785,stroke-width:1.5px,color:#e6edf3
+    classDef core fill:#3a2a1a,stroke:#d4a849,stroke-width:2px,color:#e6edf3
+
+    class ART,CAL,RANSIM attack
+    class WIN,LIN,CANARY env
+    class L1,L2,L3 detect
+    class DE soar
+    class API,RAG,CLIENT,DSEEK,QWEN,OUT llm
+    class ISO,KILL,SNAP,NOTIFY resp
+    class KIB,STREAM vis
+    class DEMO,FOR,EVAL metric
+    class WMGR core
+    </pre>
+  </div>
+
+  <div class="section-label">// component map</div>
+  <h2 class="section-title">Block legend</h2>
+
+  <div class="legend-grid">
+    <div class="legend-card attack">
+      <div class="num">BLOCK 01</div>
+      <div class="name">Attack Simulation</div>
+      <div class="desc">Atomic Red Team, Caldera, custom ransomware simulator. Source of controlled positive cases mapped to MITRE TTPs.</div>
+    </div>
+    <div class="legend-card">
+      <div class="num">BLOCK 02</div>
+      <div class="name">Victim Lab</div>
+      <div class="desc">Two virtualized hosts (Windows + Linux) with Sysmon/auditd telemetry. Canary files deployed in strategic paths.</div>
+    </div>
+    <div class="legend-card">
+      <div class="num">BLOCK 03</div>
+      <div class="name">Wazuh Manager</div>
+      <div class="desc">Single point for event collection and normalization. OpenSearch as storage backend.</div>
+    </div>
+    <div class="legend-card detect">
+      <div class="num">BLOCK 04</div>
+      <div class="name">Detection — 3 parallel layers</div>
+      <div class="desc">Rule-based Sigma + Unsupervised ML anomaly + Deception canaries. Each layer fails independently of the others.</div>
+    </div>
+    <div class="legend-card soar">
+      <div class="num">BLOCK 05</div>
+      <div class="name">SOAR Decision Engine</div>
+      <div class="desc">Score fusion logic. Combines outputs from all detection layers into severity + automated action.</div>
+    </div>
+    <div class="legend-card llm">
+      <div class="num">BLOCK 06</div>
+      <div class="name">LLM Triage (Layer 4)</div>
+      <div class="desc">FastAPI + mini-RAG + LLMClient (DeepSeek primary, Qwen fallback). Structured analysis enrichment.</div>
+    </div>
+    <div class="legend-card attack">
+      <div class="num">BLOCK 07</div>
+      <div class="name">Automated Response</div>
+      <div class="desc">Host isolation, process kill, disk snapshot, team notification. Triggered by Decision Engine.</div>
+    </div>
+    <div class="legend-card viz">
+      <div class="num">BLOCK 08</div>
+      <div class="name">Visualization &amp; Metrics</div>
+      <div class="desc">OpenSearch Dashboards for SOC view, Streamlit for analyst triage UI, three metric categories: demo, forensics, evaluation.</div>
+    </div>
+  </div>
+
+  <div class="section-label">// end-to-end flow</div>
+  <h2 class="section-title">A ransomware incident, step by step</h2>
+
+  <div class="flow-section">
+    <div class="flow-step">
+      <div class="flow-num">01</div>
+      <div class="flow-content"><strong>Attack initiation</strong><span>Atomic Red Team executes T1486 (Data Encrypted for Impact) on the Windows victim. Custom Python ransomware enumerates and begins encrypting files.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">02</div>
+      <div class="flow-content"><strong>Telemetry capture</strong><span>Sysmon logs file events, process creations, registry changes. Wazuh agent forwards to manager. Canary file is touched within seconds.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">03</div>
+      <div class="flow-content"><strong>Parallel detection</strong><span>Layer 3 (canary) fires immediately — high confidence. Layer 1 matches T1486 Sigma rule. Layer 2 ML detects entropy spike + crypto syscall pattern.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">04</div>
+      <div class="flow-content"><strong>Decision fusion</strong><span>SOAR Decision Engine receives all three signals. Logic: Layer 3 + corroboration → maximum severity → immediate isolation playbook.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">05</div>
+      <div class="flow-content"><strong>LLM enrichment</strong><span>FastAPI receives full context. RAG retrieves MITRE T1486 + NIST 800-61 ransomware playbook. DeepSeek-V3 generates structured analysis with technique, severity, recommended action.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">06</div>
+      <div class="flow-content"><strong>Automated containment</strong><span>Host isolated via firewall rules. Offending PID killed. Disk snapshot captured for forensics. Team notified via Slack with LLM analysis attached.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">07</div>
+      <div class="flow-content"><strong>Analyst review</strong><span>Streamlit UI shows alert + LLM analysis side-by-side with citations. OpenSearch dashboard updates MITRE coverage heatmap and time-to-detect histogram.</span></div>
+    </div>
+  <div class="section-label">// human-in-the-loop SOAR</div>
+  <h2 class="section-title">Confidence-tiered automation with approval flow</h2>
+
+  <p style="color: var(--text-secondary); max-width: 720px; margin-bottom: 2rem; line-height: 1.7;">
+    Not every alert deserves automated containment, and not every alert can wait for human approval. ARGOS classifies alerts into four tiers based on detection confidence, and routes them differently — automatic for high-confidence cases, human-in-the-loop with email approval and split-brain resolution for uncertain cases. Full rationale in <code style="font-family: 'IBM Plex Mono', monospace; color: var(--accent-amber); background: var(--bg-tertiary); padding: 2px 6px; border-radius: 2px;">ADR-0003</code> and <code style="font-family: 'IBM Plex Mono', monospace; color: var(--accent-amber); background: var(--bg-tertiary); padding: 2px 6px; border-radius: 2px;">ADR-0006</code>.
+  </p>
+
+  <div class="legend-grid">
+    <div class="legend-card attack">
+      <div class="num">TIER T0 — CRITICAL</div>
+      <div class="name">≥ 0.95 confidence</div>
+      <div class="desc"><strong>Trigger:</strong> Layer 3 alone, or Layers 1+2+3 together.<br><strong>Action:</strong> auto-isolate immediately.<br><strong>Email:</strong> post-facto, with "Revert if false alarm" button.</div>
+    </div>
+    <div class="legend-card detect">
+      <div class="num">TIER T1 — HIGH</div>
+      <div class="name">0.80 – 0.95 confidence</div>
+      <div class="desc"><strong>Trigger:</strong> Layer 1 + Layer 2 corroborate.<br><strong>Action:</strong> auto-isolate + disk snapshot.<br><strong>Email:</strong> post-facto with "Revert" button.</div>
+    </div>
+    <div class="legend-card soar">
+      <div class="num">TIER T2 — MEDIUM</div>
+      <div class="name">0.60 – 0.80 confidence</div>
+      <div class="desc"><strong>Trigger:</strong> Layer 1 alone (high-fidelity), or Layer 2 alone (very high score).<br><strong>Action:</strong> awaiting approval, 3-min countdown, escalates to T1 on timeout.<br><strong>Email:</strong> pre-approval with Approve / Reject buttons.</div>
+    </div>
+    <div class="legend-card viz">
+      <div class="num">TIER T3 — LOW</div>
+      <div class="name">0.40 – 0.60 confidence</div>
+      <div class="desc"><strong>Trigger:</strong> Layer 2 medium score, or Layer 1 experimental rule.<br><strong>Action:</strong> notification only, no execute button.<br><strong>Email:</strong> LLM analysis to analyst for review.</div>
+    </div>
+  </div>
+
+  <div class="section-label">// split-brain resolution</div>
+  <h2 class="section-title">When approvers disagree</h2>
+
+  <p style="color: var(--text-secondary); max-width: 720px; margin-bottom: 2rem; line-height: 1.7;">
+    Multiple approvers can give contradictory responses to the same email — the classic <em>distributed consensus problem</em> with humans as nodes. ARGOS resolves this with <strong style="color: var(--text-primary);">conservative-wins policy</strong> and a 60-second consolidation window. In containment context, conservative means <em>isolate</em>, because a falsely-isolated host has lower cost than a real attack uncontained.
+  </p>
+
+  <div class="flow-section">
+    <div class="flow-step">
+      <div class="flow-num">A</div>
+      <div class="flow-content"><strong>First positive response opens the window</strong><span>First click — whether "approve" or "reject" — starts a 60-second consolidation window. Subsequent responses are tracked in the audit log.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">B</div>
+      <div class="flow-content"><strong>Same-sign confirmations</strong><span>If all subsequent responses align with the first, decision confirmed. No conflict.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">C</div>
+      <div class="flow-content"><strong>Opposite-sign response → conflict detected</strong><span>System logs conflict. Live banner in Approval Workflow Console: "CONFLICT DETECTED · 60s consolidation window in progress".</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">D</div>
+      <div class="flow-content"><strong>Window closes → conservative-wins applied</strong><span>If at least one approve exists, isolation executes — regardless of how many rejects were cast. Audit log records: "EXECUTED: 2 approve, 1 reject, conservative-wins policy".</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">E</div>
+      <div class="flow-content"><strong>Final email + dashboard update</strong><span>All approvers receive audit summary. Approvers who rejected can see the policy justification. Reverting requires logging into the dashboard (not via email) — adds friction to mistaken reverts.</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">// approval workflow console</div>
+  <h2 class="section-title">The visual centerpiece</h2>
+
+  <p style="color: var(--text-secondary); max-width: 720px; margin-bottom: 2rem; line-height: 1.7;">
+    Streamlit-based real-time dashboard that visualizes the approval flow. Demo audiences see decisions arrive live, conflict detection trigger, countdown timers run, and conservative-wins resolution execute — all in one screen. This transforms abstract policy logic into something that explains itself in 30 seconds.
+  </p>
+
+  <div class="legend-grid">
+    <div class="legend-card">
+      <div class="num">PANEL · LEFT</div>
+      <div class="name">Incident Card</div>
+      <div class="desc">Severity tier badge color-coded, incident summary, MITRE technique, compact LLM analysis. Click for raw alert telemetry.</div>
+    </div>
+    <div class="legend-card detect">
+      <div class="num">PANEL · CENTER</div>
+      <div class="name">Decision Matrix</div>
+      <div class="desc">One row per approver. Columns: name, role, email destination, status (🟡 pending / 🟢 approved / 🔴 rejected / ⚫ timeout), response timestamp, latency. Animation highlights newly arrived responses.</div>
+    </div>
+    <div class="legend-card soar">
+      <div class="num">PANEL · RIGHT</div>
+      <div class="name">System Decision Logic</div>
+      <div class="desc">Current state, live countdown, conflict indicator, final decision banner with justification ("2 approve · 1 reject · conservative-wins applied").</div>
+    </div>
+    <div class="legend-card viz">
+      <div class="num">PANEL · BOTTOM</div>
+      <div class="name">Action Timeline</div>
+      <div class="desc">Horizontal chronology: alert created → emails sent → first response → conflict detected → window closed → action executed.</div>
+    </div>
+  </div>
+
+  <div class="section-label">// resilience by design</div>
+  <h2 class="section-title">What happens when things break</h2>
+
+  <p style="color: var(--text-secondary); max-width: 720px; margin-bottom: 2rem; line-height: 1.7;">
+    A defensive system that fails silently is worse than no system at all. ARGOS is designed against failures of its own components and against adversaries actively attacking the defender. The full STRIDE + FMEA threat model (≈40 threats and failure modes) is in <code style="font-family: 'IBM Plex Mono', monospace; color: var(--accent-amber); background: var(--bg-tertiary); padding: 2px 6px; border-radius: 2px;">THREAT_MODEL.md</code>.
+  </p>
+
+  <div class="legend-grid">
+    <div class="legend-card llm">
+      <div class="num">R-01</div>
+      <div class="name">LLM never on critical path</div>
+      <div class="desc">If LLM hallucinates or goes down, SOAR containment still triggers from Layers 1-3. The LLM only enriches the analyst's view — it cannot prevent isolation, only fail to explain it.</div>
+    </div>
+    <div class="legend-card detect">
+      <div class="num">R-02</div>
+      <div class="name">No SPOF in detection</div>
+      <div class="desc">Three layers run in parallel. Failure of any one degrades coverage; it does not blind the system. Layers 2+3 cover Layer 1's blind spots and vice versa.</div>
+    </div>
+    <div class="legend-card attack">
+      <div class="num">R-03</div>
+      <div class="name">Agent disconnect = signal</div>
+      <div class="desc">If an attacker kills the Wazuh agent on a victim, the heartbeat loss is itself a high-priority alert (rule 502). Suspicious silence becomes a positive indicator of compromise.</div>
+    </div>
+    <div class="legend-card">
+      <div class="num">R-04</div>
+      <div class="name">Logs ship in real time</div>
+      <div class="desc">Telemetry forwards immediately, never buffered locally. An attacker clearing local logs after action cannot prevent events from being already indexed remotely (mitigation against MITRE T1070.001).</div>
+    </div>
+    <div class="legend-card llm">
+      <div class="num">R-05</div>
+      <div class="name">LLM output validated</div>
+      <div class="desc">Every response: Pydantic schema check, MITRE technique whitelist (rejects hallucinated IDs), confidence threshold, no-action constraint. LLM cannot trigger isolation or kill — output is descriptive only.</div>
+    </div>
+    <div class="legend-card soar">
+      <div class="num">R-06</div>
+      <div class="name">Containment fails closed</div>
+      <div class="desc">If automated isolation playbook fails, the alert state remains "uncontained" and escalates to manual response. There is no scenario where a failed action silently appears successful.</div>
+    </div>
+    <div class="legend-card llm">
+      <div class="num">R-07</div>
+      <div class="name">Vendor portability</div>
+      <div class="desc">DeepSeek primary → Qwen fallback → continue without enrichment if both down → swap to local Llama with one config change. No vendor lock-in failure mode.</div>
+    </div>
+    <div class="legend-card viz">
+      <div class="num">R-08</div>
+      <div class="name">Cost-bounded operations</div>
+      <div class="desc">LLM API calls have per-incident rate limits and monthly budget caps. Pathological attack patterns or runaway bugs cannot drain the budget — system fails closed on cost before exceeding the cap.</div>
+    </div>
+  </div>
+
+  <div class="section-label">// designed degradation paths</div>
+  <h2 class="section-title">Critical failure scenarios</h2>
+
+  <div class="flow-section">
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>LLM API completely down</strong><span>Alerts continue without enrichment. Analyst sees raw alert with full telemetry. SOAR containment unaffected. Demo: visible failover Qwen → narrate "this is where LLM analysis would appear" with screenshot if both fail.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>LLM hallucinates non-existent MITRE technique</strong><span>Pydantic + ATT&amp;CK whitelist rejects response. Alert proceeds without enrichment. Validation layer prevents bad analysis from reaching the analyst.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>Attacker kills Wazuh agent on victim</strong><span>Heartbeat loss within 60s → high-priority "agent stopped" alert → host investigated as compromised. Sysmon continues local logging. Optional Filebeat secondary shipper to backup collector.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>Wazuh manager service crashes</strong><span>systemd auto-restart (~30s). External heartbeat alerts the team. Agents queue events locally during outage and ship on recovery. Manager admin actions logged externally.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>Attacker clears Windows Event Log (T1070.001)</strong><span>Events already shipped to manager in real-time. Log clearing event itself fires a Sigma rule. Attacker cannot retroactively delete what's already indexed remotely.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>Race: attack faster than detection</strong><span>Documented theoretical TTD floor of 3-5 seconds. Some files will encrypt before isolation. Honest metric reported in evaluation, not hidden.</span></div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">!</div>
+      <div class="flow-content"><strong>Live demo VM crash or network failure</strong><span>Pre-recorded high-quality video as last-resort backup (recorded day before). Demo runs entirely on internal lab — no internet dependency for core flow. Snapshot of pre-attack state for VM rollback.</span></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-content">
+    <div>UNIVERSIDAD DE LIMA · 2026-1</div>
+    <div>v1.2 · ARCH + THREAT MODEL + HITL SOAR</div>
+  </div>
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      darkMode: true,
+      background: '#11161d',
+      primaryColor: '#1a212b',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#2a3340',
+      lineColor: '#6b7785',
+      secondaryColor: '#1a212b',
+      tertiaryColor: '#1a212b',
+      fontFamily: 'IBM Plex Mono, monospace',
+      fontSize: '13px'
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 20
+    }
+  });
+</script>
+</body>
+</html>
