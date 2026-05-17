@@ -1,6 +1,6 @@
 # ADR-0005: Notification channel abstraction
 
-**Estado:** Aceptado
+**Estado:** Aceptado · implementaciones concretas en ADR-0007
 **Fecha:** Semana 1
 **Autores:** P1 (Enzo)
 **Revisores:** Equipo completo
@@ -8,6 +8,8 @@
 ---
 
 ## Contexto
+
+> **Nota (Semana 9):** Este ADR define la **abstracción `NotificationChannel`** y sigue siendo la interfaz canónica. Las **implementaciones concretas** y la cadena de escalación temporal entre canales se definen en `ADR-0007` (Telegram + ntfy.sh + Slack + Twilio Voice). Email queda degradado al rol de notificación post-facto. Ver §"Actualizaciones posteriores" al pie.
 
 ADR-0003 introduce email + botón de aprobación como canal de comunicación con el equipo de TI. En el futuro se quieren soportar canales adicionales: Slack, Microsoft Teams, Telegram, SMS, llamada vía PagerDuty.
 
@@ -159,3 +161,7 @@ Future: panel admin en Streamlit para que un operador modifique destinatarios si
 ## Revisión
 
 A re-evaluar si en el desarrollo se descubre que la abstracción no calza para algún channel específico (por ejemplo, voz humana vía PagerDuty no encaja exactamente en send/verify_response sincrónico).
+
+## Actualizaciones posteriores
+
+- **Semana 9:** ADR-0007 cierra el capítulo de implementaciones concretas para v1: Telegram (primario) + ntfy.sh + Slack/Discord (paralelos en t=0) + Twilio Voice DTMF (escalación en t=60s). El comentario "voz humana vía PagerDuty no encaja exactamente" en la sección Revisión fue resuelto adaptando el patrón: el `TwilioVoiceChannel` usa correlation_id por llamada saliente para encajar en `send` + verificación asincrónica de respuestas DTMF. La interfaz definida en este ADR no requirió cambios. Email pasa a notificación post-facto (resumen tras la decisión final), preservando la implementación de `EmailChannel` pero reasignando su rol.

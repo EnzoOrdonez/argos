@@ -195,7 +195,7 @@ All architecture, design decisions, threat model, and use cases are in [`docs/`]
 | 🎨 Interactive architecture diagram | [`docs/architecture/architecture_diagram.html`](./docs/architecture/architecture_diagram.html) |
 | 📐 Cross-team contracts spec | [`docs/architecture/CONTRACTS_SPECIFICATION.md`](./docs/architecture/CONTRACTS_SPECIFICATION.md) |
 | 🛡️ Threat model (STRIDE + FMEA) | [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md) |
-| 🧠 Architecture decisions (6 ADRs) | [`docs/decisions/`](./docs/decisions/) |
+| 🧠 Architecture decisions (7 ADRs) | [`docs/decisions/`](./docs/decisions/) |
 | 🎬 Use cases & demo scenarios | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
 
 ---
@@ -256,7 +256,7 @@ argos/
 
 ## Roadmap
 
-- ✅ **Week 1:** Architecture & design phase complete (~210 KB of docs, 6 ADRs, threat model, use cases).
+- ✅ **Week 1:** Architecture & design phase complete (~210 KB of docs, 7 ADRs, threat model, use cases).
 - ✅ **Week 2:** Cross-team contracts layer shipped (`argos_contracts/`, 59 tests).
 - 🚧 **Weeks 2–9:** Implementation across 4 layers + SOAR + Approval Workflow Console.
   - 🎯 **Gate 1 (Week 5):** Layer 1 functional end-to-end (UC-01 demo possible).
