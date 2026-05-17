@@ -3,11 +3,11 @@
 | Field | Value |
 |-------|-------|
 | Document type | Use Case Specification |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Approved |
 | Owner | P1 (Enzo) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `THREAT_MODEL.md`, ADRs 0001-0006, `OPEN_QUESTIONS_RESOLUTION.md` |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `THREAT_MODEL.md`, ADRs 0001-0007, `OPEN_QUESTIONS_RESOLUTION.md` |
 
 ---
 
@@ -170,8 +170,9 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 - **Decision Engine action:**
   1. Immediately applies throttle on offending process (CPU/IO limits).
   2. Triggers proactive disk snapshot.
-  3. Sends approval emails to all 4 team members.
+  3. Sends approval requests through the multi-channel chain defined in ADR-0007 to all 4 team members (Telegram bot con botones inline + ntfy.sh push + Slack webhook en paralelo a t=0; llamada Twilio con DTMF como escalación a t=60s si nadie respondió).
   4. Starts 3-minute countdown with conflict detection.
+  5. Email post-facto resume goes to all approvers after final decision (legacy `EmailChannel`, post-facto notification only, per ADR-0007).
 - **The split-brain happens here:**
   - **Enzo (P1) at +18s:** clicks "Reject — false positive" (deliberately, per script).
   - **P2 at +35s:** clicks "Approve isolation".
@@ -199,7 +200,7 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 | 1:00 | "Score 0.74 — anomalous but not certain. Tier T2. This requires human approval." | Tier badge, score visible |
 | 1:15 | "But before any human looks at it, two things happen automatically: throttle and snapshot." | Show throttle indicator + snapshot timestamp |
 | 1:30 | "Encryption velocity drops 80%. Forensic state preserved. Now we wait — but we wait safely." | Velocity graph drops |
-| 1:45 | "Four team members get the email. Watch what happens." | Show 4 phones / 4 email clients |
+| 1:45 | "Four team members get the request via Telegram, ntfy and Slack in parallel. Watch what happens." | Show 4 phones with Telegram inline buttons + Slack channel mirror |
 | 2:00 | Enzo clicks **Reject**. | Console shows row 1 turn red |
 | 2:15 | P2 clicks **Approve**. | Console shows row 2 turn green. Banner: "CONFLICT DETECTED" |
 | 2:30 | "We have a split-brain. The system started a 60-second consolidation window." | Countdown timer visible |
@@ -452,7 +453,7 @@ Risks specific to running these use cases live:
 | VM crashes mid-demo | UC-01, UC-04, UC-05 | Snapshot before demo; quick restore script ready |
 | Split-brain choreography fails (P4 forgets to NOT respond) | UC-03 | Written script per person; rehearse timing; pre-recorded backup |
 | Two-person rule misconfigured | UC-04 | Verify host tag in Wazuh before demo starts |
-| Network issue prevents email delivery | UC-03, UC-04 | MailHog or local SMTP server in lab; no external dependencies |
+| Network issue prevents primary channel delivery | UC-03, UC-04 | Multi-canal en paralelo (Telegram + ntfy + Slack) por ADR-0007 reduce dependencia a una sola red; MailHog local para el email post-facto |
 
 ---
 
@@ -476,8 +477,8 @@ Total runtime: ~13 minutes core scenarios + 2 minutes intro/outro = 15 min.
 
 After this document, the **what to build** is fully specified:
 - ✅ Architecture defined (SAD).
-- ✅ Threat model documented.
-- ✅ Decisions explicit (ADRs 0001-0006, OPEN_QUESTIONS_RESOLUTION).
+- ✅ Threat model documented (incl. T-067/T-068/T-069 introduced by ADR-0007).
+- ✅ Decisions explicit (ADRs 0001-0007, OPEN_QUESTIONS_RESOLUTION).
 - ✅ Use cases specified (this document).
 
 **Next step: implementation.** P1 begins with `LLMClient` interface (`base.py`) per the path proposed in earlier discussion. Each team member kicks off their layer per the 14-week plan.
@@ -489,3 +490,4 @@ After this document, the **what to build** is fully specified:
 | Version | Date | Change | Author |
 |---------|------|--------|--------|
 | 1.0 | Week 1 | Initial use case specification with 5 demo scenarios (UC-01 to UC-05) and 7 evaluation scenarios (EV-01 to EV-07). | P1 |
+| 1.1 | Week 9 (post-merge) | Synchronized with ADR-0007 (multi-channel notification escalation): UC-03 approval flow updated to describe Telegram + ntfy + Slack in parallel at t=0 with Twilio voice DTMF escalation at t=60s; email demoted to post-facto summary channel. UC-03 demo narration script updated. Risk table updated to reflect multi-channel resilience. Metadata: version bump, `Related` extended to ADRs 0001-0007. | P1 |

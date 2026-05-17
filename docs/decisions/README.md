@@ -20,8 +20,9 @@ Rejected decisions are documented too — they show that the team evaluated alte
 | [0002](./0002-heartbeat-default-60s.md) | Wazuh agent heartbeat — keep default 60s | ✅ Accepted | Reject lowering heartbeat interval; alert fatigue cost outweighs marginal detection improvement. |
 | [0003](./0003-confidence-tiered-automation.md) | Confidence-tiered automation with HITL SOAR | ✅ Accepted | 4-tier classification (T0-T3); auto-execute high confidence, human approval for medium-uncertain. T2 timeout 3min with throttle+snapshot during countdown. |
 | [0004](./0004-auto-rollback-rejected.md) | Auto-rollback "dead man's switch" | ❌ Rejected | Rejected. Contradicts "fails closed" principle. Documented to show the team considered and consciously rejected the option. |
-| [0005](./0005-notification-channel-abstraction.md) | Notification channel abstraction | ✅ Accepted | Strategy pattern for notification channels. Email v1, Slack/Teams/Telegram/SMS/PagerDuty as future implementations. |
+| [0005](./0005-notification-channel-abstraction.md) | Notification channel abstraction | ✅ Accepted | Strategy pattern for notification channels. Email v1; canales concretos para v1+ definidos en ADR-0007. |
 | [0006](./0006-split-brain-resolution.md) | Split-brain resolution — conservative-wins policy | ✅ Accepted | When approvers disagree, conservative-wins policy with 60s consolidation window. In containment context, conservative = isolate. |
+| [0007](./0007-notification-multichannel-escalation.md) | Multi-channel notification escalation chain | ✅ Accepted | Telegram + ntfy.sh + Slack/Discord en paralelo a t=0; Twilio Voice (DTMF) como escalación a t=60s; email degradado a notificación post-facto. Sustituye el rol de email primario implícito en ADR-0003. |
 
 ---
 

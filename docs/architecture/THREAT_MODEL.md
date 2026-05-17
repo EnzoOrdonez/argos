@@ -5,13 +5,13 @@
 | Field | Value |
 |-------|-------|
 | Document type | Threat Model + Failure Mode Analysis (FMEA) + Risk Register |
-| Version | 1.0 |
-| Status | Baseline · Approved at Kickoff |
+| Version | 1.2 |
+| Status | Baseline · Approved at Kickoff · Updated with ADR-0007 threats |
 | Methodology | STRIDE (security) + FMEA (reliability) + Project Risk Register |
 | Course | Tópicos Avanzados de Ciberseguridad · 2026-1 |
 | Owner | P1 (Enzo Cáceres) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `architecture_diagram.html` |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `architecture_diagram.html`, ADRs 0001-0007 |
 
 ---
 
@@ -117,9 +117,9 @@ Threats numbered T-NNN. Mitigations referenced in section 6.
 | T-052 | SOAR service | Attacker exploits FastAPI service vulnerability to gain RCE on SOAR host | L | C | High | FastAPI on isolated host, no exposure to victim subnet, dependency scanning (`pip-audit`), input validation via Pydantic, no `eval` / dynamic code paths | Low |
 | T-053 | LLM service | Prompt injection causes LLM to leak system prompt or internal config | L | L | Low | System prompt minimal, no secrets in prompt, output validation rejects responses outside expected schema | Negligible |
 
-### 3.7 Approval system threats (new — added with ADR-0003/0005/0006)
+### 3.7 Approval system threats (new — added with ADR-0003/0005/0006/0007)
 
-The introduction of email-based approval flow (ADR-0003) and multi-recipient notifications (ADR-0005) introduces a new attack surface. Threats analyzed:
+The introduction of email-based approval flow (ADR-0003) and multi-recipient notifications (ADR-0005) introduces a new attack surface. ADR-0007 expands el canal único a una cadena multi-canal (Telegram + ntfy + Slack + Twilio voz), lo que añade T-067, T-068, T-069. Threats analyzed:
 
 | ID | Component | Threat | L | I | Risk | Mitigation | Residual |
 |----|-----------|--------|---|---|------|------------|----------|
@@ -130,6 +130,9 @@ The introduction of email-based approval flow (ADR-0003) and multi-recipient not
 | T-064 | Defensive DoS via rejection flooding | Attacker triggers many T2/T3 alerts and floods approver inbox to delay legitimate responses | L | M | Low | Per-incident dedup by alert hash; rate limit on email sends per minute; T2/T3 with no response after timeout escalates to conservative auto-execute (ADR-0003) | Low |
 | T-065 | Phishing of approvers | Attacker sends fake "approval needed" email tricking approver to click malicious link mimicking ARGOS | M | H | High | Approval emails sent only from designated `argos-noreply@` domain, links only to internal ARGOS dashboard URL (verifiable), training note in onboarding for approvers, optional DKIM/SPF strict | Medium — phishing always partially residual |
 | T-066 | Audit log tampering | Attacker modifies decision audit log to hide that they rejected a contention | L | H | Medium | Audit log written to OpenSearch with append-only index settings, sequence numbers, daily snapshot to immutable storage | Low |
+| T-067 | SIM-swap del aprobador | Atacante toma control del número telefónico del aprobador (vía social engineering al carrier o port-out) y aprueba/rechaza vía Telegram (re-login con SMS), Twilio voice, o re-establece sesión en cualquier canal vinculado al teléfono | L | H | Medium | Conservative-wins (ADR-0006) protege contra rechazos malintencionados; detectar nueva sesión Telegram con notificación cruzada por ntfy y Slack al aprobador legítimo; idealmente, exigir al aprobador habilitar 2FA app-based en sus canales (no SMS) | Medium — fuera del control técnico del sistema; mitigación principal es educación + multi-canal |
+| T-068 | Caller-ID spoofing al webhook Twilio | Atacante llama al endpoint Twilio simulando ser el aprobador (ANI spoofing) y emite DTMF para aprobar/rechazar contención falsa | L | H | Medium | Aceptar callbacks DTMF únicamente cuando estén correlacionados con una llamada *saliente activa* iniciada por ARGOS (correlation_id en la sesión Twilio); nunca aceptar inbound calls como votos válidos; rate-limit por número origen | Low |
+| T-069 | Compromise del bot Telegram (token leakage) | Atacante con el bot token puede leer mensajes del bot y aprobar en nombre del bot, o suplantar al bot en chats nuevos | L | H | Medium | Bot token en secreto rotable (`.env` con permisos 0600 en v1, Vault en producción); el bot únicamente *envía* mensajes, las respuestas se validan contra `chat_id` esperado del aprobador (no contra el remitente del callback); rotación inmediata si se sospecha leak | Low |
 
 ---
 
@@ -311,6 +314,7 @@ Future expansions (out of scope for v1.0):
 |---------|------|--------|--------|
 | 1.0 | Week 1 | Initial baseline. STRIDE for 4 categories, FMEA for 6 components, Risk Register with 9 project risks, 10 resilience properties documented. | P1 |
 | 1.1 | Week 1 | Added Section 3.7 (approval system threats) covering 7 new threats T-060 through T-066 introduced by ADRs 0003/0005/0006. Updated residual risks list. | P1 |
+| 1.2 | Week 9 (post Gate 2) | Section 3.7 expanded to cover ADR-0007 (multi-channel notification chain): added T-067 (SIM-swap del aprobador), T-068 (caller-ID spoofing al webhook Twilio), T-069 (compromise del bot Telegram via token leakage). Trust boundary note added implicitly via §3.7 preamble. Metadata: version bump, `Related` extended to ADRs 0001-0007, status note. | P1 |
 
 ---
 
