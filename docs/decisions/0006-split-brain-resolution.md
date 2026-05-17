@@ -75,6 +75,18 @@ Este es el **split-brain decision problem**, formalmente equivalente a problemas
 
 Cada decisión multi-aprobador genera un audit log estructurado:
 
+### Política de gestión del secreto JWT (per Q6 OPEN_QUESTIONS_RESOLUTION)
+
+Los botones de aprobación/rechazo en los emails llevan un token JWT firmado HS256 con un secreto compartido:
+
+- **v1 (proyecto académico):** secreto estático en archivo `.env` (modo 0600, `.gitignore` enforced). Rotación manual únicamente ante sospecha de leak.
+- **v2 (deployment productivo, fuera de scope):** secreto en gestor dedicado (Azure Key Vault / AWS Secrets Manager / HashiCorp Vault) con rotación automática cada 90 días, acceso por identidad IAM + policy, audit log de cada lectura.
+- **Propiedades del token actuales:** expira a los 5 minutos, single-use (invalidado tras la primera respuesta válida), bound al `incident_id` específico, transporte TLS-only.
+
+Una rotación del secreto JWT en v1 invalida todos los tokens en vuelo; los emails enviados antes de la rotación quedan inservibles. El equipo asume este costo durante operación normal porque la frecuencia de rotación es muy baja.
+
+
+
 ```json
 {
   "incident_id": "INC-2026-04-29-001",
@@ -163,3 +175,7 @@ El Streamlit dashboard muestra durante el incidente:
 ## Revisión
 
 A re-evaluar si en testing se observa que conservative-wins genera demasiados aislamientos no deseados. Si la ratio "rejected by majority but executed anyway" supera 10% de los conflictos, ajustar política (posiblemente a "supermajority required to reject").
+
+## Actualizaciones posteriores
+
+- **Semana 2:** se añade la política de gestión del secreto JWT (Q6 de `OPEN_QUESTIONS_RESOLUTION.md`) — sección "Audit trail obligatorio" actualizada.

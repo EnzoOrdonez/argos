@@ -221,22 +221,22 @@ This is the schema that P1's backend writes to Redis and P4's Streamlit reads. D
 
 ## Q8. Updates to existing documents
 
-The following updates need to be applied:
+The following updates needed to be applied. Status as of Week 2:
 
-| Document | Update | Section |
-|----------|--------|---------|
-| SAD | Coverage targets per Q3 | §13.5 |
-| SAD | Secret manager clarification per Q6 | §13.7 |
-| SAD | Backup as future work per Q7 | §14 |
-| SAD | Incident schema reference per Q4 | §6.5 (cross-reference to this doc) |
-| SAD | Tier calibration protocol per Q5 | §15 (open questions) — close it |
-| SAD | T2 timeout + throttle/snapshot per Q9 | §6.3 |
-| ADR-0006 | JWT rotation policy clarification per Q6 | "Audit trail" section |
-| ADR-0003 | Two-person rule applied to production-critical hosts per Q2 | "Reversibility" section |
-| ADR-0003 | T2 timeout corrected per Q9 | "Approval flow" section |
-| THREAT_MODEL | New metric: throttle effectiveness during countdown | Section on metrics |
+| Document | Update | Section | Status |
+|----------|--------|---------|--------|
+| SAD | Coverage targets per Q3 | §13.5 | ✅ Applied W2 |
+| SAD | Secret manager clarification per Q6 | §13.7 | ✅ Applied W1 |
+| SAD | Backup as future work per Q7 | §14 (item 9) | ✅ Applied W2 |
+| SAD | Incident schema reference per Q4 | §6.5 | ✅ Applied W2 |
+| SAD | Tier calibration protocol per Q5 | §15 (item 5 closed) | ✅ Applied W2 |
+| SAD | T2 timeout + throttle/snapshot per Q9 | §6.3 | ✅ Applied W1 |
+| ADR-0006 | JWT rotation policy clarification per Q6 | "Audit trail" section | ✅ Applied W2 |
+| ADR-0003 | Two-person rule applied to production-critical hosts per Q2 | "Reversibility" → new subsection | ✅ Applied W2 |
+| ADR-0003 | T2 timeout corrected per Q9 | "Approval flow" section | ✅ Applied W1 |
+| THREAT_MODEL | New metric: throttle effectiveness during countdown | F-052 mitigation + residual risks | ✅ Applied W1 |
 
-These are minor edits. P1 batches them into a single PR before Week 2.
+All Q8 patches are now applied. The "Status W2" entries were batched and verified together — see SAD §16, ADR-0003 "Actualizaciones posteriores", ADR-0006 "Actualizaciones posteriores".
 
 ---
 
@@ -322,3 +322,4 @@ This closes the architectural design phase. Next step: **use-case definition**.
 |---------|------|--------|--------|
 | 1.0 | Week 1 | Initial closure document. Resolves Q1 through Q8. | P1 |
 | 1.1 | Week 1 | Added Q9: T2 timeout correction. Original recommendation of long timeout was incompatible with ransomware encryption velocity. Corrected to 3min fixed timeout with proactive throttle + snapshot during countdown. | P1 |
+| 1.2 | Week 2 | Q8 closure status updated: confirmed all 10 cross-document patches were applied (six remaining patches applied this week — SAD §13.5/§14/§6.5/§15, ADR-0003 override por criticidad, ADR-0006 política JWT). | P1 |

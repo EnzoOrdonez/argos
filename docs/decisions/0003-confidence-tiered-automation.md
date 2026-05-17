@@ -71,6 +71,12 @@ Cada acción se categoriza como:
 | Account deletion | Irreversible | Two-person rule (ADR-0006 split-brain) |
 | Disk wipe | Irreversible | Out of scope ARGOS v1 |
 
+### Override por criticidad del host (per Q2 OPEN_QUESTIONS_RESOLUTION)
+
+Independientemente del tier asignado por confianza, el Decision Engine enruta la contención de cualquier host etiquetado en Wazuh como `criticality=production-critical` a través del flujo de **two-person rule** (dos aprobaciones explícitas requeridas antes de ejecutar; un solo rechazo cancela). Esto se aplica incluso a tiers T0/T1 que normalmente serían auto-execute. Razón: el costo de aislar erróneamente un activo de producción crítico (downtime de servicio facturable, cascada de dependencias) supera el costo del delay de aprobación. Ver UC-04 en `USE_CASES.md` para el escenario demo correspondiente.
+
+Throttle y disk snapshot siguen disparándose inmediatamente sin esperar aprobación (no destructivos), por lo que la ventana de espera mantiene el daño acotado por la misma propiedad descrita en la sección T2 de este ADR.
+
 ## Alternativas consideradas
 
 ### Toda acción 100% automática
@@ -128,4 +134,8 @@ Cada acción se categoriza como:
 
 ## Revisión
 
-A re-evaluar en Gate 2 (semana 7) cuando los thresholds entre tiers se calibren con datos reales del lab.
+A re-evaluar en Gate 2 (semana 7) cuando los thresholds entre tiers se calibren con datos reales del lab. Protocolo de calibración cerrado en `OPEN_QUESTIONS_RESOLUTION.md` §Q5.
+
+## Actualizaciones posteriores
+
+- **Semana 2:** se incorpora override por criticidad del host (Q2 de `OPEN_QUESTIONS_RESOLUTION.md`) — los hosts `production-critical` se enrutan a two-person rule independientemente del tier. Sección "Reversibilidad" actualizada en consecuencia.
