@@ -51,11 +51,13 @@ flowchart TD
     L3 --> DE
     L4 -. enriches .-> DE
 
-    DE --> T0["🟢 T0 / T1<br/>≥ 0.80 confidence"]
+    DE --> T0["🟢 T0<br/>≥ 0.95 confidence"]
+    DE --> T1["🟢 T1<br/>0.80 – 0.95"]
     DE --> T2["🟡 T2<br/>0.60 – 0.80"]
     DE --> T3["🔵 T3<br/>0.40 – 0.60"]
 
     T0 --> A1["Auto-isolate<br/>+ snapshot<br/>+ post-facto email"]
+    T1 --> A1
     T2 --> A2["Throttle + snapshot<br/>then 3-min approval<br/>(split-brain →<br/>conservative-wins)"]
     T3 --> A3["LLM-enriched<br/>analyst notification"]
 ```

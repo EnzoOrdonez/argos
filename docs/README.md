@@ -70,7 +70,7 @@ Layered ransomware detection and response system combining rule-based detection 
 - **Stack:** Wazuh, OpenSearch, Sigma, Sysmon, auditd, Atomic Red Team, Caldera, scikit-learn, FastAPI, Streamlit, Redis, DeepSeek/Qwen API.
 - **Documentation:** ~210 KB across 14 documents before any code written.
 - **Threats analyzed:** ~50 via STRIDE + FMEA.
-- **Architecture decisions:** 6 ADRs (5 accepted, 1 rejected) + 9 closure resolutions.
+- **Architecture decisions:** 7 ADRs (6 accepted, 1 rejected) + 9 closure resolutions.
 
 ---
 
