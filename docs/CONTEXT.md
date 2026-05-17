@@ -1,6 +1,8 @@
-# SOC-in-a-Box
+# ARGOS
 
-**Stack defensivo por capas con triage asistido por LLM para detección y contención automatizada de ransomware**
+**Adaptive Ransomware Guard with Orchestrated Surveillance — stack defensivo por capas con triage asistido por LLM para detección y contención automatizada de ransomware**
+
+> **Nota de rebrand:** este documento de kickoff originalmente nombraba el proyecto "SOC-in-a-Box". En la Semana 2 el sistema se renombró a **ARGOS** (acrónimo en `PROJECT_BRIEF.md`). Las referencias internas, paths de repo y diagramas se actualizaron a la nueva nomenclatura. El contenido técnico y la división de trabajo se mantienen idénticos al acuerdo de kickoff.
 
 > Proyecto del curso **Tópicos Avanzados de Ciberseguridad** — Universidad de Lima — Semestre 2026-1
 > Integrantes: Enzo Cáceres + 3 compañeros
@@ -40,7 +42,7 @@ Construir un sistema de detección y respuesta a ransomware que combine cuatro c
 
 ## 3. Arquitectura: 4 capas + SOAR
 
-Ver diagrama completo en `docs/architecture/soc_in_a_box_architecture_v2.mermaid`.
+Ver diagrama interactivo en `docs/architecture/architecture_diagram.html` y la especificación completa en `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`.
 
 ### Capa 1 — Rule-Based Detection (Sigma + Wazuh)
 
@@ -292,7 +294,7 @@ Si un PR es rechazado, no es drama — se documenta el aprendizaje y la regla qu
 ## 12. Estructura del repo
 
 ```
-soc-in-a-box/
+argos/
 ├── README.md                  # Entry point: visión, demo gif, instalación
 ├── LICENSE                    # MIT (definir en sem 1)
 ├── .gitignore
@@ -300,8 +302,10 @@ soc-in-a-box/
 │
 ├── docs/
 │   ├── architecture/
-│   │   ├── soc_in_a_box_architecture_v2.mermaid
-│   │   └── README.md (explica el diagrama)
+│   │   ├── architecture_diagram.html
+│   │   ├── SOLUTION_ARCHITECTURE_DOCUMENT.md
+│   │   ├── THREAT_MODEL.md
+│   │   └── CONTRACTS_SPECIFICATION.md
 │   ├── adr/                   # Architecture Decision Records
 │   │   ├── 0001-llm-vendor-agnostic.md
 │   │   └── 0002-...
@@ -392,6 +396,6 @@ soc-in-a-box/
 
 ---
 
-**Última actualización:** Semana 1 (kickoff)
+**Última actualización:** Semana 2 (rebrand a ARGOS + sync de paths de repo)
 **Owner del documento:** P1 (Enzo)
-**Estado:** Draft inicial — aprobado por equipo en standup semana 1
+**Estado:** Aprobado — sincronizado con `PROJECT_BRIEF.md`, `SOLUTION_ARCHITECTURE_DOCUMENT.md` y la estructura actual del repo (`argos/`)
