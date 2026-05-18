@@ -15,7 +15,7 @@ A defense-in-depth ransomware detection and response system combining rule-based
 | Aspect | Status |
 |--------|:------:|
 | Architecture & design (SAD, threat model, 7 ADRs, contracts spec, use cases) | ✅ Complete |
-| `argos_contracts/` cross-team Pydantic models (59 validation tests) | ✅ Shipped |
+| `argos_contracts/` cross-team Pydantic models (64 validation tests) | ✅ Shipped |
 | ADR-0007 multi-channel notification (Telegram + ntfy + Slack + Twilio voice) | ✅ Architecturally decided · 🚧 implementation pending |
 | Layers 1 (rules), 2 (ML), 3 (deception), 4 (LLM) implementation | 🚧 Pending |
 | Gates 1 (W5), 2 (W7), 3 (W9) | ⚠️ Behind schedule — gates re-baselined below |
@@ -123,7 +123,7 @@ Full STRIDE + FMEA threat model with ~50 analyzed threats: [`docs/architecture/T
 
 | Module | Status | Notes |
 |--------|:------:|-------|
-| [`argos_contracts/`](./argos_contracts/) — shared Pydantic v2 models | ✅ shipped | 25 cross-team contracts (9 enums + 16 models/constants). 59 validation tests. UTC-aware timestamps enforced. MITRE whitelist hardens LLM output against hallucination. |
+| [`argos_contracts/`](./argos_contracts/) — shared Pydantic v2 models | ✅ shipped | 25 cross-team contracts (9 enums + 16 models/constants). 64 validation tests. UTC-aware timestamps enforced. MITRE whitelist hardens LLM output against hallucination. |
 | [`llm-triage/`](./llm-triage/) — Layer 4 (FastAPI + RAG + LLM client) | 🚧 scaffolding | Module skeleton + vendor-agnostic factory pattern. Implementation Weeks 2–8. |
 | `lab/`, `detection/`, `ml/`, `deception/`, `soar/`, `ui/`, `attack-simulation/`, `evaluation/` | 📅 planned | See roadmap below. |
 
@@ -138,12 +138,12 @@ The contracts module is runnable today. Other layers are scaffolding or pending 
 git clone https://github.com/EnzoOrdonez/argos.git
 cd argos
 
-# Run the contracts layer test suite (59 tests)
+# Run the contracts layer test suite (64 tests)
 pip install -r argos_contracts/requirements.txt
 pytest argos_contracts/tests/ -v
 ```
 
-You should see all 59 tests pass — these lock the inter-layer interfaces (alerts, ML scores, triage I/O, incidents, approvals) so the four work-streams can implement in parallel without integration friction.
+You should see all 64 tests pass — these lock the inter-layer interfaces (alerts, ML scores, triage I/O, incidents, approvals) so the four work-streams can implement in parallel without integration friction.
 
 <details>
 <summary><b>Full lab setup (coming Week 2–3)</b></summary>
@@ -209,6 +209,7 @@ All architecture, design decisions, threat model, and use cases are in [`docs/`]
 | 🛡️ Threat model (STRIDE + FMEA) | [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md) |
 | 🔒 LLM data handling + sanitization policy | [`docs/data-handling.md`](./docs/data-handling.md) |
 | 📋 Course rubric + deliverable criteria | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
+| 📊 Honest project status (what's shipped vs what's documented) | [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) |
 | 🧠 Architecture decisions (7 ADRs) | [`docs/decisions/`](./docs/decisions/) |
 | 🎬 Use cases & demo scenarios | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
 
@@ -233,7 +234,7 @@ argos/
 │   ├── incident.py            #     Incident state machine, ProposedAction
 │   ├── approval.py            #     ApprovalRequest, ApprovalResponse (JWT)
 │   ├── enums.py               #     Severity, Tier, Layer, IncidentState, ...
-│   └── tests/                 #     59 validation tests
+│   └── tests/                 #     64 validation tests
 │
 ├── llm-triage/                # 🚧 Layer 4 — FastAPI + RAG + LLM client (scaffolding)
 │   ├── api/                   #     POST /triage endpoint
@@ -270,7 +271,7 @@ argos/
 
 ## Roadmap
 
-- ✅ **Week 1-2 (calendar W1-2):** Architecture & design phase complete (~210 KB of docs, 7 ADRs, threat model, use cases) + cross-team contracts layer shipped (`argos_contracts/`, 59 tests).
+- ✅ **Week 1-2 (calendar W1-2):** Architecture & design phase complete (~210 KB of docs, 7 ADRs, threat model, use cases) + cross-team contracts layer shipped (`argos_contracts/`, 64 tests).
 - ⚠️ **Originally Weeks 2–9 (planned):** Implementation across 4 layers + SOAR + Approval Workflow Console.
 - 🚧 **Re-baselined (current reality):** at calendar Week 7, layer implementation begins. The next 4-5 calendar weeks (W7-11) compress the original 8-week implementation window. Scope will be cut to preserve quality of demo + informe per the "Gate de abandono" rule in `docs/CONTEXT.md` §7.
   - 🎯 **Gate 1 (Week 5):** Layer 1 functional end-to-end (UC-01 demo possible).

@@ -201,7 +201,7 @@ Numbered P-NNN. Reviewed weekly in standup.
 | ID | Risk | Likelihood | Impact | Risk | Mitigation | Owner |
 |----|------|------------|--------|------|------------|-------|
 | P-001 | Team member drops course / unavailable for >1 week | M | H | High | Documented runbooks per layer, pair sessions in standup, no single-author code in critical paths | All |
-| P-002 | Knowledge silo — only one person understands their layer | H | M | High | Friday demo (each presents their work), code review across layers, comprehensive READMEs per module | All |
+| P-002 | Knowledge silo — only one person understands their layer | H | M | High | Monday standup (`docs/team/standup-template.md`) + code review across layers (mandatory PR review per ADR-level critical paths) + comprehensive READMEs per module (`<layer>/README.md` for each of the 8 layer folders). **Note:** the original mitigation included "Friday demo" but this practice was not adopted by the team (per Week 7 retrospective). The risk remains at score H × M = High; if a single integrante drops out mid-implementation the layer they own would need to be picked up by another. | All |
 | P-003 | Tesis collision with Enzo (P1) availability | H | M | High | P1 explicitly does not commit beyond 6h/week; Capa 4 scope reducible if needed; Capa 4 abandonable per Gate 2 | P1 |
 | P-004 | Scope creep — feature additions during build | H | M | High | All scope changes via written ADR; gates enforce baseline before extras; PRs Sigma upstream are stretch goals only | P1 |
 | P-005 | Profesor rejects Capa 4 LLM as out-of-course-scope | L | H | Medium | Validation conversation in week 1 before commit; backup plan: simplified version with rules+ML+deception | P1 |
@@ -316,6 +316,7 @@ Future expansions (out of scope for v1.0):
 | 1.1 | Week 1 | Added Section 3.7 (approval system threats) covering 7 new threats T-060 through T-066 introduced by ADRs 0003/0005/0006. Updated residual risks list. | P1 |
 | 1.2 | Week 9 (post Gate 2) | Section 3.7 expanded to cover ADR-0007 (multi-channel notification chain): added T-067 (SIM-swap del aprobador), T-068 (caller-ID spoofing al webhook Twilio), T-069 (compromise del bot Telegram via token leakage). Trust boundary note added implicitly via §3.7 preamble. Metadata: version bump, `Related` extended to ADRs 0001-0007, status note. | P1 |
 | 1.3 | Week 7 calendar | T-062 reframed from "compromised approver **email** account" to channel-agnostic ("any notification channel") with explicit note that email is now post-facto-only per ADR-0007. Cross-references T-067/T-069 as primary-channel threats. | P1 |
+| 1.4 | Week 7 calendar | P-002 mitigation updated to reflect reality: removed "Friday demo" (practice not adopted), kept Monday standup + cross-layer code review + per-module READMEs. Risk score unchanged at High because removed mitigation was aspirational. | P1 |
 
 ---
 

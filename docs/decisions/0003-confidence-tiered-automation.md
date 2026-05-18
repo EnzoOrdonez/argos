@@ -178,6 +178,3 @@ A re-evaluar en Gate 2 (semana 7) cuando los thresholds entre tiers se calibren 
 - **Semana 2:** se incorpora override por criticidad del host (Q2 de `OPEN_QUESTIONS_RESOLUTION.md`) — los hosts `production-critical` se enrutan a two-person rule independientemente del tier. Sección "Reversibilidad" actualizada en consecuencia.
 - **Semana 7 (calendario):** auditoría externa cerró tres huecos: (a) tabla principal de tiers ahora indica multi-canal vía ADR-0007 en vez de "email" únicamente; (b) "high-fidelity rule" vs "experimental rule" definido operativamente mediante el campo Sigma `level:` (`critical|high` → high-fidelity → T2; `medium|low|informational` → experimental → T3); (c) edge case "3 AM con 1 aprobador para production-critical" documentado en §"Override por criticidad del host" — la espera es indefinida con throttle activo, no hay auto-execute por timeout. Protocolo de calibración cerrado en `OPEN_QUESTIONS_RESOLUTION.md` §Q5.
 
-## Actualizaciones posteriores
-
-- **Semana 2:** se incorpora override por criticidad del host (Q2 de `OPEN_QUESTIONS_RESOLUTION.md`) — los hosts `production-critical` se enrutan a two-person rule independientemente del tier. Sección "Reversibilidad" actualizada en consecuencia.

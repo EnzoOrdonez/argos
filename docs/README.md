@@ -95,4 +95,5 @@ TBD before public release at end of course (recommended: MIT).
 ## New documents added in Week 7 audit pass
 
 - [`EVALUATION_CRITERIA.md`](./EVALUATION_CRITERIA.md) — Course rubric (Informe Final Técnico + Presentación + Implementación Funcional + W5/W7/W9 checkpoints) with mapping of each required section to artifacts in this repo.
+- [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) — Honest snapshot of what's actually shipped vs what every other doc commits the team to do. Closes the audit gap on "processes mandated but with no execution evidence".
 - [`data-handling.md`](./data-handling.md) — Closes T-030 mitigation: what crosses the trust boundary to DeepSeek/Qwen, concrete sanitization regex patterns, LLM response validation, audit trail policy.
