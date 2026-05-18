@@ -21,14 +21,34 @@ La industria converge en una lectura mixta donde el grado de automatización dep
 
 **Implementar automatización en cuatro tiers según confianza, con email + botón de aprobación para tiers de confianza media-baja.**
 
+## Definición operativa de "high-fidelity rule" vs "experimental rule"
+
+El criterio que el Decision Engine usa para distinguir entre los dos tipos de regla Sigma es el campo estándar `level:` de la regla:
+
+| Sigma `level:` | Categoría ARGOS | Tier resultante si Capa 1 dispara sola |
+|---------------|-----------------|----------------------------------------|
+| `critical` | High-fidelity | T2 |
+| `high` | High-fidelity | T2 |
+| `medium` | Experimental | T3 |
+| `low` | Experimental | T3 |
+| `informational` | Experimental | T3 |
+
+Justificación de usar el campo canónico Sigma:
+
+- **Upstream-portable:** las reglas que ARGOS contribuye a `SigmaHQ/sigma` no requieren tags propietarios.
+- **Auditable:** el criterio vive en la regla misma, no en una allowlist hardcoded en código.
+- **Coherente con la comunidad:** los autores Sigma ya usan `level:` para indicar confianza; nos sumamos a la convención.
+
+Implementación: `soar/decision_engine/tier_classifier.py` lee `rule.level` del payload Wazuh (que viene del `level:` del YAML original tras conversión vía `sigma-cli`).
+
 ## Esquema de tiers
 
 | Tier | Disparado por | Confianza | Acción | Email |
 |------|---------------|-----------|--------|-------|
-| **T0 — Critical confirmed** | Capa 3 (canary) sola, o Capas 1+2+3 simultáneas | ≥0.95 | Auto-isolate inmediato | Post-facto con botón "Revertir" |
-| **T1 — High confirmed** | Capa 1 + Capa 2 corroboran (sin canary) | 0.80–0.95 | Auto-isolate inmediato | Post-facto con botón "Revertir" |
-| **T2 — Medium uncertain** | Capa 1 sola con regla high-fidelity, o Capa 2 sola con score muy alto | 0.60–0.80 | Pendiente con countdown 3 min | Pre-aprobación con botones |
-| **T3 — Low uncertain** | Capa 2 score medio, Capa 1 con regla experimental | 0.40–0.60 | Solo notificación, sin acción | Análisis LLM al analista, sin botón ejecutar |
+| **T0 — Critical confirmed** | Capa 3 (canary) sola, o Capas 1+2+3 simultáneas | ≥0.95 | Auto-isolate inmediato | Post-facto multi-canal (ADR-0007: Telegram + ntfy + Slack en paralelo + email post-facto) con botón "Revertir" |
+| **T1 — High confirmed** | Capa 1 + Capa 2 corroboran (sin canary) | 0.80–0.95 | Auto-isolate inmediato | Post-facto multi-canal idem T0 con botón "Revertir" |
+| **T2 — Medium uncertain** | Capa 1 sola con regla high-fidelity (Sigma `level: high\|critical`), o Capa 2 sola con score muy alto | 0.60–0.80 | Pendiente con countdown 3 min | Pre-aprobación multi-canal (ADR-0007: Telegram con botones inline + ntfy + Slack en paralelo; Twilio voice DTMF como escalación a t=60s) |
+| **T3 — Low uncertain** | Capa 2 score medio, Capa 1 con regla experimental (Sigma `level: medium\|low`) | 0.40–0.60 | Solo notificación, sin acción | Análisis LLM al analista vía Telegram + Slack, sin botón ejecutar |
 
 ## Lógica de ejecución por tier
 
@@ -76,6 +96,23 @@ Cada acción se categoriza como:
 Independientemente del tier asignado por confianza, el Decision Engine enruta la contención de cualquier host etiquetado en Wazuh como `criticality=production-critical` a través del flujo de **two-person rule** (dos aprobaciones explícitas requeridas antes de ejecutar; un solo rechazo cancela). Esto se aplica incluso a tiers T0/T1 que normalmente serían auto-execute. Razón: el costo de aislar erróneamente un activo de producción crítico (downtime de servicio facturable, cascada de dependencias) supera el costo del delay de aprobación. Ver UC-04 en `USE_CASES.md` para el escenario demo correspondiente.
 
 Throttle y disk snapshot siguen disparándose inmediatamente sin esperar aprobación (no destructivos), por lo que la ventana de espera mantiene el daño acotado por la misma propiedad descrita en la sección T2 de este ADR.
+
+#### Edge case: solo 1 aprobador responde (caso "3 AM")
+
+Si solo aparece **un** aprobador y la ventana de 3 minutos del countdown T2 estándar expira, **el aislamiento full NO se ejecuta automáticamente** para hosts production-critical. La lógica del override es:
+
+| Estado a t=180s (T2 timeout) | Acción para production-critical |
+|------------------------------|---------------------------------|
+| 0 aprobaciones | Throttle + snapshot **se mantienen activos indefinidamente**; el incidente queda en estado `AWAITING_APPROVAL` hasta intervención manual |
+| 1 aprobación · 0 rechazos | Throttle + snapshot **se mantienen activos indefinidamente**; el incidente queda en `PENDING_SECOND_APPROVAL` esperando al segundo aprobador |
+| 1 aprobación · 1 rechazo | Conservative-wins **no aplica aquí** (caso irreversible-like): el rechazo cancela; throttle removido, snapshot descartado |
+| 2 aprobaciones | Ejecutar aislamiento full (regla satisfecha) |
+
+Justificación de no auto-execute por timeout: el principio de four-eyes para producción **no debe** ser anulado por un timeout administrativo. El throttle activo bound el daño potencial (~100-500 archivos/min vs 25,000/min sin throttle); incluso 24 horas de throttle indefinido en el peor caso son < 1M de archivos, lo cual es recuperable desde el snapshot proactivo.
+
+El throttle indefinido tiene cost de CPU/IO en el host afectado pero no costo de negocio comparable a un aislamiento erróneo. El analista on-call escalará cuando lo note (vía dashboard Streamlit que muestra incidentes en `PENDING_SECOND_APPROVAL` > 30 min).
+
+Esta lógica está alineada con la actualización a ADR-0006 §"Two-person rule: tres situaciones que la disparan" (Situación B).
 
 ## Alternativas consideradas
 
@@ -135,6 +172,11 @@ Throttle y disk snapshot siguen disparándose inmediatamente sin esperar aprobac
 ## Revisión
 
 A re-evaluar en Gate 2 (semana 7) cuando los thresholds entre tiers se calibren con datos reales del lab. Protocolo de calibración cerrado en `OPEN_QUESTIONS_RESOLUTION.md` §Q5.
+
+## Actualizaciones posteriores
+
+- **Semana 2:** se incorpora override por criticidad del host (Q2 de `OPEN_QUESTIONS_RESOLUTION.md`) — los hosts `production-critical` se enrutan a two-person rule independientemente del tier. Sección "Reversibilidad" actualizada en consecuencia.
+- **Semana 7 (calendario):** auditoría externa cerró tres huecos: (a) tabla principal de tiers ahora indica multi-canal vía ADR-0007 en vez de "email" únicamente; (b) "high-fidelity rule" vs "experimental rule" definido operativamente mediante el campo Sigma `level:` (`critical|high` → high-fidelity → T2; `medium|low|informational` → experimental → T3); (c) edge case "3 AM con 1 aprobador para production-critical" documentado en §"Override por criticidad del host" — la espera es indefinida con throttle activo, no hay auto-execute por timeout. Protocolo de calibración cerrado en `OPEN_QUESTIONS_RESOLUTION.md` §Q5.
 
 ## Actualizaciones posteriores
 

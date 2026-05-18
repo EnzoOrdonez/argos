@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P1** (Lead · LLM/SOAR · Coordinator) |
+| Owner | **P1 · Enzo Cáceres** (Lead · LLM/SOAR · Coordinator) |
 | Status | 📅 Planned · Weeks 4-9 (Gate 2 decision engine v1 · Gate 3 full HITL) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §6, ADRs [0003](../docs/decisions/0003-confidence-tiered-automation.md) · [0005](../docs/decisions/0005-notification-channel-abstraction.md) · [0006](../docs/decisions/0006-split-brain-resolution.md) · [0007](../docs/decisions/0007-notification-multichannel-escalation.md) |
 

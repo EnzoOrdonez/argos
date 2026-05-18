@@ -52,4 +52,4 @@ When making a significant architectural change post-design-freeze:
 3. Fill in: context, decision, alternatives, consequences.
 4. Update this README index.
 5. Reference from related documents (SAD, threat model, use cases) as needed.
-6. PR to `main` requires review by at least one other team member.
+6. PR to `mai

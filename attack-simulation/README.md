@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P4** (Infra · UI · Eval) |
+| Owner | **P4 · Loli Jara** (Infra · UI · Eval) |
 | Status | 📅 Planned · Weeks 4-9 (simulator W4 · per-UC variants W5-9) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §2 (Block 01), [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) §3 (all 5 scenarios) |
 

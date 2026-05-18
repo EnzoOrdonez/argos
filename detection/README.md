@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P3** (Detection Engineer) |
+| Owner | **P3 · Angeles Castillo** (Detection Engineer) |
 | Status | 📅 Planned · Weeks 2-5 (Gate 1) + Weeks 8-11 (Sigma upstream PRs) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §5.1, [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) |
 

@@ -21,6 +21,33 @@ Este es el **split-brain decision problem**, formalmente equivalente a problemas
 
 ## Reglas concretas
 
+### Two-person rule: tres situaciones que la disparan
+
+En ARGOS v1 la two-person rule se aplica en **tres** situaciones distintas. La primera viene de la primera versión de este ADR; la segunda viene de Q2 de `OPEN_QUESTIONS_RESOLUTION.md` y del override en ADR-0003 §"Override por criticidad del host":
+
+#### Situación A — Acciones irreversibles (account deletion, disk wipe, etc.)
+
+1. **Two-person rule estricto.**
+   - Requiere DOS aprobaciones explícitas de distintos aprobadores.
+   - UN SOLO rechazo cancela la acción permanentemente.
+   - No hay timeout escalation hacia execute.
+
+2. **Ningún destructive action en ARGOS v1 cae en esta categoría.** Por diseño, todas las acciones automatizadas son reversibles (isolation, kill, snapshot). Two-person rule queda documentado para futuras extensiones.
+
+#### Situación B — Hosts `criticality=production-critical` (per Q2 + ADR-0003 override)
+
+1. **Two-person rule también aplica**, independientemente del tier de confianza y de que la acción sea reversible.
+2. **Diferencia con Situación A — timeout behavior (caso edge "3 AM con 1 aprobador"):**
+   - Throttle + disk snapshot se aplican **inmediatamente** (no destructivos).
+   - El aislamiento full **espera al segundo aprobador**.
+   - **NO hay auto-execute por timeout** en este caso (a diferencia de T2 estándar, donde el timeout de 3 min sí escala a execute).
+   - El throttle puede mantenerse activo horas si no aparece un segundo aprobador. La justificación: para hosts de producción, el costo de un aislamiento erróneo (downtime de servicio facturable, cascada de dependencias) supera el costo del delay. El throttle + snapshot ya bound el daño aun en este modo de espera larga.
+3. Demo de referencia: UC-04 en USE_CASES.md.
+
+#### Situación C — Casos futuros (out of scope v1)
+
+Cualquier nueva acción que se categorice como irreversible o cualquier nuevo tag de criticidad equivalente a `production-critical` hereda la lógica de A o B según corresponda. No requiere nuevo ADR — está cubierto por este.
+
 ### Para acciones reversibles (host isolation, process kill)
 
 1. **First positive response sets initial decision.**
@@ -41,16 +68,7 @@ Este es el **split-brain decision problem**, formalmente equivalente a problemas
    - Email final a todos los aprobadores con audit summary: *"Action: ISOLATED. Decisions: 2 approve, 1 reject, 1 timeout. Policy: conservative-wins."*
    - Aprobadores que querían reject pueden ver justificación en el dashboard.
 
-### Para acciones irreversibles (account deletion, disk wipe)
-
-1. **Two-person rule estricto.**
-   - Requiere DOS aprobaciones explícitas de distintos aprobadores.
-   - UN SOLO rechazo cancela la acción permanentemente.
-   - No hay timeout escalation hacia execute.
-
-2. **Ningún destructive action en ARGOS v1 cae en esta categoría.**
-   - Por diseño, todas las acciones automatizadas son reversibles (isolation, kill, snapshot).
-   - Two-person rule queda documentado para futuras extensiones.
+<!-- Esta sección original ahora vive en "Situación A" arriba. -->
 
 ## Justificación
 
@@ -179,3 +197,4 @@ A re-evaluar si en testing se observa que conservative-wins genera demasiados ai
 ## Actualizaciones posteriores
 
 - **Semana 2:** se añade la política de gestión del secreto JWT (Q6 de `OPEN_QUESTIONS_RESOLUTION.md`) — sección "Audit trail obligatorio" actualizada.
+- **Semana 7 (calendario):** auditoría externa señaló que la two-person rule estaba fragmentada entre 3 documentos (ADR-0006 + Q2 + ADR-0003 update). Sección reescrita como "Two-person rule: tres situaciones que la disparan" (A: irreversibles · B: hosts production-critical · C: futuro). Caso B documenta explícitamente la lógica de timeout indefinido con throttle activo, complementaria a ADR-0003 §"Edge case 3 AM".

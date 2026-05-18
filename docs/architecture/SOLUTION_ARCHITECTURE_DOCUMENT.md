@@ -135,7 +135,19 @@ Unsupervised models trained on a benign baseline of approximately two weeks of n
 
 **Models:**
 - **Isolation Forest** as the first detector (fast, interpretable, robust with limited training data).
-- **One-Class SVM** as a complement; ensemble decision combines both scores.
+- **One-Class SVM** as a complement.
+
+**Ensemble formula:**
+
+```
+ensemble_score = 0.6 × isolation_forest_score + 0.4 × one_class_svm_score
+```
+
+Isolation Forest receives the higher weight (0.6) because (a) it is more interpretable for the informe técnico, (b) it is more robust with the limited training data available in the 14-week academic budget, and (c) its output is calibrated to [0,1] without requiring distance-to-hyperplane normalization. One-Class SVM (0.4) acts as a sanity check that catches anomalies the isolation forest's tree-cuts miss.
+
+The single threshold is applied to `ensemble_score`, not to the individual model scores. Individual scores are persisted in the `MLScore` payload (per `argos_contracts/ml_score.py`) for forensic analysis but are not consumed by the tier classifier.
+
+If empirical evaluation (Q5 calibration) shows that one model dominates the signal, the weights can be re-tuned without changing the contract or the decision logic — they live in `ml/models/ensemble.py` as a config constant.
 
 **Pipeline:** Wazuh alerts published to a Redis stream → Python consumer extracts features → models score → score above threshold becomes a new Wazuh alert via custom decoder.
 
@@ -179,12 +191,18 @@ Per `ADR-0003`, alerts are classified into four tiers based on which detection l
 | Triggered layers | Tier | Action |
 |------------------|------|--------|
 | Layer 3 alone | T0 | Immediate isolation (canary = zero-FP by design) |
-| Layers 1+2+3 | T0 | Immediate isolation + disk snapshot |
-| Layer 1 + Layer 2 corroborate | T1 | Immediate isolation + disk snapshot |
-| Layer 1 alone (high-fidelity rule) | T2 | Awaiting approval + LLM analysis to analyst |
-| Layer 2 alone (high score) | T2 | Awaiting approval + LLM analysis to analyst |
-| Layer 1 alone (experimental rule) | T3 | Notification only |
-| Layer 2 alone (medium score) | T3 | Notification only |
+| Layer 1 + Layer 3 | T0 | Immediate isolation + disk snapshot (L3 already qualifies for T0; L1 corroboration adds context) |
+| Layer 2 + Layer 3 | T0 | Immediate isolation + disk snapshot (idem) |
+| Layers 1+2+3 simultaneous | T0 | Immediate isolation + disk snapshot + full LLM analysis |
+| Layer 1 + Layer 2 corroborate (no canary) | T1 | Immediate isolation + disk snapshot |
+| Layer 1 alone (high-fidelity rule — Sigma `level: high\|critical`) | T2 | Throttle + snapshot now, awaiting approval (3-min countdown), LLM analysis to analyst |
+| Layer 2 alone (ensemble_score ≥ 0.74) | T2 | Throttle + snapshot now, awaiting approval, LLM analysis to analyst |
+| Layer 1 alone (experimental rule — Sigma `level: medium\|low`) | T3 | Notification only with LLM enrichment |
+| Layer 2 alone (ensemble_score 0.40–0.60) | T3 | Notification only with LLM enrichment |
+
+**Coverage note:** the 9 rows above exhaust the 2³ = 8 combinations of L1/L2/L3 (firing or not), plus the two tier T3 cases. Layer 3 firing always wins to T0 because Layer 3 is zero-FP by design — there is no T2 or T3 row that includes Layer 3.
+
+**High-fidelity vs experimental rule classification:** the Decision Engine reads the standard Sigma `level:` field from the rule definition. `critical` and `high` map to **high-fidelity** (route to T2 when alone). `medium` and `low` map to **experimental** (route to T3 when alone). This uses the canonical Sigma format (`https://github.com/SigmaHQ/sigma/wiki/Specification`) so rules are upstream-portable and the classification stays in the rule file itself, not in a hardcoded allowlist.
 
 ### 6.3 Approval flow (T2/T3)
 
@@ -225,7 +243,7 @@ For irreversible actions (account deletion, disk wipe — out of scope v1), a **
 Python service (FastAPI) with:
 - Subscriber to Wazuh alerts stream.
 - Tier classifier based on layer signals + confidence scores.
-- State machine in Redis (states: `RECEIVED`, `AWAITING_APPROVAL`, `PENDING_EXECUTION`, `PENDING_REJECTION`, `EXECUTING`, `EXECUTED`, `REVERTED`, `REJECTED`, `TIMEOUT_ESCALATED`).
+- State machine in Redis (states: `RECEIVED`, `AWAITING_APPROVAL`, `PENDING_EXECUTION`, `PENDING_REJECTION`, `PENDING_SECOND_APPROVAL` (production-critical only — see ADR-0003 §"Edge case 3 AM"), `EXECUTING`, `EXECUTED`, `REVERTED`, `REJECTED`, `TIMEOUT_ESCALATED`).
 - Async scheduler (`apscheduler`) for timeouts and consolidation windows.
 - Audit logger writing structured JSON to OpenSearch.
 
@@ -557,6 +575,7 @@ Items considered and deferred. Documented to demonstrate awareness:
 | 1.2 | Week 1 | Expanded Section 6 with confidence-tiered automation (ADR-0003), approval flow, split-brain resolution (ADR-0006). Expanded Section 9.2 with Approval Workflow Console. Added Sections 13.5 (Testing), 13.6 (Self-monitoring), 13.7 (Secrets management), and Section 14 (Future work). | P1 |
 | 1.3 | Week 2 | Applied pending Q8 patches from `OPEN_QUESTIONS_RESOLUTION.md`: §13.5 tiered coverage targets (Q3), §14 added OpenSearch backup as future work (Q7), §6.5 cross-references incident schema (Q4) and `argos_contracts`, §15 closed tier calibration with reference to Q5 protocol. | P1 |
 | 1.4 | Week 9 | Sync with `ADR-0007` (multi-channel notification escalation): §6.3 step 3 now describes the Telegram + ntfy + Slack parallel chain with Twilio DTMF escalation; §14 item 3 marked implemented (previously "deferred"). §15 item 1 closed (LLM containment path decision was already final, formalized here). | P1 |
+| 1.5 | Week 7 calendar | Audit pass: §5.2 ensemble formula made explicit (0.6·IF + 0.4·SVM); §6.2 fusion table extended to cover all 2³ layer combinations + high-fidelity Sigma `level:` mapping; §6.5 state machine adds `PENDING_SECOND_APPROVAL` per ADR-0003 §"Edge case 3 AM"; cross-references to new `docs/EVALUATION_CRITERIA.md` and `docs/data-handling.md`. | P1 |
 
 ---
 

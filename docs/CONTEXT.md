@@ -155,9 +155,9 @@ Sysmon es freeware Microsoft, no OSS estricto. Lo usamos porque es el estándar 
 | Persona | Rol | Responsabilidades principales |
 |---------|-----|-------------------------------|
 | **P1 — Enzo (Lead)** | LLM / SOAR / Coordinación | Capa 4 (FastAPI + RAG + LLMClient), Decision Engine, integración entre capas, coordinación general |
-| **P2** | ML Engineer | Capa 2 completa: feature extraction, entrenamiento Isolation Forest + OC-SVM, ensemble, evaluación, integración con Wazuh vía Redis |
-| **P3** | Detection Engineer | Capa 1 (reglas Sigma + mapping MITRE) + Capa 3 (canary files + FIM rules), PRs upstream a SigmaHQ |
-| **P4** | Infra / Attack Sim / UI | Lab provisioning (Vagrant/Terraform), Wazuh + OpenSearch deployment, simulador de ransomware, Streamlit dashboard, dashboards Kibana/OpenSearch, métricas |
+| **P2 — Sebastian Montenegro** | ML Engineer | Capa 2 completa: feature extraction, entrenamiento Isolation Forest + OC-SVM, ensemble, evaluación, integración con Wazuh vía Redis |
+| **P3 — Angeles Castillo** | Detection Engineer | Capa 1 (reglas Sigma + mapping MITRE) + Capa 3 (canary files + FIM rules), PRs upstream a SigmaHQ |
+| **P4 — Loli Jara** | Infra / Attack Sim / UI | Lab provisioning (Vagrant/Terraform), Wazuh + OpenSearch deployment, simulador de ransomware, Streamlit dashboard, dashboards Kibana/OpenSearch, métricas |
 
 **Regla operativa crítica:** cada integrante debe poder defender SU módulo en exposición. No se permite que P1 haga el trabajo de otros con Claude Code — P1 puede ayudar con dudas, no escribir código por ellos.
 

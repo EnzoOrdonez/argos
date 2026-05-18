@@ -34,7 +34,7 @@
 
 ---
 
-### P2 — [Nombre] (ML)
+### P2 — Sebastian Montenegro (ML)
 
 **Hecho la semana pasada:**
 -
@@ -52,7 +52,7 @@
 
 ---
 
-### P3 — [Nombre] (Detection + Deception)
+### P3 — Angeles Castillo (Detection + Deception)
 
 **Hecho la semana pasada:**
 -
@@ -70,7 +70,7 @@
 
 ---
 
-### P4 — [Nombre] (Infra/Attack/UI/Eval)
+### P4 — Loli Jara (Infra/Attack/UI/Eval)
 
 **Hecho la semana pasada:**
 -

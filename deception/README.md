@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P3** (Detection Engineer — same as `detection/`) |
+| Owner | **P3 · Angeles Castillo** (Detection Engineer — same as `detection/`) |
 | Status | 📅 Planned · Weeks 4-7 (Gate 2 functional) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §5.3, [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) UC-02 |
 

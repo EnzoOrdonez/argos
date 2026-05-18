@@ -10,7 +10,17 @@ A defense-in-depth ransomware detection and response system combining rule-based
 
 ## Status
 
-🚧 **In active development** — Architecture and design phase complete. **Week 2 contracts layer shipped** ([`argos_contracts/`](./argos_contracts/), 59 validation tests). Layers 1–4 implementation in progress.
+🚧 **In active development.** Calendar week: **7 of 14** · Project work currently at architectural foundation + contracts. Layer implementation hasn't started in earnest yet.
+
+| Aspect | Status |
+|--------|:------:|
+| Architecture & design (SAD, threat model, 7 ADRs, contracts spec, use cases) | ✅ Complete |
+| `argos_contracts/` cross-team Pydantic models (59 validation tests) | ✅ Shipped |
+| ADR-0007 multi-channel notification (Telegram + ntfy + Slack + Twilio voice) | ✅ Architecturally decided · 🚧 implementation pending |
+| Layers 1 (rules), 2 (ML), 3 (deception), 4 (LLM) implementation | 🚧 Pending |
+| Gates 1 (W5), 2 (W7), 3 (W9) | ⚠️ Behind schedule — gates re-baselined below |
+
+**Schedule reckoning:** the original 14-week plan put Gate 1 at Week 5. Calendar Week 7 has arrived and the implementation phase hasn't started, which means the team is **~5 weeks behind** the original plan. The 14-week plan in §Roadmap below is the original; the realistic projection depends on team capacity from Week 7 onwards. This is documented honestly rather than hidden because the rubric (see `docs/EVALUATION_CRITERIA.md`) values the informe técnico + working demo + presentation regardless of how much was implemented when.
 
 ---
 
@@ -197,6 +207,8 @@ All architecture, design decisions, threat model, and use cases are in [`docs/`]
 | 🎨 Interactive architecture diagram | [`docs/architecture/architecture_diagram.html`](./docs/architecture/architecture_diagram.html) |
 | 📐 Cross-team contracts spec | [`docs/architecture/CONTRACTS_SPECIFICATION.md`](./docs/architecture/CONTRACTS_SPECIFICATION.md) |
 | 🛡️ Threat model (STRIDE + FMEA) | [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md) |
+| 🔒 LLM data handling + sanitization policy | [`docs/data-handling.md`](./docs/data-handling.md) |
+| 📋 Course rubric + deliverable criteria | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
 | 🧠 Architecture decisions (7 ADRs) | [`docs/decisions/`](./docs/decisions/) |
 | 🎬 Use cases & demo scenarios | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
 
@@ -250,17 +262,17 @@ argos/
 | Role | Member |
 |------|--------|
 | Lead · LLM/SOAR · Coordinator | [@EnzoOrdonez](https://github.com/EnzoOrdonez) |
-| ML Engineer | TBD |
-| Detection Engineer | TBD |
-| Infrastructure · UI · Evaluation | TBD |
+| ML Engineer | Sebastian Montenegro |
+| Detection Engineer · Deception | Angeles Castillo |
+| Infrastructure · UI · Evaluation | Loli Jara |
 
 ---
 
 ## Roadmap
 
-- ✅ **Week 1:** Architecture & design phase complete (~210 KB of docs, 7 ADRs, threat model, use cases).
-- ✅ **Week 2:** Cross-team contracts layer shipped (`argos_contracts/`, 59 tests).
-- 🚧 **Weeks 2–9:** Implementation across 4 layers + SOAR + Approval Workflow Console.
+- ✅ **Week 1-2 (calendar W1-2):** Architecture & design phase complete (~210 KB of docs, 7 ADRs, threat model, use cases) + cross-team contracts layer shipped (`argos_contracts/`, 59 tests).
+- ⚠️ **Originally Weeks 2–9 (planned):** Implementation across 4 layers + SOAR + Approval Workflow Console.
+- 🚧 **Re-baselined (current reality):** at calendar Week 7, layer implementation begins. The next 4-5 calendar weeks (W7-11) compress the original 8-week implementation window. Scope will be cut to preserve quality of demo + informe per the "Gate de abandono" rule in `docs/CONTEXT.md` §7.
   - 🎯 **Gate 1 (Week 5):** Layer 1 functional end-to-end (UC-01 demo possible).
   - 🎯 **Gate 2 (Week 7):** Layers 1+2+3 integrated with SOAR.
   - 🎯 **Gate 3 (Week 9):** Full stack + Layer 4 LLM + approval flow + initial metrics.

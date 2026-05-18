@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P4** (Infra · UI · Eval) |
+| Owner | **P4 · Loli Jara** (Infra · UI · Eval) |
 | Status | 📅 Planned · Weeks 6-9 (Gate 2 v1 · Gate 3 Approval Console) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §9.2, [`docs/decisions/0006-split-brain-resolution.md`](../docs/decisions/0006-split-brain-resolution.md), [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) UC-03 (centerpiece visual) |
 

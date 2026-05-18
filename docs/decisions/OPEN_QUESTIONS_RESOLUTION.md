@@ -310,9 +310,9 @@ This closes the architectural design phase. Next step: **use-case definition**.
 | Role | Name | Status |
 |------|------|--------|
 | P1 (Lead) | Enzo | ✅ Approved |
-| P2 (ML) | TBD | Pending Week 1 standup |
-| P3 (Detection) | TBD | Pending Week 1 standup |
-| P4 (Infra/UI) | TBD | Pending Week 1 standup |
+| P2 (ML) | Sebastian Montenegro | ✅ Confirmed |
+| P3 (Detection) | Angeles Castillo | ✅ Confirmed |
+| P4 (Infra/UI) | Loli Jara | ✅ Confirmed |
 
 ---
 
@@ -323,3 +323,4 @@ This closes the architectural design phase. Next step: **use-case definition**.
 | 1.0 | Week 1 | Initial closure document. Resolves Q1 through Q8. | P1 |
 | 1.1 | Week 1 | Added Q9: T2 timeout correction. Original recommendation of long timeout was incompatible with ransomware encryption velocity. Corrected to 3min fixed timeout with proactive throttle + snapshot during countdown. | P1 |
 | 1.2 | Week 2 | Q8 closure status updated: confirmed all 10 cross-document patches were applied (six remaining patches applied this week — SAD §13.5/§14/§6.5/§15, ADR-0003 override por criticidad, ADR-0006 política JWT). | P1 |
+| 1.3 | Week 7 calendar | Sign-off table updated with confirmed names (Sebastian Montenegro P2, Angeles Castillo P3, Loli Jara P4). Cross-references added to new `EVALUATION_CRITERIA.md` and `data-handling.md`. | P1 |

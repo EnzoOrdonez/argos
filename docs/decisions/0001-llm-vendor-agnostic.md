@@ -78,7 +78,7 @@ class TriageResponse(BaseModel):
     confianza: float
     severidad: str
     runbook_aplicable: str
-    accion_recomendada: str
+    accion_recomendada: str  # DESCRIPTIVE TEXT ONLY — never parsed by SOAR. Shown to analyst as-is.
     indicadores_correlacionar: list[str]
 
 class LLMClient(ABC):
@@ -105,6 +105,14 @@ def get_llm_client() -> LLMClient:
         return QwenClient(api_key=os.getenv("QWEN_API_KEY"))
     raise ValueError(f"Unknown LLM_BACKEND: {backend}")
 ```
+
+## Invariante R-2: el LLM nunca acciona
+
+El campo `accion_recomendada` del `TriageResponse` es **texto descriptivo en lenguaje natural** dirigido al analista humano. Ejemplos válidos: *"Isolate host, capture memory, preserve disk snapshot before remediation"*, *"Monitor process tree for 30 min before triaging"*, *"Escalate to L2 — pattern matches APT29 dwell-time signature"*.
+
+El SOAR Decision Engine **nunca** parsea este campo para disparar acciones. La acción que el sistema ejecuta se decide enteramente desde las Capas 1-3 + el tier classifier, conforme a R-2 (`THREAT_MODEL.md` §6). El LLM puede recomendar *"isolate immediately"* en `accion_recomendada` pero esa recomendación solo viaja al analista (vía email post-facto, Telegram, Slack o UI). Si el analista decide actuar sobre la recomendación, lo hace **manualmente** vía el botón de aprobación correspondiente.
+
+Esto preserva el invariante de seguridad: una alucinación del LLM (técnica MITRE inventada, severidad inflada, runbook inaplicable) **no puede** disparar una contención. Solo puede degradar la calidad del análisis que ve el humano.
 
 ## Métricas de éxito
 

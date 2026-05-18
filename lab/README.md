@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P4** (Infra · UI · Eval) |
+| Owner | **P4 · Loli Jara** (Infra · UI · Eval) |
 | Status | 📅 Planned · Weeks 2-3 |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §3 (Block 02 — Victim Lab), [`docs/decisions/0002-heartbeat-default-60s.md`](../docs/decisions/0002-heartbeat-default-60s.md) |
 

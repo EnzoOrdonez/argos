@@ -5,8 +5,8 @@
 | Field | Value |
 |-------|-------|
 | Document type | Threat Model + Failure Mode Analysis (FMEA) + Risk Register |
-| Version | 1.2 |
-| Status | Baseline · Approved at Kickoff · Updated with ADR-0007 threats |
+| Version | 1.3 |
+| Status | Baseline · Approved at Kickoff · Updated with ADR-0007 threats + W7 audit pass |
 | Methodology | STRIDE (security) + FMEA (reliability) + Project Risk Register |
 | Course | Tópicos Avanzados de Ciberseguridad · 2026-1 |
 | Owner | P1 (Enzo Cáceres) |
@@ -125,7 +125,7 @@ The introduction of email-based approval flow (ADR-0003) and multi-recipient not
 |----|-----------|--------|---|---|------|------------|----------|
 | T-060 | Approval token (JWT) | Attacker intercepts approval email and uses the token to approve a malicious action or reject contention of their own attack | M | H | **High** | JWT signed with rotating secret, expiration 5 minutes, single-use (token invalidated after first response), TLS-only delivery, conservative-wins policy ensures single rejection cannot block contention if at least one approver also approves | Medium — accept residual: full mitigation requires email transport security beyond our control |
 | T-061 | Email delivery | Attacker spoofs approval response by sending fake email to approval API endpoint | M | H | **High** | Approval API only accepts requests via the JWT-tokenized URL, not via email reply parsing; URL hits HTTPS endpoint with token validation | Low |
-| T-062 | Compromised approver email account | Attacker with access to one approver's mailbox votes "reject" on legitimate threats | M | M | Medium | Conservative-wins (ADR-0006) — single reject cannot block contention if any approver approves; audit log shows each individual vote, suspicious pattern of rejects from one account becomes detectable | Low — intentional design choice |
+| T-062 | Compromised approver authentication on any notification channel | Attacker with access to one approver's authenticated session (email mailbox in v1 design / Telegram session / Slack workspace / Twilio phone) votes "reject" on legitimate threats | M | M | Medium | Conservative-wins (ADR-0006) — single reject cannot block contention if any other approver approves; audit log shows each individual vote with the source channel; suspicious pattern of rejects from one identity becomes detectable. **Note (Semana 7):** ADR-0007 degraded email to post-facto-only, so the email-mailbox vector for this threat is mitigated structurally. Primary attack surface today is Telegram session hijack — see T-067 (SIM-swap), T-069 (bot token leak). | Low — intentional design choice; channel diversification (ADR-0007) further reduces single-channel compromise impact |
 | T-063 | Token replay | Attacker captures token from past email and replays it on new incident | L | M | Low | Tokens bound to specific incident_id; reused tokens rejected; tokens expire after 5 min absolute time | Negligible |
 | T-064 | Defensive DoS via rejection flooding | Attacker triggers many T2/T3 alerts and floods approver inbox to delay legitimate responses | L | M | Low | Per-incident dedup by alert hash; rate limit on email sends per minute; T2/T3 with no response after timeout escalates to conservative auto-execute (ADR-0003) | Low |
 | T-065 | Phishing of approvers | Attacker sends fake "approval needed" email tricking approver to click malicious link mimicking ARGOS | M | H | High | Approval emails sent only from designated `argos-noreply@` domain, links only to internal ARGOS dashboard URL (verifiable), training note in onboarding for approvers, optional DKIM/SPF strict | Medium — phishing always partially residual |
@@ -315,6 +315,7 @@ Future expansions (out of scope for v1.0):
 | 1.0 | Week 1 | Initial baseline. STRIDE for 4 categories, FMEA for 6 components, Risk Register with 9 project risks, 10 resilience properties documented. | P1 |
 | 1.1 | Week 1 | Added Section 3.7 (approval system threats) covering 7 new threats T-060 through T-066 introduced by ADRs 0003/0005/0006. Updated residual risks list. | P1 |
 | 1.2 | Week 9 (post Gate 2) | Section 3.7 expanded to cover ADR-0007 (multi-channel notification chain): added T-067 (SIM-swap del aprobador), T-068 (caller-ID spoofing al webhook Twilio), T-069 (compromise del bot Telegram via token leakage). Trust boundary note added implicitly via §3.7 preamble. Metadata: version bump, `Related` extended to ADRs 0001-0007, status note. | P1 |
+| 1.3 | Week 7 calendar | T-062 reframed from "compromised approver **email** account" to channel-agnostic ("any notification channel") with explicit note that email is now post-facto-only per ADR-0007. Cross-references T-067/T-069 as primary-channel threats. | P1 |
 
 ---
 

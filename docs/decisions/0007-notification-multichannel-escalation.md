@@ -1,7 +1,7 @@
 # ADR-0007: Cadena de notificación multi-canal con escalación temporal
 
-**Estado:** Aceptado
-**Fecha:** Semana 9 (post Gate 2, feedback de profesor + revisión crítica)
+**Estado:** Aceptado · arquitectura decidida · **implementación pendiente** (planificada para Gate 2-3)
+**Fecha:** Semana 1-2 · decisión arquitectónica anticipada post-revisión con asesor del curso
 **Autores:** P1 (Enzo)
 **Revisores:** Equipo completo
 **Relacionado con:** ADR-0003 (HITL SOAR), ADR-0005 (Notification channel abstraction), ADR-0006 (Split-brain)
@@ -205,6 +205,10 @@ Reemplaza el target original de Gate 3 que asumía solo email (~3 días). El del
 ## Revisión
 
 A re-evaluar tras la primera demo en vivo (Semana 13). Si Telegram + ntfy + Slack genera tasa de respuesta humana > 90% en los primeros 30s, considerar relegar la llamada Twilio a opcional / tier de pago. Si la tasa es < 70%, considerar invertir el orden y poner la llamada como concurrente al t=0.
+
+### Nota sobre estado de implementación (Semana 7 calendario)
+
+Esta decisión arquitectónica está **firmada** pero la **implementación de los 4 canales sigue pendiente**. El estimado de 9 días de trabajo P1 (§"Plan de implementación") se mantiene válido; se ejecuta entre Gate 2 y Gate 3. Si la presión de calendario obliga a recortar, el orden de sacrificio es: Twilio Voice → Slack → ntfy → Telegram (Telegram es el último porque es el canal primario crítico). El `EmailChannel` post-facto queda garantizado como fallback en todos los casos.
 
 ## Notas para el informe técnico
 

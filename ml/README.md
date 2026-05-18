@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P2** (ML Engineer) |
+| Owner | **P2 · Sebastian Montenegro** (ML Engineer) |
 | Status | 📅 Planned · Weeks 2-9 (Gate 1 baseline · Gate 2 ensemble · Gate 3 eval) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §5.2, [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) UC-03 (centerpiece), [`docs/decisions/OPEN_QUESTIONS_RESOLUTION.md`](../docs/decisions/OPEN_QUESTIONS_RESOLUTION.md) §Q5 (tier calibration) |
 
