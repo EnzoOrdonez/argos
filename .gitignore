@@ -230,3 +230,8 @@ evaluation/temp/
 # Temporary files
 *.tmp
 .cache/
+
+# Backup files from sandbox FUSE mount workarounds
+*.bak.*
+*.preserve.*
+*.truncated.*
