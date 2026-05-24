@@ -1,299 +1,336 @@
+<div align="center">
+
 # ARGOS
 
-**Adaptive Ransomware Guard with Orchestrated Surveillance**
+### Adaptive Ransomware Guard with Orchestrated Surveillance
 
-A defense-in-depth ransomware detection and response system combining rule-based detection (Sigma + Wazuh), ML anomaly detection, deception (canary files), and LLM-assisted triage with human-in-the-loop SOAR.
+*Sistema de detección y respuesta a ransomware con defensa en profundidad, SOAR y aprobación humana asistida por LLM.*
 
-> 🎓 Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
+[![Status](https://img.shields.io/badge/status-active%20development-orange)](docs/PROJECT_STATUS.md)
+[![Contracts](https://img.shields.io/badge/argos__contracts-v1.1.0-blue)](argos_contracts/)
+[![Tests](https://img.shields.io/badge/tests-69%20passing-brightgreen)](argos_contracts/tests/)
+[![Deadline](https://img.shields.io/badge/entrega-13%20jun%202026-red)](docs/EVALUATION_CRITERIA.md)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
----
+**Activo defendido:** 🛡 PostgreSQL Production DB · **Curso:** Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
 
-## Status
-
-🚧 **In active development.** Calendar week: **7 of 14** · Project work currently at architectural foundation + contracts. Layer implementation hasn't started in earnest yet.
-
-| Aspect | Status |
-|--------|:------:|
-| Architecture & design (SAD, threat model, 7 ADRs, contracts spec, use cases) | ✅ Complete |
-| `argos_contracts/` cross-team Pydantic models (64 validation tests) | ✅ Shipped |
-| ADR-0007 v2 multi-channel notification (Telegram + Discord + Twilio voice + email post-facto) | ✅ Architecturally decided · 🚧 implementation pending |
-| Layers 1 (rules), 2 (ML), 3 (deception), 4 (LLM) implementation | 🚧 Pending |
-| Gates 1 (W5), 2 (W7), 3 (W9) | ⚠️ Behind schedule — gates re-baselined below |
-
-**Schedule reckoning:** the original 14-week plan put Gate 1 at Week 5. Calendar Week 7 has arrived and the implementation phase hasn't started, which means the team is **~5 weeks behind** the original plan. The 14-week plan in §Roadmap below is the original; the realistic projection depends on team capacity from Week 7 onwards. This is documented honestly rather than hidden because the rubric (see `docs/EVALUATION_CRITERIA.md`) values the informe técnico + working demo + presentation regardless of how much was implemented when.
+</div>
 
 ---
 
-## What is ARGOS?
+## ¿Qué es ARGOS?
 
-ARGOS replicates the architecture of commercial high-end EDR/XDR products (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) using exclusively open-source components plus a low-cost LLM API for the triage layer. It demonstrates four parallel detection layers, automated containment with human approval flow, and visible split-brain resolution — all in a reproducible lab environment.
+ARGOS replica la arquitectura de productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando **exclusivamente componentes open source** más una API LLM de bajo costo para la capa de triage. Cuatro capas de detección en paralelo, contención automatizada con flujo de aprobación humana, y resolución visible de split-brain — todo reproducible en un lab virtualizado.
 
-**For the full vision in 90 seconds:** see [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md).
-
----
-
-## Why this matters
-
-- **Open-source replica of commercial EDR.** Same architectural primitives as paid products (multi-layer + SOAR + LLM triage), 100% OSS stack except for a budget-capped LLM API (~$5/day). Reproducible on any laptop with Vagrant.
-- **HITL automation with split-brain consensus.** Multi-approver decisions resolved by an explicit *conservative-wins* policy (ADR-0006), not improvisation. Visible in real-time on the Approval Workflow Console.
-- **ML against novel variants.** Isolation Forest + One-Class SVM ensemble detects ransomware that doesn't match any rule — the case where signature-only defenses go silent.
-- **Deception layer with zero-FP property.** Canary files with FIM whodata catch attackers *before* they reach real data. By design: a legitimate user never touches a honeypot.
+> 📄 **Resumen en 90 segundos:** [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md)
+> 🎨 **Flujo visual con asignación por integrante:** [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html)
+> 🏗️ **Arquitectura completa (SAD):** [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md)
 
 ---
 
-## Architecture at a glance
+## Por qué importa
 
-Four parallel detection layers feed a SOAR Decision Engine that classifies alerts into four confidence tiers (T0–T3) and routes them to either automated containment or a human approval flow:
+| | |
+|---|---|
+| 🆓 **Réplica open-source de EDR comercial** | Mismas primitivas arquitectónicas que productos pagos (multi-capa + SOAR + LLM triage). Stack 100% OSS excepto una API LLM con budget tope (~\$5/día). Reproducible en cualquier laptop con Vagrant. |
+| 👥 **HITL automation con consenso anti-split-brain** | Decisiones multi-aprobador resueltas por *conservative-wins policy* explícita (ADR-0006), no por improvisación. Visible en tiempo real en la Approval Workflow Console. |
+| 🤖 **ML contra variantes novel** | Ensemble Isolation Forest + One-Class SVM detecta ransomware que no matchea ninguna regla — el caso donde las defensas signature-only se quedan ciegas. |
+| 🍯 **Capa de deception con propiedad zero-FP** | Canary files con FIM whodata atrapan al atacante *antes* de que toque datos reales. Por diseño: un usuario legítimo nunca toca un honeypot. |
+| 🌐 **Soberanía de datos** | Primario US-based (GPT-4o-mini) + fallback local Llama 3.1 (zero-egress). El sistema sigue funcionando sin internet. |
+
+---
+
+## Arquitectura de un vistazo
+
+Cuatro capas de detección paralelas alimentan un SOAR Decision Engine que clasifica alertas en cuatro tiers de confianza (T0–T3) y las enruta a contención automática o a flujo de aprobación humana:
 
 ```mermaid
 flowchart TD
-    subgraph DET["Detection layers (parallel)"]
-        L1["<b>Layer 1</b><br/>Sigma + Wazuh<br/><i>rule-based</i>"]
-        L2["<b>Layer 2</b><br/>Isolation Forest + OC-SVM<br/><i>ML anomaly</i>"]
-        L3["<b>Layer 3</b><br/>Canary + FIM whodata<br/><i>deception</i>"]
-        L4["<b>Layer 4</b><br/>FastAPI + RAG + LLM<br/><i>triage enrichment</i>"]
+    subgraph DET["🔍 Capas de detección (paralelas)"]
+        L1["<b>Capa 1</b><br/>Sigma + Wazuh<br/><i>rule-based</i>"]
+        L2["<b>Capa 2</b><br/>Isolation Forest + OC-SVM<br/><i>ML anomalía</i>"]
+        L3["<b>Capa 3</b><br/>Canary + FIM whodata<br/><i>deception</i>"]
+        L4["<b>Capa 4</b><br/>FastAPI + RAG + LLM<br/><i>triage (enrichment-only)</i>"]
     end
 
-    DE[["SOAR Decision Engine<br/>tier classifier"]]
+    DE[["⚙️ SOAR Decision Engine<br/>tier classifier"]]
 
     L1 --> DE
     L2 --> DE
     L3 --> DE
-    L4 -. enriches .-> DE
+    L4 -. enriquece .-> DE
 
-    DE --> T0["🟢 T0<br/>≥ 0.95 confidence"]
-    DE --> T1["🟢 T1<br/>0.80 – 0.95"]
-    DE --> T2["🟡 T2<br/>0.60 – 0.80"]
-    DE --> T3["🔵 T3<br/>0.40 – 0.60"]
+    DE --> T0["🟥 T0<br/>≥ 0.95"]
+    DE --> T1["🟧 T1<br/>0.80–0.95"]
+    DE --> T2["🟨 T2<br/>0.60–0.80"]
+    DE --> T3["🟦 T3<br/>0.40–0.60"]
 
-    T0 --> A1["Auto-isolate<br/>+ snapshot<br/>+ post-facto email"]
+    T0 --> A1["⚡ Auto-isolate<br/>+ snapshot"]
     T1 --> A1
-    T2 --> A2["Throttle + snapshot<br/>then 3-min approval<br/>(split-brain →<br/>conservative-wins)"]
-    T3 --> A3["LLM-enriched<br/>analyst notification"]
+    T2 --> A2["⏱ Throttle + snapshot<br/>luego 3-min approval<br/>(split-brain →<br/>conservative-wins)"]
+    T3 --> A3["📨 Notificación<br/>LLM-enriched"]
 ```
 
-For the complete architecture: [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md).
-For an interactive view (zoom, pan, hover): open [`docs/architecture/architecture_diagram.html`](./docs/architecture/architecture_diagram.html) locally.
+> Thresholds 0.95 / 0.80 / 0.60 / 0.40 son **valores preliminares** pendientes de calibración empírica (ver [Q5 protocol](./docs/decisions/OPEN_QUESTIONS_RESOLUTION.md)).
+> Para el flujo completo con asignación por integrante: [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html).
 
 ---
 
-## Confidence-tiered automation (T0–T3)
+## Automatización por tier de confianza (T0–T3)
 
-ADR-0003 makes automation depth a function of *detection confidence* and *action reversibility*. The same alert pipeline produces four very different outcomes:
+ADR-0003 hace que la profundidad de automatización sea función de **confianza de detección** × **reversibilidad de la acción**. La misma pipeline de alerta produce cuatro outcomes muy distintos:
 
-| Tier | Trigger | Confidence | Action | Approval |
-|:----:|---------|:----------:|--------|----------|
-| 🟢 **T0** | Canary alone, OR layers 1+2+3 fire together | ≥ 0.95 ⁽*⁾ | Immediate auto-isolation + snapshot | Post-facto with revert button |
-| 🟢 **T1** | Layers 1+2 corroborate (no canary) | 0.80 – 0.95 ⁽*⁾ | Immediate auto-isolation + snapshot | Post-facto with revert button |
-| 🟡 **T2** | Single layer, high score | 0.60 – 0.80 ⁽*⁾ | **Throttle + snapshot now**, full isolation pending 3-min approval | Pre-execution with timeout |
-| 🔵 **T3** | Low corroboration | 0.40 – 0.60 ⁽*⁾ | LLM-enriched notification only | Manual analyst review |
+| Tier | Disparado por | Acción | Aprobación |
+|:----:|---------------|--------|-----------|
+| 🟥 **T0** | Canary solo, o capas 1+2+3 corroboran | Aislamiento inmediato + snapshot | Post-facto con botón "Revertir" |
+| 🟧 **T1** | Capa 1 + Capa 2 corroboran (sin canary) | Aislamiento inmediato + snapshot | Post-facto con botón "Revertir" |
+| 🟨 **T2** | Capa sola con high score | **Throttle + snapshot ahora**, aislamiento full pendiente de aprobación 3-min | Pre-ejecución con timeout |
+| 🟦 **T3** | Corroboración baja | Solo notificación enriquecida con LLM | Revisión manual del analista |
 
-⁽*⁾ **Thresholds preliminares.** Los valores 0.95 / 0.80 / 0.60 / 0.40 son working values pendientes de calibración empírica sobre el dataset descrito en `OPEN_QUESTIONS_RESOLUTION.md` §Q5 (~100 alertas ransomware + ~500 benignas). Pueden moverse ±0.05 tras la calibración. Ver `PROJECT_STATUS.md` D-1.
+**Por qué T2 es interesante.** Ransomware moderno cifra ~25,000 archivos/min. El throttle aplicado durante la ventana de aprobación corta esa tasa ≥80% (objetivo validado en EV-03), acotando el daño incluso si el humano no responde. Si el timeout expira sin respuesta, el sistema auto-ejecuta — no hay escenario donde el atacante le gane al reloj.
 
-**Why T2 is interesting:** modern ransomware encrypts ~25,000 files/min. The throttle applied during the approval window cuts that rate by ≥80% (target validated by EV-03), bounding damage even if the human is unavailable. If the timeout expires without a response, the system auto-executes — there is no scenario where the attacker outruns the clock.
-
-**Split-brain (multi-approver conflict)** is resolved by a *conservative-wins* policy with a 60s consolidation window: any "approve" wins over rejects, except for irreversible actions which require two-person rule. See [ADR-0006](./docs/decisions/0006-split-brain-resolution.md).
+**Split-brain (conflicto multi-aprobador)** se resuelve con *conservative-wins policy* + ventana de consolidación de 60s: cualquier "approve" gana sobre rechazos, excepto para acciones irreversibles que requieren two-person rule. Ver [ADR-0006](./docs/decisions/0006-split-brain-resolution.md).
 
 ---
 
-## Resilience by design
+## Resiliencia por diseño
 
-ARGOS assumes the attacker will target the defender:
+ARGOS asume que el atacante apuntará al defensor mismo:
 
-- **The LLM is never on the critical containment path.** If DeepSeek hallucinates, returns garbage, or goes offline, layers 1–3 + the SOAR keep working. LLM Triage only enriches the analyst view.
-- **Agent disconnect is itself a signal.** If an attacker kills the Wazuh agent (T1562.001), the heartbeat-loss alert fires within ~60s and triggers network-level isolation — the silence betrays them (R-04).
-- **Three independent detection layers.** Sigma rules, ML anomaly, and canaries fail independently. There is no single defender component whose compromise produces total blindness.
-- **Conservative-wins on multi-approver conflict.** A compromised approver account cannot single-handedly veto a legitimate containment — any other "approve" overrides the reject (ADR-0006).
+- **El LLM nunca está en el path crítico de containment.** Si OpenAI cae, alucina, o el endpoint responde basura, las capas 1–3 + el SOAR siguen funcionando. El LLM Triage solo enriquece la vista del analista.
+- **Inferencia local como fallback genuino.** Llama 3.1 8B vía Ollama mantiene el análisis activo aun en deployment air-gapped (per ADR-0001 v2).
+- **El disconnect del agente es señal en sí mismo.** Si un atacante mata el Wazuh agent (T1562.001), la pérdida de heartbeat dispara una alerta crítica dentro de ~60s y activa aislamiento de red — el silencio los delata (R-04).
+- **Tres capas de detección independientes.** Sigma rules, ML anomaly y canaries fallan independientemente. No hay un solo componente cuya caída produzca ceguera total.
+- **Conservative-wins en conflicto multi-aprobador.** Una cuenta de aprobador comprometida no puede vetar unilateralmente una contención legítima — cualquier otro "approve" sobrescribe el "reject" (ADR-0006).
 
-Full STRIDE + FMEA threat model with ~50 analyzed threats: [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md).
-
----
-
-## Tech stack
-
-**Detection & SIEM:** Wazuh · OpenSearch · Sigma · Sysmon · auditd
-**Attack simulation:** Atomic Red Team · Caldera · custom ransomware simulator
-**ML:** scikit-learn (Isolation Forest, One-Class SVM)
-**Backend services:** FastAPI · Redis · APScheduler · Pydantic v2
-**LLM Triage:** DeepSeek-V3 (primary) · Qwen2.5-72B (fallback) · BGE-large embeddings · mini-RAG
-**UI:** Streamlit · OpenSearch Dashboards
-**Infra:** Vagrant · Terraform (optional Azure)
+Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md).
 
 ---
 
-## What's working today
+## Stack tecnológico
 
-| Module | Status | Notes |
-|--------|:------:|-------|
-| [`argos_contracts/`](./argos_contracts/) — shared Pydantic v2 models | ✅ shipped | 25 cross-team contracts (9 enums + 16 models/constants). 64 validation tests. UTC-aware timestamps enforced. MITRE whitelist hardens LLM output against hallucination. |
-| [`llm_triage/`](./llm_triage/) — Layer 4 (FastAPI + RAG + LLM client) | 🚧 scaffolding | Module skeleton + vendor-agnostic factory pattern. |
-| `lab/`, `detection/`, `ml/`, `deception/`, `soar/`, `ui/`, `attack-simulation/`, `evaluation/` | 📅 planned | See roadmap below. |
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**🔍 Detección & SIEM**
+- Wazuh 4.7 · OpenSearch · Sigma
+- Sysmon · auditd
+
+**🎯 Simulación de ataque**
+- Atomic Red Team · Caldera
+- Custom ransomware simulator (Python)
+
+**🤖 Machine Learning**
+- scikit-learn (Isolation Forest, One-Class SVM)
+- scipy (Shannon entropy)
+
+</td>
+<td valign="top">
+
+**⚙️ Backend services**
+- FastAPI · Redis · APScheduler · Pydantic v2 · PyJWT
+
+**🛡 LLM Triage** (per ADR-0001 v2)
+- OpenAI GPT-4o-mini (primario, US-based)
+- Llama 3.1 8B local vía Ollama (fallback, zero-egress)
+- BGE-large embeddings · mini-RAG (BM25 + RRF)
+
+**📺 UI**
+- Streamlit · OpenSearch Dashboards
+
+**🏗 Infra**
+- Vagrant · VirtualBox · Terraform (opcional Azure)
+
+</td>
+</tr>
+</table>
+
+---
+
+## Equipo y responsabilidades
+
+> Para el detalle visual con asignación por componente: [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html)
+
+| | Integrante | Rol | Alcance principal |
+|:--:|---|---|---|
+| 🟣 | **Enzo Ordoñez Flores** | P1 · Líder · LLM/SOAR | `argos_contracts` (entregado), Capa 4 LLM Triage, motor SOAR + Tier Classifier, Approval API con JWT, notificaciones multi-canal, Consola de Aprobación, simulador de ransomware, playbooks de containment, coordinación general |
+| 🔵 | **Sebastian Montenegro** | P2 · Ingeniero ML | Capa 2 (Isolation Forest + One-Class SVM), feature extraction, calibración de tier thresholds, métricas A/B/C (P/R/F1, MITRE coverage, ablation), captura forense |
+| 🟠 | **Angeles Castillo** | P3 · Detección · Engaño | Capa 1 (Sigma rules mapeadas a MITRE), Capa 3 (canary FIM + whodata), validación con Atomic Red Team y Caldera, bonus: PRs upstream a SigmaHQ |
+| 🟢 | **Diego Jara** | P4 · Infraestructura · UI | Vagrantfile + Wazuh/OpenSearch deployment, PostgreSQL provisioning con datos sintéticos, UI Streamlit base, grabación y edición del video demo |
+
+---
+
+## Estado actual
+
+| Componente | Estado | Notas |
+|---|:---:|---|
+| 📐 Arquitectura & diseño (SAD, threat model, 7 ADRs, contracts spec, use cases) | ✅ | Completo |
+| 📦 [`argos_contracts/`](./argos_contracts/) — Pydantic v2 cross-team | ✅ | **v1.1.0** · 25 modelos · 9 enums · **69 tests** · TD-01 y TD-02 cerrados |
+| 🎨 [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html) — flujo + ownership | ✅ | Entregado al equipo |
+| 🛡 PostgreSQL como activo defendido (UC-04) | ✅ | Documentado en `OPEN_QUESTIONS §Q2` |
+| 🔍 Capa 1 (Sigma + Wazuh) | 🚧 | Pendiente |
+| 🤖 Capa 2 (ML anomaly) | 🚧 | Pendiente |
+| 🍯 Capa 3 (Canary FIM) | 🚧 | Pendiente |
+| 🧠 Capa 4 (LLM Triage) | 🚧 | Esqueletos + TODOs (OpenAI + Llama stubs) |
+| ⚙️ Motor SOAR + Approval API | 🚧 | Pendiente |
+| 🏗 Lab Vagrant + Wazuh deployment | 🚧 | Pendiente |
+| 🎯 Simulador de ransomware | 🚧 | Pendiente |
+| 📺 UI Streamlit + Approval Console | 🚧 | Pendiente |
+| 📊 Evaluación + métricas | 🚧 | Pendiente |
+| 🎬 Video demo + exposición | 🚧 | Pendiente |
+
+> **Honest status snapshot detallado:** [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md)
 
 ---
 
 ## Quick start
 
-The contracts module is runnable today. Other layers are scaffolding or pending — full lab provisioning lands in Weeks 2–3.
+El módulo de contratos es ejecutable hoy. Las otras capas están en esqueleto o pendientes.
 
 ```bash
-# Clone the repo
 git clone https://github.com/EnzoOrdonez/argos.git
 cd argos
 
-# Run the contracts layer test suite (64 tests)
-pip install -r argos_contracts/requirements.txt
+# Suite de tests de contracts (69 tests)
+pip install -e ".[contracts,dev]"
 pytest argos_contracts/tests/ -v
 ```
 
-You should see all 64 tests pass — these lock the inter-layer interfaces (alerts, ML scores, triage I/O, incidents, approvals) so the four work-streams can implement in parallel without integration friction.
+Los 69 tests bloquean las interfaces inter-capa (alerts, ML scores, triage I/O, incidents, approvals) para que los cuatro work-streams puedan implementar en paralelo sin fricción de integración.
 
 <details>
-<summary><b>Full lab setup (coming Week 2–3)</b></summary>
+<summary><b>Setup completo del lab (pendiente)</b></summary>
 
 ```bash
-# Copy environment template and fill in real values
+# Copiar plantilla de variables y completar valores reales
 cp .env.example .env
-# Edit .env with your Wazuh, OpenSearch, Redis, LLM, SMTP credentials
 
-# Vagrant lab provisioning
-vagrant up   # placeholder — Vagrantfile lands in Week 2
+# Provisioning del lab (Wazuh manager + Windows VM + Linux VM + PostgreSQL)
+cd lab
+vagrant up   # ~15 min primera vez
 
-# Service orchestration
-docker compose up -d   # placeholder — compose file lands in Week 3
+# Orquestación de servicios
+docker compose up -d   # compose file por entregar
 ```
 
 </details>
 
 <details>
-<summary><b>Required environment variables</b> (see <code>.env.example</code> for the full template)</summary>
+<summary><b>Variables de entorno requeridas</b> (ver <code>.env.example</code> completo)</summary>
 
-Grouped by component:
+Agrupadas por componente:
 
 - **Wazuh:** `WAZUH_API_URL`, `WAZUH_API_USER`, `WAZUH_API_PASSWORD`
 - **OpenSearch:** `OPENSEARCH_URL`, `OPENSEARCH_USER`, `OPENSEARCH_PASSWORD`
 - **Redis:** `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
-- **LLM Triage:** `LLM_BACKEND` (deepseek|qwen), `DEEPSEEK_API_KEY`, `QWEN_API_KEY`, `LLM_DAILY_BUDGET_USD`
+- **PostgreSQL (activo defendido):** `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- **LLM Triage (ADR-0001 v2):** `LLM_BACKEND` (openai/llama_local), `OPENAI_API_KEY`, `OLLAMA_BASE_URL`, `LLM_DAILY_BUDGET_USD`
 - **Approval flow:** `JWT_SECRET`, `APPROVAL_T2_TIMEOUT_SECONDS=180`, `APPROVAL_CONSOLIDATION_WINDOW_SECONDS=60`
-- **SMTP:** `SMTP_HOST`, `SMTP_PORT`, `APPROVER_EMAILS` (use [MailHog](https://github.com/mailhog/MailHog) in dev)
+- **Notificaciones (ADR-0007 v2):** `TELEGRAM_BOT_TOKEN`, `DISCORD_WEBHOOK_URL`, `TWILIO_ACCOUNT_SID`, `SMTP_*` (post-facto)
 - **Lab:** `LAB_VICTIM_WINDOWS_IP`, `LAB_VICTIM_LINUX_IP`, `LAB_MANAGER_IP`
 
 </details>
 
 ---
 
-## Demo scenarios
+## Escenarios de demo
 
-Five end-to-end attack scenarios designed for the live exposition (~13 min total). Full TTPs, narration scripts, and success criteria in [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md).
+Cinco escenarios end-to-end de ataque diseñados para la exposición en vivo (~13 min total). TTPs completos, guiones de narración y criterios de éxito en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md).
 
-| UC | Scenario | Tier | Layers | Demo focus |
-|----|----------|:----:|:------:|------------|
-| **UC-01** | Classic ransomware (LockBit-like) | T0 | 1 + 2 + 3 | Full-stack end-to-end, post-facto email |
-| **UC-02** | Canary deception | T0 | 3 alone | Ultra-early detection, **zero real files encrypted** |
-| ⭐ **UC-03** | Novel variant + split-brain | T2 | 2 alone | **Centerpiece:** ML catches what rules can't · 4-approver split-brain · conservative-wins live |
-| **UC-04** | Production DB (two-person rule) | T1 | 1 + 2 | Compliance vocabulary · four-eyes principle · governance |
-| **UC-05** | Stealth attack (agent-kill attempt) | T0 | 1 + 3 + heartbeat | Resilience: agent disconnect = signal |
+| UC | Escenario | Tier | Capas | Foco del demo |
+|:--:|-----------|:----:|:----:|--------------|
+| **UC-01** | Ransomware clásico (LockBit-like) | T0 | 1 + 2 + 3 | Full-stack end-to-end, email post-facto |
+| **UC-02** | Deception por canary | T0 | 3 sola | Detección ultra-temprana, **zero archivos reales cifrados** |
+| ⭐ **UC-03** | Variante novel + split-brain | T2 | 2 sola | **Centerpiece:** ML atrapa lo que las reglas no · 4-aprobador split-brain · conservative-wins en vivo |
+| **UC-04** | PostgreSQL en producción (two-person rule) | T1 | 1 + 2 | Vocabulario de compliance · four-eyes principle · governance |
+| **UC-05** | Ataque stealth (agent-kill attempt) | T0 | 1 + 3 + heartbeat | Resiliencia: agent disconnect = signal |
 
-**MITRE ATT&CK techniques in scope:** T1486 (Data Encrypted for Impact) · T1490 (Inhibit System Recovery) · T1083 (File Discovery) · T1562 (Impair Defenses) · T1021 (Remote Services) · T1071 (Application Layer Protocol).
-
----
-
-## Documentation
-
-All architecture, design decisions, threat model, and use cases are in [`docs/`](./docs/):
-
-| Topic | Document |
-|-------|----------|
-| 📄 90-second overview | [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md) |
-| 👥 Team onboarding | [`docs/CONTEXT.md`](./docs/CONTEXT.md) |
-| 🏗️ Full architecture (SAD) | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) |
-| 🎨 Interactive architecture diagram | [`docs/architecture/architecture_diagram.html`](./docs/architecture/architecture_diagram.html) |
-| 📐 Cross-team contracts spec | [`docs/architecture/CONTRACTS_SPECIFICATION.md`](./docs/architecture/CONTRACTS_SPECIFICATION.md) |
-| 🛡️ Threat model (STRIDE + FMEA) | [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md) |
-| 🔒 LLM data handling + sanitization policy | [`docs/data-handling.md`](./docs/data-handling.md) |
-| 📋 Course rubric + deliverable criteria | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
-| 📊 Honest project status (what's shipped vs what's documented) | [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) |
-| 🧠 Architecture decisions (7 ADRs) | [`docs/decisions/`](./docs/decisions/) |
-| 🎬 Use cases & demo scenarios | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
+**Técnicas MITRE ATT&CK en alcance:** T1486 · T1490 · T1083 · T1562 · T1021 · T1071.
 
 ---
 
-## Repository layout
+## Documentación
+
+| 📂 | Topic | Documento |
+|:--:|-------|-----------|
+| 📄 | Resumen 90 segundos | [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md) |
+| 👥 | Onboarding del equipo | [`docs/CONTEXT.md`](./docs/CONTEXT.md) |
+| 🏗 | Arquitectura completa (SAD) | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) |
+| 🎨 | Flujo + asignación por integrante | [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html) · [`.drawio`](./docs/architecture/argos_flow.drawio) |
+| 📐 | Cross-team contracts spec | [`docs/architecture/CONTRACTS_SPECIFICATION.md`](./docs/architecture/CONTRACTS_SPECIFICATION.md) |
+| 🛡 | Threat model (STRIDE + FMEA) | [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md) |
+| 🔒 | LLM data handling + sanitization | [`docs/data-handling.md`](./docs/data-handling.md) |
+| 📋 | Rúbrica del curso + deliverables | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
+| 📊 | Status honesto (shipped vs documentado) | [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) |
+| 🧠 | Architecture decisions (7 ADRs) | [`docs/decisions/`](./docs/decisions/) |
+| 🎬 | Use cases & escenarios demo | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
+
+---
+
+## Estructura del repo
 
 <details>
-<summary><b>Click to expand</b></summary>
+<summary><b>Click para expandir</b></summary>
 
 ```
 argos/
-├── README.md                  # This file
-├── LICENSE
-├── .env.example               # Environment template
-├── pyproject.toml             # mypy + pydantic plugin config
+├── README.md                  # Este archivo
+├── LICENSE                    # MIT
+├── .env.example               # Plantilla de variables
+├── pyproject.toml             # Metadata + extras por módulo + tooling
 │
-├── argos_contracts/           # ✅ Cross-team Pydantic v2 contracts (shipped)
+├── argos_contracts/           # Cross-team Pydantic v2 contracts (entregado · v1.1.0)
+│   ├── _mitre_data.py         #     Set curado de ~40 técnicas MITRE
 │   ├── alert.py               #     WazuhAlert, NormalizedAlert
 │   ├── ml_score.py            #     MLFeatures, MLScore
 │   ├── triage.py              #     AlertContext, TriageResponse, MITRE_WHITELIST
-│   ├── incident.py            #     Incident state machine, ProposedAction
+│   ├── incident.py            #     Incident (HostInfo tipado), FinalDecision (Literal types)
 │   ├── approval.py            #     ApprovalRequest, ApprovalResponse (JWT)
-│   ├── enums.py               #     Severity, Tier, Layer, IncidentState, ...
-│   └── tests/                 #     64 validation tests
+│   ├── enums.py               #     Tier, Severity, NotificationChannelType, ...
+│   └── tests/                 #     69 validation tests
 │
-├── llm_triage/                # 🚧 Layer 4 — FastAPI + RAG + LLM client (scaffolding)
+├── llm_triage/                # Capa 4 — FastAPI + RAG + LLM client (esqueleto)
 │   ├── api/                   #     POST /triage endpoint
-│   ├── llm_client/            #     Vendor-agnostic: DeepSeek + Qwen via factory
-│   ├── prompts/               #     Jinja2 templates (system, user, injection_guard)
-│   └── rag/                   #     BM25 → BGE-large → cross-encoder pipeline
+│   ├── llm_client/            #     OpenAI primary + Llama local fallback (ADR-0001 v2)
+│   ├── prompts/               #     Jinja2 templates
+│   └── rag/                   #     BM25 + BGE-large + RRF
 │
-├── docs/                      # ✅ All architecture & design documentation
+├── docs/                      # Toda la documentación arquitectónica
+│   ├── architecture/
+│   │   ├── argos_flow.html    #     Flujo + ownership (navegador)
+│   │   ├── argos_flow.drawio  #     Mismo flujo editable en draw.io
+│   │   └── ...
+│   └── decisions/             #     7 ADRs + OPEN_QUESTIONS_RESOLUTION
 │
-├── lab/                       # 📅 Vagrant + Terraform IaC
-├── detection/                 # 📅 Sigma rules + Wazuh decoders
-├── ml/                        # 📅 Layer 2 ML pipeline + consumer
-├── deception/                 # 📅 Canary generator + FIM configs
-├── soar/                      # 📅 Decision Engine + tier classifier + playbooks
-├── ui/                        # 📅 Streamlit dashboards + Approval Workflow Console
-├── attack-simulation/         # 📅 Ransomware simulator + Atomic Red Team wrappers
-└── evaluation/                # 📅 Metrics, datasets, reports
+├── lab/                       # Vagrant + Terraform IaC + PostgreSQL provisioning
+├── detection/                 # Sigma rules + Wazuh decoders
+├── ml/                        # Capa 2 ML pipeline + consumer
+├── deception/                 # Canary generator + FIM configs
+├── soar/                      # Decision Engine + tier classifier + playbooks
+├── ui/                        # Streamlit dashboards + Approval Workflow Console
+├── attack-simulation/         # Ransomware simulator + Atomic Red Team wrappers
+└── evaluation/                # Métricas, datasets, reportes
 ```
 
 </details>
 
 ---
 
-## Team
+## Hito siguiente
 
-| Role | Member |
-|------|--------|
-| Lead · LLM/SOAR · Coordinator | [@EnzoOrdonez](https://github.com/EnzoOrdonez) |
-| ML Engineer | Sebastian Montenegro |
-| Detection Engineer · Deception | Angeles Castillo |
-| Infrastructure · UI · Evaluation | Diego Jara |
+🎯 **Entrega final: 13 de junio de 2026** — informe técnico + demo en vivo + presentación.
+
+El alcance se va recortando según el orden documentado en [`docs/PROJECT_STATUS.md §4`](./docs/PROJECT_STATUS.md) si la presión de calendario lo exige. UC-01 + UC-02 + UC-04 son los irrenunciables del demo.
 
 ---
 
-## Roadmap
+## Licencia
 
-- ✅ **Week 1-2 (calendar W1-2):** Architecture & design phase complete (~210 KB of docs, 7 ADRs, threat model, use cases) + cross-team contracts layer shipped (`argos_contracts/`, 64 tests).
-- ⚠️ **Originally Weeks 2–9 (planned):** Implementation across 4 layers + SOAR + Approval Workflow Console.
-- 🚧 **Re-baselined (current reality):** at calendar Week 7, layer implementation begins. The next 4-5 calendar weeks (W7-11) compress the original 8-week implementation window. Scope will be cut to preserve quality of demo + informe per the "Gate de abandono" rule in `docs/CONTEXT.md` §7.
-  - 🎯 **Gate 1 (Week 5):** Layer 1 functional end-to-end (UC-01 demo possible).
-  - 🎯 **Gate 2 (Week 7):** Layers 1+2+3 integrated with SOAR.
-  - 🎯 **Gate 3 (Week 9):** Full stack + Layer 4 LLM + approval flow + initial metrics.
-- 📅 **Weeks 10–12:** Evaluation runs (EV-01..EV-07) + Sigma rules upstream contributions.
-- 📅 **Week 13:** Demo polish + 3-min video recording.
-- 📅 **Week 14:** Live exposition.
+MIT — © 2026 Enzo Ordoñez Flores. Repositorio privado durante el curso; público al cierre.
 
 ---
 
-## License
+## Agradecimientos
 
-This repository will be released under the **MIT License** at the end of the course (currently private during development).
-
----
-
-## Acknowledgments
-
-- [SigmaHQ](https://github.com/SigmaHQ/sigma) for the open Sigma rule format.
-- [MITRE ATT&CK](https://attack.mitre.org/) for the threat taxonomy.
-- [Wazuh](https://wazuh.com/) for the open-source SIEM/HIDS.
-- [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team) and [MITRE Caldera](https://github.com/mitre/caldera) for adversary emulation.
+[SigmaHQ](https://github.com/SigmaHQ/sigma) por el formato Sigma abierto · [MITRE ATT&CK](https://attack.mitre.org/) por la taxonomía de amenazas · [Wazuh](https://wazuh.com/) por el SIEM/HIDS open-source · [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team) y [MITRE Caldera](https://github.com/mitre/caldera) por adversary emulation · [Ollama](https://ollama.com/) por inferencia local accesible.
