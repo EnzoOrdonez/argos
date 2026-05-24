@@ -13,12 +13,17 @@ class Severity(str, Enum):
 
 
 class Tier(str, Enum):
-    """Confidence tiers for alert classification (per ADR-0003)."""
+    """Confidence tiers for alert classification (per ADR-0003).
 
-    T0 = "T0"  # Critical confirmed, >=0.95 confidence, auto-execute
-    T1 = "T1"  # High confirmed, 0.80-0.95, auto-execute
-    T2 = "T2"  # Medium uncertain, 0.60-0.80, awaiting human approval
-    T3 = "T3"  # Low uncertain, 0.40-0.60, notification only
+    Threshold values (>=0.95, 0.80-0.95, 0.60-0.80, 0.40-0.60) are
+    preliminary working values pending empirical calibration per Q5
+    of OPEN_QUESTIONS_RESOLUTION.md.
+    """
+
+    T0 = "T0"  # Critical confirmed, auto-execute
+    T1 = "T1"  # High confirmed, auto-execute
+    T2 = "T2"  # Medium uncertain, awaiting human approval
+    T3 = "T3"  # Low uncertain, notification only
 
 
 class Layer(str, Enum):
@@ -78,9 +83,16 @@ class ActionType(str, Enum):
 
 
 class NotificationChannelType(str, Enum):
-    """Channels available for sending approval requests (per ADR-0005)."""
+    """Channels available for sending approval requests (per ADR-0007 v2).
 
+    Channel chain (T2 / production-critical):
+    - TELEGRAM   → primary, t=0, with inline JWT buttons
+    - DISCORD    → public visibility in team server, t=0
+    - TWILIO_VOICE → escalation, t=60s if no response, DTMF input
+    - EMAIL      → post-facto summary only, never in critical path
+    """
+
+    TELEGRAM = "telegram"
+    DISCORD = "discord"
+    TWILIO_VOICE = "twilio_voice"
     EMAIL = "email"
-    SLACK = "slack"  # future
-    TELEGRAM = "telegram"  # future
-    TEAMS = "teams"  # future

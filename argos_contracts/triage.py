@@ -5,24 +5,17 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
+from argos_contracts._mitre_data import MITRE_WHITELIST
 from argos_contracts._validators import ensure_tz_aware
 from argos_contracts.enums import Criticality, Layer, Severity
 
-# MITRE ATT&CK techniques in scope (per USE_CASES + project scope).
-# Hardcoded whitelist for v1. Future: load from MITRE STIX bundle dynamically.
-MITRE_WHITELIST: set[str] = {
-    "T1486",  # Data Encrypted for Impact
-    "T1490",  # Inhibit System Recovery
-    "T1083",  # File and Directory Discovery
-    "T1562",  # Impair Defenses
-    "T1562.001",  # Disable or Modify Tools
-    "T1021",  # Remote Services
-    "T1071",  # Application Layer Protocol
-    "T1070",  # Indicator Removal
-    "T1070.001",  # Clear Windows Event Logs
-    "T1070.004",  # File Deletion
-    # Extend as new use cases require
-}
+__all__ = [
+    "MITRE_WHITELIST",
+    "HostInfo",
+    "AlertSummary",
+    "AlertContext",
+    "TriageResponse",
+]
 
 
 class HostInfo(BaseModel):

@@ -112,11 +112,18 @@ class ActionType(str, Enum):
 
 
 class NotificationChannelType(str, Enum):
-    """Channels available for sending approval requests (per ADR-0005)."""
+    """Channels available for sending approval requests (per ADR-0007 v2).
+
+    Channel chain (T2 / production-critical):
+    - TELEGRAM    → primary, t=0, with inline JWT buttons
+    - DISCORD     → public visibility in team server, t=0
+    - TWILIO_VOICE→ escalation, t=60s if no response, DTMF input
+    - EMAIL       → post-facto summary only, never in critical path
+    """
+    TELEGRAM = "telegram"
+    DISCORD = "discord"
+    TWILIO_VOICE = "twilio_voice"
     EMAIL = "email"
-    SLACK = "slack"  # future
-    TELEGRAM = "telegram"  # future
-    TEAMS = "teams"  # future
 ```
 
 ---
@@ -265,21 +272,11 @@ from pydantic import BaseModel, Field, field_validator
 from argos_contracts.enums import Severity, Layer, Criticality
 
 
-# MITRE ATT&CK techniques in scope (per USE_CASES + project scope).
-# Hardcoded whitelist for v1. Future: load from MITRE STIX bundle dynamically.
-MITRE_WHITELIST: set[str] = {
-    "T1486",      # Data Encrypted for Impact
-    "T1490",      # Inhibit System Recovery
-    "T1083",      # File and Directory Discovery
-    "T1562",      # Impair Defenses
-    "T1562.001",  # Disable or Modify Tools
-    "T1021",      # Remote Services
-    "T1071",      # Application Layer Protocol
-    "T1070",      # Indicator Removal
-    "T1070.001",  # Clear Windows Event Logs
-    "T1070.004",  # File Deletion
-    # Extend as new use cases require
-}
+# MITRE ATT&CK techniques in scope. Curated subset (~40 técnicas)
+# covering the ransomware kill chain. Maintained as data in
+# `argos_contracts/_mitre_data.py` and re-exported from `triage.py`.
+# Quarterly refresh policy documented in the data module.
+from argos_contracts._mitre_data import MITRE_WHITELIST  # frozenset[str]
 
 
 class HostInfo(BaseModel):
@@ -348,7 +345,7 @@ class TriageResponse(BaseModel):
     indicadores_correlacionar: list[str] = Field(default_factory=list)
     llm_backend: str = Field(
         ...,
-        description="Identifier of backend used: 'deepseek-v3' | 'qwen2.5-72b-instruct'"
+        description="Identifier of backend used: 'gpt-4o-mini' | 'llama-3.1-8b-local' (per ADR-0001 v2)"
     )
     generated_at: datetime
 
@@ -380,7 +377,7 @@ The state machine of an incident. Lives in Redis, consumed by Streamlit.
 
 ```python
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from argos_contracts.enums import (
@@ -388,7 +385,7 @@ from argos_contracts.enums import (
     NotificationChannelType, ActionType
 )
 from argos_contracts.alert import NormalizedAlert
-from argos_contracts.triage import TriageResponse
+from argos_contracts.triage import HostInfo, TriageResponse
 
 
 class ProposedAction(BaseModel):
@@ -410,7 +407,7 @@ class ApproverState(BaseModel):
     status: ApproverStatus = ApproverStatus.PENDING
     responded_at: datetime | None = None
     latency_seconds: float | None = None
-    channel: NotificationChannelType = NotificationChannelType.EMAIL
+    channel: NotificationChannelType = NotificationChannelType.TELEGRAM
 
 
 class ConsolidationWindow(BaseModel):
@@ -424,23 +421,26 @@ class ConsolidationWindow(BaseModel):
     conflict_detected: bool = False
 
 
+# Literal types catch typos at construction. v1.1.0 release.
+FinalOutcome = Literal["EXECUTE_ISOLATION", "NO_ACTION", "REVERTED"]
+PolicyApplied = Literal[
+    "auto-execute", "unanimous-approve", "conservative-wins",
+    "two-person-rule", "timeout-escalation",
+]
+ExecutionStatus = Literal["success", "failed", "partial"]
+
+
 class FinalDecision(BaseModel):
-    """Final decision after approval flow completes (or auto-executes)."""
-    outcome: str = Field(
-        ...,
-        description="'EXECUTE_ISOLATION' | 'NO_ACTION' | 'REVERTED'"
-    )
-    policy_applied: str = Field(
-        ...,
-        description="'auto-execute' | 'unanimous-approve' | 'conservative-wins' | "
-                    "'two-person-rule' | 'timeout-escalation'"
-    )
+    """Final decision after approval flow completes (or auto-executes).
+
+    String fields typed as ``Literal[...]`` so Streamlit Approval Console
+    and audit-log consumers can branch on them safely.
+    """
+    outcome: FinalOutcome
+    policy_applied: PolicyApplied
     rationale: str
     executed_at: datetime | None = None
-    execution_status: str | None = Field(
-        None,
-        description="'success' | 'failed' | 'partial'"
-    )
+    execution_status: ExecutionStatus | None = None
 
 
 class Incident(BaseModel):
@@ -453,7 +453,7 @@ class Incident(BaseModel):
 
     Reference: OPEN_QUESTIONS_RESOLUTION.md Q4.2 (canonical schema).
     """
-    schema_version: str = Field(default="1.0")
+    schema_version: str = Field(default="1.1")
     incident_id: str = Field(
         ...,
         pattern=r"^INC-\d{4}-\d{2}-\d{2}-\d{3}$",
@@ -463,7 +463,7 @@ class Incident(BaseModel):
     updated_at: datetime
     tier: Tier
     state: IncidentState
-    host: dict[str, Any]  # uses HostInfo-compatible structure
+    host: HostInfo
     alert: NormalizedAlert
     llm_analysis: TriageResponse | None = Field(
         None,
@@ -495,10 +495,10 @@ from argos_contracts.triage import TriageResponse
 class ApprovalRequest(BaseModel):
     """
     Request sent to approvers via notification channel(s).
-    Reference: ADR-0003, ADR-0005.
+    Reference: ADR-0003, ADR-0007 v2.
 
     Owner: Notification service (P1).
-    Consumer: Email/Slack/Telegram channel implementations.
+    Consumer: Telegram / Discord / Twilio Voice / Email channel implementations.
     """
     incident_id: str
     tier: Tier

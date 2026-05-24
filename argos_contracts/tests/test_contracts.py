@@ -117,12 +117,12 @@ def _incident() -> Incident:
         updated_at=UTC_LATER,
         tier=Tier.T0,
         state=IncidentState.EXECUTED,
-        host={
-            "id": "WIN-VICTIM-01",
-            "criticality": "standard",
-            "ip": "10.0.0.21",
-            "os": "Windows 10",
-        },
+        host=HostInfo(
+            id="WIN-VICTIM-01",
+            criticality=Criticality.STANDARD,
+            ip="10.0.0.21",
+            os="Windows 10",
+        ),
         alert=_normalized_alert(),
         llm_analysis=_triage_response(),
         proposed_actions=[_proposed_action()],
@@ -520,7 +520,7 @@ def test_proposed_action_missing_required_rejects() -> None:
 def test_approver_state_default_pending() -> None:
     a = ApproverState(email="x@y.local", role="analyst")
     assert a.status == ApproverStatus.PENDING
-    assert a.channel == NotificationChannelType.EMAIL
+    assert a.channel == NotificationChannelType.TELEGRAM
     assert a.responded_at is None
 
 
@@ -580,7 +580,9 @@ def test_incident_valid_full_construction() -> None:
     i = _incident()
     assert i.tier == Tier.T0
     assert i.state == IncidentState.EXECUTED
-    assert i.schema_version == "1.0"
+    assert i.schema_version == "1.1"
+    assert isinstance(i.host, HostInfo)
+    assert i.host.id == "WIN-VICTIM-01"
 
 
 def test_incident_id_pattern_valid() -> None:
@@ -607,7 +609,7 @@ def test_incident_id_pattern_invalid_rejects(bad_id: str) -> None:
             updated_at=UTC_LATER,
             tier=Tier.T0,
             state=IncidentState.RECEIVED,
-            host={"id": "h"},
+            host=HostInfo(id="h", criticality=Criticality.STANDARD),
             alert=_normalized_alert(),
             proposed_actions=[_proposed_action()],
         )
@@ -640,7 +642,7 @@ def test_incident_minimal_required_no_optional_blocks() -> None:
         updated_at=UTC_NOW,
         tier=Tier.T3,
         state=IncidentState.RECEIVED,
-        host={"id": "h"},
+        host=HostInfo(id="h", criticality=Criticality.STANDARD),
         alert=_normalized_alert(),
         proposed_actions=[],
     )
@@ -810,7 +812,7 @@ def test_incident_naive_created_at_rejects() -> None:
             updated_at=UTC_LATER,
             tier=Tier.T0,
             state=IncidentState.RECEIVED,
-            host={"id": "h"},
+            host=HostInfo(id="h", criticality=Criticality.STANDARD),
             alert=_normalized_alert(),
             proposed_actions=[],
         )
@@ -824,7 +826,7 @@ def test_incident_naive_updated_at_rejects() -> None:
             updated_at=NAIVE_DT,
             tier=Tier.T0,
             state=IncidentState.RECEIVED,
-            host={"id": "h"},
+            host=HostInfo(id="h", criticality=Criticality.STANDARD),
             alert=_normalized_alert(),
             proposed_actions=[],
         )
@@ -905,3 +907,76 @@ def test_final_decision_executed_at_none_passes() -> None:
         rationale="false positive, no action taken",
     )
     assert d.executed_at is None
+
+
+# ---------------------------------------------------------------------------
+# FinalDecision — Literal field tightening (v1.1.0 release)
+# Closes TD-02 from the now-retired TECHNICAL_DEBT.md.
+# ---------------------------------------------------------------------------
+
+
+def test_final_decision_invalid_outcome_rejects() -> None:
+    with pytest.raises(ValidationError):
+        FinalDecision(
+            outcome="executed",  # type: ignore[arg-type]  # typo: should be EXECUTE_ISOLATION
+            policy_applied="auto-execute",
+            rationale="r",
+        )
+
+
+def test_final_decision_invalid_policy_applied_rejects() -> None:
+    with pytest.raises(ValidationError):
+        FinalDecision(
+            outcome="EXECUTE_ISOLATION",
+            policy_applied="majority-rule",  # type: ignore[arg-type]  # not a valid policy
+            rationale="r",
+        )
+
+
+def test_final_decision_invalid_execution_status_rejects() -> None:
+    with pytest.raises(ValidationError):
+        FinalDecision(
+            outcome="EXECUTE_ISOLATION",
+            policy_applied="auto-execute",
+            rationale="r",
+            executed_at=UTC_LATER,
+            execution_status="ok",  # type: ignore[arg-type]  # should be success/failed/partial
+        )
+
+
+# ---------------------------------------------------------------------------
+# Incident.host strong typing (v1.1.0 release)
+# Closes TD-01 from the now-retired TECHNICAL_DEBT.md.
+# ---------------------------------------------------------------------------
+
+
+def test_incident_host_dict_with_wrong_key_rejects() -> None:
+    """A dict with a typo on the host_id key must reject at construction
+    (under the old dict[str, Any] typing, this would have passed silently)."""
+    with pytest.raises(ValidationError):
+        Incident(
+            incident_id="INC-2026-04-30-009",
+            created_at=UTC_NOW,
+            updated_at=UTC_LATER,
+            tier=Tier.T0,
+            state=IncidentState.RECEIVED,
+            host={"hsot_id": "WIN-VICTIM-01"},  # type: ignore[arg-type]  # typo
+            alert=_normalized_alert(),
+            proposed_actions=[],
+        )
+
+
+def test_incident_host_compatible_dict_validates_as_host_info() -> None:
+    """Pydantic coerces a valid dict into HostInfo automatically."""
+    i = Incident(
+        incident_id="INC-2026-04-30-010",
+        created_at=UTC_NOW,
+        updated_at=UTC_NOW,
+        tier=Tier.T1,
+        state=IncidentState.RECEIVED,
+        host={"id": "WIN-VICTIM-01", "criticality": "standard"},  # type: ignore[arg-type]
+        alert=_normalized_alert(),
+        proposed_actions=[],
+    )
+    assert isinstance(i.host, HostInfo)
+    assert i.host.criticality == Criticality.STANDARD

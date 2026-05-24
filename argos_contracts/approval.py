@@ -1,4 +1,8 @@
-"""Approval contracts. What flows through the notification system (email v1, multi-channel future)."""
+"""Approval contracts. What flows through the multi-channel notification system per ADR-0007 v2.
+
+Channels active in v1: Telegram (primary, t=0) + Discord (visibility, t=0)
++ Twilio Voice (escalation, t=60s) + Email (post-facto summary).
+"""
 
 from datetime import datetime
 
@@ -16,7 +20,8 @@ class ApprovalRequest(BaseModel):
     Reference: ADR-0003, ADR-0005.
 
     Owner: Notification service (P1).
-    Consumer: Email/Slack/Telegram channel implementations.
+    Consumer: Telegram / Discord / Twilio Voice / Email channel implementations
+              (per ADR-0007 v2).
     """
 
     incident_id: str

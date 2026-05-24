@@ -1,7 +1,7 @@
 """Incident state machine. Lives in Redis, consumed by Streamlit, persisted to OpenSearch."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -14,7 +14,7 @@ from argos_contracts.enums import (
     NotificationChannelType,
     Tier,
 )
-from argos_contracts.triage import TriageResponse
+from argos_contracts.triage import HostInfo, TriageResponse
 
 
 class ProposedAction(BaseModel):
@@ -38,7 +38,7 @@ class ApproverState(BaseModel):
     status: ApproverStatus = ApproverStatus.PENDING
     responded_at: datetime | None = None
     latency_seconds: float | None = None
-    channel: NotificationChannelType = NotificationChannelType.EMAIL
+    channel: NotificationChannelType = NotificationChannelType.TELEGRAM
 
     _validate_responded_at = field_validator("responded_at")(ensure_tz_aware)
 
@@ -57,26 +57,30 @@ class ConsolidationWindow(BaseModel):
     _validate_dts = field_validator("started_at", "ended_at")(ensure_tz_aware)
 
 
-class FinalDecision(BaseModel):
-    """Final decision after approval flow completes (or auto-executes)."""
+FinalOutcome = Literal["EXECUTE_ISOLATION", "NO_ACTION", "REVERTED"]
+PolicyApplied = Literal[
+    "auto-execute",
+    "unanimous-approve",
+    "conservative-wins",
+    "two-person-rule",
+    "timeout-escalation",
+]
+ExecutionStatus = Literal["success", "failed", "partial"]
 
-    outcome: str = Field(
-        ...,
-        description="'EXECUTE_ISOLATION' | 'NO_ACTION' | 'REVERTED'",
-    )
-    policy_applied: str = Field(
-        ...,
-        description=(
-            "'auto-execute' | 'unanimous-approve' | 'conservative-wins' | "
-            "'two-person-rule' | 'timeout-escalation'"
-        ),
-    )
+
+class FinalDecision(BaseModel):
+    """Final decision after approval flow completes (or auto-executes).
+
+    Note: the three string fields below are typed as ``Literal[...]`` to
+    catch typos at construction time (Streamlit Approval Console and
+    audit-log consumers branch on these values).
+    """
+
+    outcome: FinalOutcome
+    policy_applied: PolicyApplied
     rationale: str
     executed_at: datetime | None = None
-    execution_status: str | None = Field(
-        None,
-        description="'success' | 'failed' | 'partial'",
-    )
+    execution_status: ExecutionStatus | None = None
 
     _validate_executed_at = field_validator("executed_at")(ensure_tz_aware)
 
@@ -92,7 +96,7 @@ class Incident(BaseModel):
     Reference: OPEN_QUESTIONS_RESOLUTION.md Q4.2 (canonical schema).
     """
 
-    schema_version: str = Field(default="1.0")
+    schema_version: str = Field(default="1.1")
     incident_id: str = Field(
         ...,
         pattern=r"^INC-\d{4}-\d{2}-\d{2}-\d{3}$",
@@ -102,7 +106,7 @@ class Incident(BaseModel):
     updated_at: datetime
     tier: Tier
     state: IncidentState
-    host: dict[str, Any]  # uses HostInfo-compatible structure
+    host: HostInfo
     alert: NormalizedAlert
     llm_analysis: TriageResponse | None = Field(
         None,
