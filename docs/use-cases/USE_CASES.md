@@ -170,9 +170,9 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 - **Decision Engine action:**
   1. Immediately applies throttle on offending process (CPU/IO limits).
   2. Triggers proactive disk snapshot.
-  3. Sends approval requests through the multi-channel chain defined in ADR-0007 to all 4 team members (Telegram bot con botones inline + ntfy.sh push + Slack webhook en paralelo a t=0; llamada Twilio con DTMF como escalación a t=60s si nadie respondió).
+  3. Sends approval requests through the multi-channel chain defined in ADR-0007 v2 to all 4 team members (Telegram bot con botones inline + Discord webhook con `@mention` de role en paralelo a t=0; llamada Twilio con DTMF como escalación a t=60s si nadie respondió).
   4. Starts 3-minute countdown with conflict detection.
-  5. Email post-facto resume goes to all approvers after final decision (legacy `EmailChannel`, post-facto notification only, per ADR-0007).
+  5. Email post-facto resume goes to all approvers after final decision (`EmailChannel`, post-facto notification only, per ADR-0007 v2).
 - **The split-brain happens here:**
   - **Enzo (P1) at +18s:** clicks "Reject — false positive" (deliberately, per script).
   - **P2 at +35s:** clicks "Approve isolation".
@@ -200,7 +200,7 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 | 1:00 | "Score 0.74 — anomalous but not certain. Tier T2. This requires human approval." | Tier badge, score visible |
 | 1:15 | "But before any human looks at it, two things happen automatically: throttle and snapshot." | Show throttle indicator + snapshot timestamp |
 | 1:30 | "Encryption velocity drops 80%. Forensic state preserved. Now we wait — but we wait safely." | Velocity graph drops |
-| 1:45 | "Four team members get the request via Telegram, ntfy and Slack in parallel. Watch what happens." | Show 4 phones with Telegram inline buttons + Slack channel mirror |
+| 1:45 | "Four team members get the request via Telegram and Discord in parallel. Watch what happens." | Show 4 phones with Telegram inline buttons + Discord channel mirror with role mention |
 | 2:00 | Enzo clicks **Reject**. | Console shows row 1 turn red |
 | 2:15 | P2 clicks **Approve**. | Console shows row 2 turn green. Banner: "CONFLICT DETECTED" |
 | 2:30 | "We have a split-brain. The system started a 60-second consolidation window." | Countdown timer visible |
@@ -222,17 +222,18 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 
 ### UC-04 — Production Database (two-person rule)
 
-**Purpose:** Show governance and compliance vocabulary. Demonstrate that not all hosts are equal — production-critical systems require additional authorization per ADR-0003.
+**Purpose:** Show governance and compliance vocabulary. Demonstrate that not all hosts are equal — el host que aloja la **base PostgreSQL de producción** (activo defendido por ARGOS) requiere autorización adicional per ADR-0003.
 
 #### Attack details
 
-- **Target:** Linux Ubuntu Server VM, tagged in Wazuh as `criticality=production-critical` (acts symbolically as "production database server").
-- **Source:** Atomic Red Team T1490 — shadow copy deletion equivalent on Linux (`btrfs` snapshot deletion or `lvm` snapshot removal).
+- **Target:** Linux Ubuntu Server VM con **PostgreSQL 15** corriendo (esquema `argos_demo_prod` con tablas employees / payroll / customers / invoices / payments y datos sintéticos representativos). Host tagged en Wazuh como `criticality=production-critical` per OPEN_QUESTIONS_RESOLUTION §Q2.
+- **Source:** Atomic Red Team T1490 — shadow copy deletion equivalent on Linux + `pg_dump` exfil simulation.
 - **Behavior chain:**
   1. SSH access (legitimate-looking but using stolen credential simulation).
-  2. Snapshot deletion: `btrfs subvolume delete /backup/snapshots/*`.
-  3. Tar archive of `/var/lib/db/` to staging directory.
-  4. (Attack interrupted by detection)
+  2. Snapshot deletion: `btrfs subvolume delete /backup/snapshots/*` y borrado de los `pg_dump` exports en `/var/backups/postgres/*.sql`.
+  3. Tar archive de `/var/lib/postgresql/15/main/` (data directory de PostgreSQL) a staging.
+  4. Intento de encriptación de los dumps SQL antes de exfil (signal claro para ML).
+  5. (Attack interrupted by detection)
 
 #### Expected system behavior
 
@@ -261,7 +262,7 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 
 | Time | Narrator | Screen |
 |------|----------|--------|
-| 0:00 | "Some hosts are more equal than others. This database server is tagged production-critical." | Show host inventory with tag |
+| 0:00 | "Our crown-jewel asset: PostgreSQL en producción con payroll, customers, invoices. Tagged production-critical." | Show host inventory + `\dt` output del esquema argos_demo_prod |
 | 0:15 | P4 launches attack: `python attack_db_server.py` | Terminal |
 | 0:30 | "Detection fires from Layers 1 and 2. Tier T1, normally auto-execute." | Dashboard lights up |
 | 0:45 | "But this host requires two-person rule. The system asks for *two* approvals, not one." | Console shows counter "0 of 2" |
@@ -453,7 +454,7 @@ Risks specific to running these use cases live:
 | VM crashes mid-demo | UC-01, UC-04, UC-05 | Snapshot before demo; quick restore script ready |
 | Split-brain choreography fails (P4 forgets to NOT respond) | UC-03 | Written script per person; rehearse timing; pre-recorded backup |
 | Two-person rule misconfigured | UC-04 | Verify host tag in Wazuh before demo starts |
-| Network issue prevents primary channel delivery | UC-03, UC-04 | Multi-canal en paralelo (Telegram + ntfy + Slack) por ADR-0007 reduce dependencia a una sola red; MailHog local para el email post-facto |
+| Network issue prevents primary channel delivery | UC-03, UC-04 | Multi-canal en paralelo (Telegram + Discord) por ADR-0007 v2 reduce dependencia a una sola red; Twilio Voice escalación a t=60s; MailHog local para el email post-facto |
 
 ---
 

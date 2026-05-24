@@ -27,7 +27,7 @@ This file lists every such commitment with its actual current status and the evi
 | Layer 1 — Sigma rules | `detection/` | 📅 Folder + README, no rules yet | `detection/sigma-rules/` does not exist. 0 Sigma rules committed. |
 | Layer 2 — ML anomaly | `ml/` | 📅 Folder + README, no code | `ml/features/`, `ml/models/`, `ml/consumer/` not created yet. |
 | Layer 3 — Canary deception | `deception/` | 📅 Folder + README, no code | No generator, no FIM configs. |
-| Layer 4 — LLM Triage | `llm-triage/` | 🚧 Scaffolding only | `llm-triage/llm_client/` has `base.py`, `deepseek.py`, `qwen.py`, `factory.py` — all skeleton classes, no working API calls. |
+| Layer 4 — LLM Triage | `llm_triage/` | 🚧 Scaffolding only | `llm_triage/llm_client/` has `base.py`, `openai_client.py`, `llama_local.py`, `factory.py` (per ADR-0001 v2) — all skeleton classes, no working API calls. |
 | SOAR / HITL | `soar/` | 📅 Folder + README, no code | No decision engine, no state machine, no notification channels. |
 | Lab / IaC | `lab/` | 📅 Folder + README, no Vagrantfile | No VMs provisioned yet. |
 | UI | `ui/` | 📅 Folder + README, no code | No Streamlit app. |
@@ -61,13 +61,13 @@ This file lists every such commitment with its actual current status and the evi
 ### D-4 · LLM API cost tracking
 
 - **Mandated by:** `ADR-0001` (target <$20 USD total) + `data-handling.md` §4 (audit log per call with `cost_estimated_usd`).
-- **Status:** ❌ **Not implemented.** No `argos-llm-calls-{YYYY-MM}` index, no API calls made yet (the only LLM-related code is the abstract `LLMClient` interface in `llm-triage/llm_client/`). Cost-to-date: **$0**.
+- **Status:** ❌ **Not implemented.** No `argos-llm-calls-{YYYY-MM}` index, no API calls made yet (the only LLM-related code is the abstract `LLMClient` interface in `llm_triage/llm_client/`). Cost-to-date: **$0**.
 - **Action when implemented:** add a row here with monthly burn-rate.
 
 ### D-5 · `argos_contracts` versioning
 
-- **Mandated by:** `CONTRACTS_SPECIFICATION.md` + `TECHNICAL_DEBT.md`.
-- **Status:** ✅ `__version__ = "1.0.0"` in `argos_contracts/__init__.py`. ❌ **No GitHub release tag.** TD-01 and TD-02 from `TECHNICAL_DEBT.md` will trigger a v1.1.0 bump (breaking) when applied.
+- **Mandated by:** `CONTRACTS_SPECIFICATION.md`.
+- **Status:** ✅ `__version__ = "1.1.0"` in `argos_contracts/__init__.py`. TD-01 (`Incident.host` typed as `HostInfo`) y TD-02 (`FinalDecision` con `Literal[...]`) ya están **resueltos** en código — `TECHNICAL_DEBT.md` fue eliminado del repo en consecuencia. Tag de release pendiente en GitHub.
 
 ### D-6 · Contract tests count
 

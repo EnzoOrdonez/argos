@@ -45,7 +45,7 @@ Formal written report. Required sections (verbatim from the course brief):
 | Metodología | `docs/CONTEXT.md` §6 (plan 14 semanas) + ADRs 0001-0007 |
 | Resultados / evidencias técnicas | `evaluation/` (when produced) + `docs/use-cases/USE_CASES.md` + screenshots from `ui/` |
 | Análisis de riesgos | `docs/architecture/THREAT_MODEL.md` (full STRIDE + FMEA + Risk Register) |
-| Recomendaciones | `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md` §14 (Future work) + `docs/architecture/TECHNICAL_DEBT.md` |
+| Recomendaciones | `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md` §14 (Future work) |
 | Conclusiones | informe-final-tecnico.md (Week 13 deliverable, lives in `evaluation/reports/`) |
 | Referencias | `README.md` §"References" + `docs/CONTEXT.md` §14 |
 

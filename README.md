@@ -16,7 +16,7 @@ A defense-in-depth ransomware detection and response system combining rule-based
 |--------|:------:|
 | Architecture & design (SAD, threat model, 7 ADRs, contracts spec, use cases) | ✅ Complete |
 | `argos_contracts/` cross-team Pydantic models (64 validation tests) | ✅ Shipped |
-| ADR-0007 multi-channel notification (Telegram + ntfy + Slack + Twilio voice) | ✅ Architecturally decided · 🚧 implementation pending |
+| ADR-0007 v2 multi-channel notification (Telegram + Discord + Twilio voice + email post-facto) | ✅ Architecturally decided · 🚧 implementation pending |
 | Layers 1 (rules), 2 (ML), 3 (deception), 4 (LLM) implementation | 🚧 Pending |
 | Gates 1 (W5), 2 (W7), 3 (W9) | ⚠️ Behind schedule — gates re-baselined below |
 
@@ -83,10 +83,12 @@ ADR-0003 makes automation depth a function of *detection confidence* and *action
 
 | Tier | Trigger | Confidence | Action | Approval |
 |:----:|---------|:----------:|--------|----------|
-| 🟢 **T0** | Canary alone, OR layers 1+2+3 fire together | ≥ 0.95 | Immediate auto-isolation + snapshot | Post-facto with revert button |
-| 🟢 **T1** | Layers 1+2 corroborate (no canary) | 0.80 – 0.95 | Immediate auto-isolation + snapshot | Post-facto with revert button |
-| 🟡 **T2** | Single layer, high score | 0.60 – 0.80 | **Throttle + snapshot now**, full isolation pending 3-min approval | Pre-execution with timeout |
-| 🔵 **T3** | Low corroboration | 0.40 – 0.60 | LLM-enriched notification only | Manual analyst review |
+| 🟢 **T0** | Canary alone, OR layers 1+2+3 fire together | ≥ 0.95 ⁽*⁾ | Immediate auto-isolation + snapshot | Post-facto with revert button |
+| 🟢 **T1** | Layers 1+2 corroborate (no canary) | 0.80 – 0.95 ⁽*⁾ | Immediate auto-isolation + snapshot | Post-facto with revert button |
+| 🟡 **T2** | Single layer, high score | 0.60 – 0.80 ⁽*⁾ | **Throttle + snapshot now**, full isolation pending 3-min approval | Pre-execution with timeout |
+| 🔵 **T3** | Low corroboration | 0.40 – 0.60 ⁽*⁾ | LLM-enriched notification only | Manual analyst review |
+
+⁽*⁾ **Thresholds preliminares.** Los valores 0.95 / 0.80 / 0.60 / 0.40 son working values pendientes de calibración empírica sobre el dataset descrito en `OPEN_QUESTIONS_RESOLUTION.md` §Q5 (~100 alertas ransomware + ~500 benignas). Pueden moverse ±0.05 tras la calibración. Ver `PROJECT_STATUS.md` D-1.
 
 **Why T2 is interesting:** modern ransomware encrypts ~25,000 files/min. The throttle applied during the approval window cuts that rate by ≥80% (target validated by EV-03), bounding damage even if the human is unavailable. If the timeout expires without a response, the system auto-executes — there is no scenario where the attacker outruns the clock.
 
@@ -124,7 +126,7 @@ Full STRIDE + FMEA threat model with ~50 analyzed threats: [`docs/architecture/T
 | Module | Status | Notes |
 |--------|:------:|-------|
 | [`argos_contracts/`](./argos_contracts/) — shared Pydantic v2 models | ✅ shipped | 25 cross-team contracts (9 enums + 16 models/constants). 64 validation tests. UTC-aware timestamps enforced. MITRE whitelist hardens LLM output against hallucination. |
-| [`llm-triage/`](./llm-triage/) — Layer 4 (FastAPI + RAG + LLM client) | 🚧 scaffolding | Module skeleton + vendor-agnostic factory pattern. Implementation Weeks 2–8. |
+| [`llm_triage/`](./llm_triage/) — Layer 4 (FastAPI + RAG + LLM client) | 🚧 scaffolding | Module skeleton + vendor-agnostic factory pattern. |
 | `lab/`, `detection/`, `ml/`, `deception/`, `soar/`, `ui/`, `attack-simulation/`, `evaluation/` | 📅 planned | See roadmap below. |
 
 ---
@@ -236,7 +238,7 @@ argos/
 │   ├── enums.py               #     Severity, Tier, Layer, IncidentState, ...
 │   └── tests/                 #     64 validation tests
 │
-├── llm-triage/                # 🚧 Layer 4 — FastAPI + RAG + LLM client (scaffolding)
+├── llm_triage/                # 🚧 Layer 4 — FastAPI + RAG + LLM client (scaffolding)
 │   ├── api/                   #     POST /triage endpoint
 │   ├── llm_client/            #     Vendor-agnostic: DeepSeek + Qwen via factory
 │   ├── prompts/               #     Jinja2 templates (system, user, injection_guard)
@@ -265,7 +267,7 @@ argos/
 | Lead · LLM/SOAR · Coordinator | [@EnzoOrdonez](https://github.com/EnzoOrdonez) |
 | ML Engineer | Sebastian Montenegro |
 | Detection Engineer · Deception | Angeles Castillo |
-| Infrastructure · UI · Evaluation | Loli Jara |
+| Infrastructure · UI · Evaluation | Diego Jara |
 
 ---
 

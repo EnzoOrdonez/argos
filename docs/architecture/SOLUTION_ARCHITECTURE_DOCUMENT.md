@@ -9,7 +9,7 @@
 | Status | Baseline · Approved at Kickoff |
 | Course | Tópicos Avanzados de Ciberseguridad |
 | Term | 2026-1 |
-| Owner | P1 (Enzo Cáceres) |
+| Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
 | Related documents | `PROJECT_BRIEF.md`, `CONTEXT.md`, `architecture_diagram.html`, `THREAT_MODEL.md`, ADRs 0001-0006 |
 
@@ -181,10 +181,12 @@ Per `ADR-0003`, alerts are classified into four tiers based on which detection l
 
 | Tier | Triggered by | Confidence | Action | Email |
 |------|--------------|------------|--------|-------|
-| **T0 — Critical confirmed** | Layer 3 (canary) alone, or Layers 1+2+3 simultaneous | ≥0.95 | Auto-isolate immediate | Post-facto with "Revert" button |
-| **T1 — High confirmed** | Layer 1 + Layer 2 corroborate (no canary) | 0.80–0.95 | Auto-isolate immediate | Post-facto with "Revert" button |
-| **T2 — Medium uncertain** | Layer 1 alone with high-fidelity rule, or Layer 2 alone with very high score | 0.60–0.80 | Pending with 3-min countdown | Pre-approval with buttons |
-| **T3 — Low uncertain** | Layer 2 medium score, Layer 1 with experimental rule | 0.40–0.60 | Notification only, no action | LLM analysis to analyst, no execute button |
+| **T0 — Critical confirmed** | Layer 3 (canary) alone, or Layers 1+2+3 simultaneous | ≥0.95 ⁽*⁾ | Auto-isolate immediate | Post-facto with "Revert" button |
+| **T1 — High confirmed** | Layer 1 + Layer 2 corroborate (no canary) | 0.80–0.95 ⁽*⁾ | Auto-isolate immediate | Post-facto with "Revert" button |
+| **T2 — Medium uncertain** | Layer 1 alone with high-fidelity rule, or Layer 2 alone with very high score | 0.60–0.80 ⁽*⁾ | Pending with 3-min countdown | Pre-approval with buttons |
+| **T3 — Low uncertain** | Layer 2 medium score, Layer 1 with experimental rule | 0.40–0.60 ⁽*⁾ | Notification only, no action | LLM analysis to analyst, no execute button |
+
+⁽*⁾ **Thresholds preliminares (working values).** Pendientes de calibración empírica per `OPEN_QUESTIONS_RESOLUTION.md` §Q5. Dataset target: ~100 alertas ransomware + ~500 benignas; curvas precision-recall por capa; thresholds finales fijados para optimizar semánticas de tier (T0 P≥99%, T1 P≥90%/R≥80%, T2 P≥70%/R≥95%, T3 R≥99%). Deliverable: `evaluation/tier_calibration.ipynb`. Status actual: pendiente (ver `PROJECT_STATUS.md` §D-1).
 
 ### 6.2 Fusion logic per layer combination
 
@@ -212,7 +214,7 @@ When an alert classifies as T2:
 2. **Immediately** triggers two non-destructive protective actions:
    - **Throttle of offending process** (CPU/IO limits via `cpulimit`/`ionice` on Linux, `Set-Process` priority + `Process Mitigation Policy` rate-limits on Windows). Reduces encryption velocity from ~25,000 files/min to ~100-500 files/min.
    - **Proactive disk snapshot** (VSS on Windows, `dd` on Linux). Preserves forensic evidence and provides recovery point if attack is confirmed.
-3. Notification service sends approval requests through the **multi-channel chain defined in `ADR-0007`** (Telegram bot with inline buttons + ntfy.sh push + Slack webhook in parallel at t=0; Twilio Voice DTMF escalation at t=60s if no response). Each channel carries a **JWT-signed token** for "Approve isolation" / "Reject — false positive". Email is retained as post-facto summary channel only (not primary), per ADR-0007.
+3. Notification service sends approval requests through the **multi-channel chain defined in `ADR-0007` v2** (Telegram bot with inline buttons + Discord webhook with role mention in parallel at t=0; Twilio Voice DTMF escalation at t=60s if no response). Each channel carries a **JWT-signed token** for "Approve isolation" / "Reject — false positive". Email is retained as post-facto summary channel only (not primary), per ADR-0007 v2.
 4. Approval API receives clicks via `POST /approval/{token}`, validates JWT, updates state.
 5. Multiple recipients may respond — split-brain resolution per ADR-0006 (see §6.4).
 6. **On approval:** SOAR triggers full containment playbook (isolation + kill). Throttle and snapshot already in place.
@@ -266,7 +268,7 @@ Single endpoint `POST /triage` accepting an `AlertContext` (alert payload, recen
 
 #### 7.2 Mini-RAG corpus
 
-Reuses the retrieval pipeline from CloudRAG (BM25 + BGE-large embeddings + Reciprocal Rank Fusion + cross-encoder reranker). Approximately 70% of the code is inherited; the corpus is 100% new.
+Hybrid retrieval pipeline implementado in-house siguiendo el patrón industrial estándar: **BM25 (léxico) + BGE-large embeddings (denso) + Reciprocal Rank Fusion (RRF)**. El cross-encoder reranker se descarta del scope v1 por relación marginal de costo/beneficio (~5-10% mejora de precision@k a cambio de ~300ms de latencia por consulta y otro modelo a mantener). El corpus es 100% nuevo para ARGOS.
 
 **Indexed sources:**
 - MITRE ATT&CK STIX bundle (techniques, mitigations, detections)
@@ -312,7 +314,7 @@ Validation: Pydantic models enforce schema. Hallucinated MITRE technique IDs are
 - **Host isolation.** `iptables -A OUTPUT -j DROP` (Linux) or PowerShell `New-NetFirewallRule -Action Block` (Windows). Excepted: management network for analyst access.
 - **Process kill.** Identify offending PID from FIM/Sysmon event, `kill -9` (Linux) or `Stop-Process -Force` (Windows).
 - **Disk snapshot.** Volume Shadow Copy (Windows) or `dd` of relevant partitions (Linux). Stored on isolated forensic volume.
-- **Notification.** Email + Slack webhook. The notification payload includes the LLM analysis output for immediate analyst context.
+- **Notification.** Multi-canal per ADR-0007 v2 (Telegram + Discord active at t=0; Twilio Voice DTMF escalation at t=60s; email post-facto). The notification payload includes the LLM analysis output for immediate analyst context.
 
 All actions are logged to OpenSearch for the forensic timeline.
 
@@ -407,7 +409,7 @@ All natively captured by Wazuh + OpenSearch — no extra work, only reporting.
 3. **Parallel detection.** Layer 3 (canary) fires immediately with high confidence. Layer 1 matches T1486 Sigma rule. Layer 2 ML detects entropy spike + crypto syscall pattern.
 4. **Decision fusion.** Decision Engine receives all three signals within the same 5-minute window. Logic: Layer 3 + corroboration → maximum severity → immediate isolation playbook.
 5. **LLM enrichment.** FastAPI receives full context. RAG retrieves MITRE T1486 + NIST 800-61 ransomware playbook. DeepSeek-V3 generates structured analysis with technique, severity, recommended action, and correlating IoCs.
-6. **Automated containment.** Host isolated via firewall rules. Offending PID killed. Disk snapshot captured for forensics. Team notified via Slack with LLM analysis attached.
+6. **Automated containment.** Host isolated via firewall rules. Offending PID killed. Disk snapshot captured for forensics. Team notified via Telegram + Discord with LLM analysis attached (per ADR-0007 v2).
 7. **Analyst review.** Streamlit UI shows alert + LLM analysis side-by-side with citations. OpenSearch dashboard updates MITRE coverage heatmap and time-to-detect histogram.
 
 ---
@@ -546,7 +548,7 @@ Items considered and deferred. Documented to demonstrate awareness:
 
 1. **Progressive containment (escalating response).** Throttle process before kill, kill before isolate. Pattern reduces collateral damage on false positives. Deferred due to scope.
 2. **Hierarchical approver authority.** Approvers with formal ranks; senior overrides junior. Deferred — requires role model formalization.
-3. **Multi-channel notifications.** ✅ Implemented in `ADR-0007` for v1: Telegram (primary), ntfy.sh, Slack/Discord, Twilio Voice DTMF. Foundation: `ADR-0005` `NotificationChannel` abstraction. Future channels (Microsoft Teams, PagerDuty escalation policies) remain deferred but trivial to add via the same interface.
+3. **Multi-channel notifications.** ✅ Implemented in `ADR-0007` v2 for v1: Telegram (primary), Discord (team visibility), Twilio Voice DTMF (escalation), Email (post-facto). Foundation: `ADR-0005` `NotificationChannel` abstraction. Future channels (Microsoft Teams, PagerDuty escalation policies, WhatsApp Business) remain deferred but trivial to add via the same interface.
 4. **Local LLM inference** (Llama 3.1, Mistral via Ollama). Foundation laid by ADR-0001 LLMClient abstraction, implementation deferred until hardware available.
 5. **High availability for Wazuh manager.** Currently SPOF; production would deploy cluster mode.
 6. **Automated red-team retraining.** Adversarial samples generated by AI to continuously test detection. Research-grade extension.

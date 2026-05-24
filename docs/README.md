@@ -1,99 +1,109 @@
-# ARGOS — Documentation
+# ARGOS — Documentación
 
 **Adaptive Ransomware Guard with Orchestrated Surveillance**
 
-Layered ransomware detection and response system combining rule-based detection (Sigma + Wazuh), ML anomaly detection, deception (canary files), and LLM-assisted triage with human-in-the-loop SOAR.
+Sistema de detección y respuesta a ransomware con defensa en profundidad: detección por reglas (Sigma + Wazuh), detección de anomalías ML, engaño (canary files) y triage asistido por LLM con SOAR human-in-the-loop.
 
 > Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
+> **Entrega final: 13 de junio de 2026**
 
 ---
 
-## Where to start
+## Por dónde empezar
 
-| If you are... | Read this first |
-|---------------|-----------------|
-| Evaluating the project in 90 seconds | [`PROJECT_BRIEF.md`](./PROJECT_BRIEF.md) |
-| A new team member onboarding | [`CONTEXT.md`](./CONTEXT.md) |
-| An architect reviewing the design | [`architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) |
-| Trying to understand security posture | [`architecture/THREAT_MODEL.md`](./architecture/THREAT_MODEL.md) |
-| Looking for a specific design decision | [`decisions/README.md`](./decisions/README.md) |
-| Wanting to see the system visually | [`architecture/architecture_diagram.html`](./architecture/architecture_diagram.html) |
-| Wanting to know what the demo will show | [`use-cases/USE_CASES.md`](./use-cases/USE_CASES.md) |
-
----
-
-## Documentation map
-
-### Top level
-
-- **`PROJECT_BRIEF.md`** — One-page executive summary. The fastest way to understand what ARGOS is and why it matters.
-- **`CONTEXT.md`** — Complete team onboarding: vision, scope, stack, division of labor, plan, conventions, repo structure.
-
-### Architecture
-
-- **`architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`** — Solution Architecture Document (SAD). Full technical specification of every component, interaction, and cross-cutting concern. The canonical reference for "how does ARGOS work".
-- **`architecture/architecture_diagram.html`** — Interactive architecture diagram with all 4 detection layers, SOAR, LLM triage, response automation, and approval workflow visualized. Open in any browser.
-- **`architecture/THREAT_MODEL.md`** — STRIDE security analysis (~50 threats), FMEA reliability analysis, project Risk Register, and 10 testable resilience properties.
-
-### Decisions
-
-- **`decisions/README.md`** — Index of all Architecture Decision Records (ADRs) with status and summary.
-- **`decisions/0001`** through **`0006`** — Individual ADRs documenting specific architectural decisions with rationale, alternatives considered, and consequences.
-- **`decisions/OPEN_QUESTIONS_RESOLUTION.md`** — Closure document resolving minor open questions in batch (Q1-Q9), including the corrected T2 timeout behavior.
-
-### Use cases
-
-- **`use-cases/USE_CASES.md`** — 5 demo scenarios (UC-01 through UC-05) with detailed narration scripts + 7 evaluation scenarios (EV-01 through EV-07) for system robustness testing.
-
-### Team
-
-- **`team/standup-template.md`** — Template for weekly Monday standups.
+| Si eres... | Lee esto primero |
+|------------|------------------|
+| Evaluador con 90 segundos | [`PROJECT_BRIEF.md`](./PROJECT_BRIEF.md) |
+| Integrante del equipo (onboarding) | [`CONTEXT.md`](./CONTEXT.md) |
+| Arquitecto revisando el diseño | [`architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) |
+| Revisor de postura de seguridad | [`architecture/THREAT_MODEL.md`](./architecture/THREAT_MODEL.md) |
+| Buscando una decisión arquitectónica específica | [`decisions/README.md`](./decisions/README.md) |
+| Quieres ver el sistema visualmente | [`architecture/argos_flow.html`](./architecture/argos_flow.html) o [`architecture/argos_flow.drawio`](./architecture/argos_flow.drawio) |
+| Quieres entender qué muestra el demo | [`use-cases/USE_CASES.md`](./use-cases/USE_CASES.md) |
+| Quieres ver responsabilidades por integrante | [`architecture/argos_flow.html`](./architecture/argos_flow.html) |
 
 ---
 
-## Project status
+## Mapa de la documentación
 
-| Phase | Status |
-|-------|--------|
-| Architecture & design | ✅ Complete (Week 1) |
-| Threat modeling | ✅ Complete (Week 1) |
-| Use case specification | ✅ Complete (Week 1) |
-| Implementation | 🚧 Starting Week 2 |
-| Evaluation | 📅 Weeks 9-12 |
-| Demo & exposition | 📅 Week 14 |
+### Nivel superior
+
+- **`PROJECT_BRIEF.md`** — Resumen ejecutivo de una página. La forma más rápida de entender qué es ARGOS y por qué importa.
+- **`CONTEXT.md`** — Onboarding completo del equipo: visión, alcance, stack, división del trabajo, plan, convenciones, estructura del repo.
+- **`PROJECT_STATUS.md`** — Snapshot honesto de qué está realmente entregado vs. qué prometen los demás documentos. Cierra la brecha de "procesos mandatados sin evidencia de ejecución".
+
+### Arquitectura
+
+- **`architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`** — Solution Architecture Document (SAD). Especificación técnica completa de cada componente, interacción y preocupación transversal. La referencia canónica para "cómo funciona ARGOS".
+- **`architecture/argos_flow.html`** y **`architecture/argos_flow.drawio`** — Flujo del sistema con asignación visible por integrante. Pieza de presentación.
+- **`architecture/THREAT_MODEL.md`** — Análisis STRIDE (~50 amenazas), FMEA de fiabilidad, Risk Register del proyecto y 10 propiedades de resiliencia verificables.
+
+### Decisiones
+
+- **`decisions/README.md`** — Índice de todos los Architecture Decision Records (ADRs) con estado y resumen.
+- **`decisions/0001`** a **`0007`** — ADRs individuales que documentan cada decisión arquitectónica con racional, alternativas consideradas y consecuencias.
+- **`decisions/OPEN_QUESTIONS_RESOLUTION.md`** — Documento de cierre que resuelve preguntas menores en lote (Q1-Q9), incluyendo el comportamiento corregido del timeout T2.
+
+### Casos de uso
+
+- **`use-cases/USE_CASES.md`** — Escenarios demo (UC-01 a UC-05) con guiones de narración + escenarios de evaluación (EV-01 a EV-07) para pruebas de robustez del sistema.
+
+### Cumplimiento del curso
+
+- **`EVALUATION_CRITERIA.md`** — Rúbrica del curso (Informe Final Técnico + Presentación + Implementación Funcional + checkpoints) con mapeo de cada sección requerida a artefactos del repo.
+- **`data-handling.md`** — Política de manejo de datos sensibles que cruzan a APIs externas: qué se sanitiza, qué se audita, qué constituye violación.
+
+### Equipo
+
+- **`team/standup-template.md`** — Plantilla para standups semanales de lunes.
+
+---
+
+## Equipo y responsabilidades
+
+| Rol | Integrante | Responsabilidades principales |
+|-----|------------|-------------------------------|
+| **P1 · Líder · LLM/SOAR · Coordinación** | **Enzo Ordoñez Flores** | `argos_contracts` (entregado), Capa 4 LLM Triage completa (FastAPI + RAG + cliente vendor-agnostic), Motor SOAR + Tier Classifier, máquina de estados, Approval API con JWT, notificaciones multicanal, política conservative-wins y two-person rule, Consola de Aprobación en Streamlit, simulador de ransomware reproducible, playbooks de containment, heartbeat externo, coordinación general |
+| **P2 · Ingeniero ML** | **Sebastian Montenegro** | Capa 2 ML completa (Isolation Forest + One-Class SVM ensemble), feature extraction ventana 60s, recolección de baseline benigno, pipeline Redis consumer, calibración de thresholds (Q5 protocol), métricas A/B/C (P/R/F1 por capa, MITRE coverage, ablation), captura forense (process tree, hashes, command-line), modelo de datos de dashboards OpenSearch |
+| **P3 · Detección y Engaño** | **Angeles Castillo** | Capa 1: reglas Sigma YAML mapeadas a MITRE, conversión a Wazuh vía `sigma-cli`, uso del campo Sigma `level:` para clasificación de fidelidad. Capa 3: generador de canary files, configuración FIM whodata (Windows) y auditd (Linux). Validación 1-a-1 con Atomic Red Team y cadenas Caldera. Objetivo bonus: 2-4 PRs upstream aceptados en `SigmaHQ/sigma` |
+| **P4 · Infraestructura · UI base · Demo** | **Diego Jara** | Vagrantfile reproducible en menos de 30 min, despliegue de Wazuh Manager + OpenSearch + Redis, setup de Windows VM (Sysmon) y Linux VM (auditd), provisioning de PostgreSQL con datos sintéticos (activo defendido), UI base Streamlit (Alert Inspection + Audit & Forensics; la Consola de Aprobación la entrega P1), grabación y edición del video demo, coordinación de rehearsals |
+
+Cada integrante debe poder defender su capa en exposición. Regla operativa: P1 no escribe código de otros con Claude Code — puede ayudar con dudas, no escribir código por ellos (per `CONTEXT.md` §5).
+
+---
+
+## Estado del proyecto
+
+Snapshot detallado en [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
+
+| Componente | Estado |
+|------------|--------|
+| Diseño arquitectónico (SAD, threat model, 7 ADRs, contracts spec, use cases) | Completado |
+| `argos_contracts` (Pydantic v2 cross-team, 64 tests) | Entregado · v1.1.0 |
+| Capa 1 (Sigma + Wazuh) | Pendiente |
+| Capa 2 (ML anomalía) | Pendiente |
+| Capa 3 (Canary FIM) | Pendiente |
+| Capa 4 (LLM Triage) | Esqueletos + TODOs |
+| Motor SOAR + Approval API | Pendiente |
+| Lab Vagrant + Wazuh deployment | Pendiente |
+| Simulador de ransomware | Pendiente |
+| UI Streamlit + Approval Console | Pendiente |
+| Evaluación + métricas | Pendiente |
+| Video demo + exposición | Pendiente |
 
 ---
 
 ## Quick stats
 
-- **Architecture:** 4 detection layers + SOAR + LLM triage + Approval Workflow Console.
-- **Stack:** Wazuh, OpenSearch, Sigma, Sysmon, auditd, Atomic Red Team, Caldera, scikit-learn, FastAPI, Streamlit, Redis, DeepSeek/Qwen API.
-- **Documentation:** ~210 KB across 14 documents before any code written.
-- **Threats analyzed:** ~50 via STRIDE + FMEA.
-- **Architecture decisions:** 7 ADRs (6 accepted, 1 rejected) + 9 closure resolutions.
+- **Arquitectura:** 4 capas de detección + SOAR + LLM triage + Approval Workflow Console.
+- **Stack:** Wazuh, OpenSearch, Sigma, Sysmon, auditd, Atomic Red Team, Caldera, scikit-learn, FastAPI, Streamlit, Redis, GPT-4o-mini (primario) + Llama 3.1 local (fallback).
+- **Activo defendido:** PostgreSQL Production DB sobre Linux VM (criticality = production-critical).
+- **Documentación:** completa para fase de diseño antes de cualquier código escrito.
+- **Amenazas analizadas:** ~50 vía STRIDE + FMEA.
+- **Decisiones arquitectónicas:** 7 ADRs (6 aceptados, 1 rechazado) + 9 resoluciones de cierre.
 
 ---
 
-## Team
+## Licencia
 
-| Role | Owner |
-|------|-------|
-| Lead / LLM-SOAR / Coordinator | Enzo Cáceres (P1) |
-| ML Engineer | P2 (TBD) |
-| Detection Engineer | P3 (TBD) |
-| Infrastructure / UI / Evaluation | P4 (TBD) |
-
----
-
-## License
-
-TBD before public release at end of course (recommended: MIT).
-
-
----
-
-## New documents added in Week 7 audit pass
-
-- [`EVALUATION_CRITERIA.md`](./EVALUATION_CRITERIA.md) — Course rubric (Informe Final Técnico + Presentación + Implementación Funcional + W5/W7/W9 checkpoints) with mapping of each required section to artifacts in this repo.
-- [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) — Honest snapshot of what's actually shipped vs what every other doc commits the team to do. Closes the audit gap on "processes mandated but with no execution evidence".
-- [`data-handling.md`](./data-handling.md) — Closes T-030 mitigation: what crosses the trust boundary to DeepSeek/Qwen, concrete sanitization regex patterns, LLM response validation, audit trail policy.
+MIT — copyright Enzo Ordoñez Flores (ver `LICENSE`). Repositorio privado durante el curso, público al cierre.

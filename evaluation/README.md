@@ -56,7 +56,7 @@ evaluation/
 │   ├── 03-tier-calibration.ipynb   # ← mirrored from ml/; canonical lives here per Q5
 │   ├── 04-throttle-eff.ipynb       # EV-03
 │   ├── 05-latency.ipynb            # EV-04
-│   ├── 06-llm-injection.ipynb      # EV-05 adversarial probes (with llm-triage/)
+│   ├── 06-llm-injection.ipynb      # EV-05 adversarial probes (with llm_triage/)
 │   ├── 07-split-brain-policy.ipynb # EV-06
 │   └── 08-recovery-outage.ipynb    # EV-07
 ├── reports/
@@ -81,7 +81,7 @@ Read-only consumer:
 | **Consumes** | `MLScore` | OpenSearch (ML scoring history) |
 | **Consumes** | `FinalDecision` | Embedded in `Incident` |
 
-Discipline: parse every doc via `Incident.model_validate(opensearch_doc)`. If parsing fails, **the doc is dropped from the metric** and logged — never silently accepted as raw dict (this is what TECHNICAL_DEBT.md TD-01/TD-02 want to harden later).
+Discipline: parse every doc via `Incident.model_validate(opensearch_doc)`. If parsing fails, **the doc is dropped from the metric** and logged — never silently accepted as raw dict (resuelto en `argos_contracts` v1.1.0: `Incident.host: HostInfo` y `FinalDecision` con `Literal[...]`).
 
 ---
 
@@ -171,7 +171,7 @@ Target coverage: **scripts + glue, best-effort** (per SAD §13.5 tiered).
 | `ml/` | Trained models for ablation comparison | W7-9 |
 | `soar/` | Incident audit logs in OpenSearch | W7+ |
 | `attack-simulation/` | 10× UC-01 + UC-02 + UC-03 runs with consistent corpus | W9-11 |
-| `llm-triage/` | LLM verdicts with injected payloads for EV-05 | W10 |
+| `llm_triage/` | LLM verdicts with injected payloads for EV-05 | W10 |
 
 ---
 

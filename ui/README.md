@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P4 · Loli Jara** (Infra · UI · Eval) |
+| Owner | **P4 · Diego Jara** (Infra · UI · Eval) |
 | Status | 📅 Planned · Weeks 6-9 (Gate 2 v1 · Gate 3 Approval Console) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §9.2, [`docs/decisions/0006-split-brain-resolution.md`](../docs/decisions/0006-split-brain-resolution.md), [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) UC-03 (centerpiece visual) |
 
@@ -78,7 +78,7 @@ This layer is **read-only** w.r.t. contracts — it never writes any model, only
 | **Consumes** | `FinalDecision` | Embedded in `Incident.final_decision` — drives the banner at the end |
 | **Uses enums** | `Tier`, `IncidentState`, `ApproverStatus` | For color-coding (T0 red, T2 amber; pending yellow, approved green, rejected red, timeout grey) |
 
-**Discipline:** UI must never branch on string literals — always parse via the enums. This is what `TECHNICAL_DEBT.md` TD-02 is preparing for (when `FinalDecision.outcome` tightens to `Literal[...]`, the UI shouldn't break).
+**Discipline:** UI must never branch on string literals — always parse via the enums. `FinalDecision.outcome`, `policy_applied` y `execution_status` ya son `Literal[...]` desde `argos_contracts` v1.1.0, así que cualquier valor inesperado falla en construcción, no en runtime.
 
 ---
 
@@ -166,4 +166,4 @@ If any of the above fails, fallback to pre-recorded video (per `THREAT_MODEL.md`
 - ADR-0006 (split-brain visualization is the centerpiece).
 - ADR-0007 (multi-channel — UI shows which channel each approver used).
 - USE_CASES UC-03 (centerpiece scenario the Approval Console serves).
-- TECHNICAL_DEBT.md TD-02 (FinalDecision string fields — coordinate before any Literal tightening).
+- `argos_contracts` v1.1.0 cerró TD-01 (`Incident.host: HostInfo`) y TD-02 (`FinalDecision` literal types). UI puede branchar directamente sobre los valores con type-safety.
