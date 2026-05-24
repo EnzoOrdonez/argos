@@ -23,6 +23,7 @@ Rejected decisions are documented too — they show that the team evaluated alte
 | [0005](./0005-notification-channel-abstraction.md) | Notification channel abstraction | ✅ Accepted | Strategy pattern for notification channels. Foundation para ADR-0007; canales concretos definidos allí. |
 | [0006](./0006-split-brain-resolution.md) | Split-brain resolution — conservative-wins policy | ✅ Accepted | When approvers disagree, conservative-wins policy with 60s consolidation window. In containment context, conservative = isolate. |
 | [0007](./0007-notification-multichannel-escalation.md) | Multi-channel notification escalation chain (v2) | ✅ Accepted | Telegram (primario) + Discord (visibilidad del equipo) en paralelo a t=0; Twilio Voice (DTMF) como escalación a t=60s; email degradado a notificación post-facto. v2 reemplazó ntfy.sh y Slack (canales que el equipo no usa) por Discord. |
+| [0008](./0008-multi-vector-scope-expansion.md) | Multi-vector scope expansion (XDR-style) | ✅ Accepted | Expansión de scope ransomware-only a multi-vector. Rebrand "Adaptive Ransomware Guard" → "Adaptive Response Guard" (mantiene acrónimo ARGOS). Añade UC-06 DDoS, UC-07 SELECT masivo legítimo (T2 false positive cancelado por humano), UC-08 SQL injection. MITRE expandido con T1498, T1499, T1078. Política Claude Code: cada integrante puede usarlo en su propia parte. |
 
 ---
 
@@ -38,18 +39,4 @@ Rejected decisions are documented too — they show that the team evaluated alte
 
 - ADRs are **immutable once accepted**. Changes happen via new ADRs that supersede earlier ones, OR via in-place version bumps (v2, v3) when the same decision needs to be revisited honestly — preserving the original rationale and the new one side-by-side.
 - New ADR number = max existing + 1.
-- Status values: `Proposed`, `Accepted`, `Rejected`, `Superseded by ADR-NNNN`, `Deprecated`.
-- Format follows Michael Nygard's template adapted for our needs.
-
----
-
-## Adding a new ADR
-
-When making a significant architectural change post-design-freeze:
-
-1. Copy an existing ADR as template.
-2. Use next sequence number.
-3. Fill in: context, decision, alternatives, consequences.
-4. Update this README index.
-5. Reference from related documents (SAD, threat model, use cases) as needed.
-6. PR to `main` requires review by at least one other team member.
+- Status values: `Proposed`, `Accepted`, `Rejected`, `Superseded by ADR

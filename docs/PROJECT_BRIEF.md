@@ -1,6 +1,6 @@
 # PROJECT BRIEF — ARGOS
 
-**Adaptive Ransomware Guard with Orchestrated Surveillance**
+**Adaptive Response Guard with Orchestrated Surveillance**
 *Curso: Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1*
 
 ---

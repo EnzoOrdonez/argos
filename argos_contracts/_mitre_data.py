@@ -1,37 +1,31 @@
 """Curated MITRE ATT&CK technique IDs relevant to ARGOS detection scope.
 
-This is **data**, not code logic. Maintained as a hand-curated subset of
+This is data, not code logic. Maintained as a hand-curated subset of
 MITRE ATT&CK Enterprise covering the kill chain of ransomware operations
-and the techniques that the four detection layers (Sigma, ML, Canary,
-LLM Triage) can reasonably identify in this lab.
+plus additional vectors (Network DoS, Application Abuse) added per
+ADR-0008 multi-vector scope expansion.
 
 Refresh policy: re-evaluate quarterly against
 https://attack.mitre.org/techniques/enterprise/ — add IDs as new TTPs
-become relevant to the demo scenarios or evaluation runs. Removal of an
-ID requires confirming no Sigma rule, ML feature, or LLM prompt
+become relevant to the demo scenarios or evaluation runs. Removal of
+an ID requires confirming no Sigma rule, ML feature, or LLM prompt
 references it.
 
 Why hand-curated instead of dynamic STIX bundle load:
     The STIX bundle has ~600 techniques. The signal-to-noise ratio for
-    a ransomware-focused EDR/XDR is low — flooding the LLM whitelist
-    with unrelated techniques (e.g. cloud privilege escalation, supply
-    chain compromise) would not help and would mask hallucinations of
-    plausible-but-irrelevant IDs.
-
-    The curated set below is the explicit allowlist of "techniques we
-    care about". Any LLM output outside this set is either a true
-    hallucination or a signal that we should expand the set deliberately
-    (with a code review).
+    a multi-vector EDR/XDR project is improved by an explicit allowlist
+    of techniques we actually care about. Any LLM output outside this
+    set is either a true hallucination or a signal that we should expand
+    the set deliberately (with a code review).
 """
 
 # Techniques are grouped by MITRE tactic for maintainability.
-# Each ID maps to a short label used only for code review — runtime
-# validation only checks membership, not the label.
 
 _TECHNIQUES_BY_TACTIC: dict[str, dict[str, str]] = {
     "initial_access": {
         "T1078": "Valid Accounts",
         "T1190": "Exploit Public-Facing Application",
+        "T1190.001": "Exploit Public-Facing Application - SQL Injection",
         "T1566": "Phishing",
     },
     "execution": {
@@ -103,6 +97,12 @@ _TECHNIQUES_BY_TACTIC: dict[str, dict[str, str]] = {
         "T1490": "Inhibit System Recovery",
         "T1491": "Defacement",
         "T1496": "Resource Hijacking",
+        "T1498": "Network Denial of Service",
+        "T1498.001": "Network DoS - Direct Network Flood",
+        "T1498.002": "Network DoS - Reflection Amplification",
+        "T1499": "Endpoint Denial of Service",
+        "T1499.002": "Endpoint DoS - Service Exhaustion Flood",
+        "T1499.004": "Endpoint DoS - Application or System Exploitation",
         "T1529": "System Shutdown/Reboot",
         "T1657": "Financial Theft",
     },
@@ -120,7 +120,7 @@ def _build_whitelist() -> frozenset[str]:
 
 # Module-level constant consumed by argos_contracts.triage.TriageResponse
 # validation. Frozen at import time; mutating it requires a code change
-# + new release of argos_contracts.
+# and a new release of argos_contracts.
 MITRE_WHITELIST: frozenset[str] = _build_whitelist()
 
 

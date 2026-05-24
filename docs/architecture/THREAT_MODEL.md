@@ -1,6 +1,6 @@
 # THREAT MODEL & RISK REGISTER — ARGOS
 
-**Adaptive Ransomware Guard with Orchestrated Surveillance**
+**Adaptive Response Guard with Orchestrated Surveillance**
 
 | Field | Value |
 |-------|-------|

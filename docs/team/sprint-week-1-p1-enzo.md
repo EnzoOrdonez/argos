@@ -4,9 +4,27 @@
 |-------|-------|
 | Owner | Enzo Ordoñez Flores |
 | Rol | P1 · Líder · LLM/SOAR · Coordinación |
-| Goal de la semana | Capa 4 LLM Triage + SOAR Decision Engine + Approval API + multi-channel notifications + Streamlit Approval Console + simulador de ransomware ejecutable. Entregable: UC-01 + UC-02 + UC-04 corriendo end-to-end al domingo. |
+| Goal de la semana | Capa 4 LLM Triage + SOAR Decision Engine + Approval API + multi-channel notifications + Streamlit Approval Console + simulador de ransomware ejecutable + wiring multi-vector (UC-06/07/08 per ADR-0008). Entregable: UC-01 + UC-02 + UC-04 + UC-06 + UC-07 corriendo end-to-end al domingo (UC-08 nice-to-have si hay tiempo). |
 | Effort estimado | 6 horas reales de trabajo por día durante 7 días = 42 horas |
-| Pre-requisito | Haber leído `docs/team/sprint-week-1-overview.md` |
+| Pre-requisito | Haber leído `docs/team/sprint-week-1-overview.md` y `docs/decisions/0008-multi-vector-scope-expansion.md` |
+
+---
+
+## Nota post-ADR-0008 (scope multi-vector)
+
+Tras la decisión documentada en ADR-0008 (2026-05-24), tu sprint ahora cubre 5 UCs en lugar de 3. Los UCs adicionales son:
+
+- **UC-06 (DDoS):** simulador con `hping3`/`slowhttptest` lo escribe P4. Tu trabajo P1 es integrar el handler en el SOAR orchestrator para que detecte alertas Sigma de rate-based, las clasifique correctamente como T0, y dispare el playbook de rate-limiting (iptables `--limit`).
+- **UC-07 (SELECT masivo FP cancelado):** la pieza más valiosa del demo. Requiere coordinación con P2 (modelo ML especializado en query patterns) + P4 (pgAudit + simulador SELECT). Tu trabajo P1 específico: implementar el flujo de **false positive cancellation** en la Approval API y la Streamlit Console — cuando el aprobador clickea "Reject", el SOAR cancela throttle, libera conexión, y registra el caso en OpenSearch con `false_positive=true` y razón documentada por el aprobador.
+- **UC-08 (SQL injection):** simulador con `sqlmap` lo escribe P4, regla Sigma SQLi la escribe P3. Tu trabajo P1 mínimo es asegurar que el tier classifier maneja la categoría como T1 (high-fidelity Sigma + ML corrobora) y dispara block-IP playbook.
+
+**Días afectados en este manual:**
+- **Día 4** (Jueves): además de UC-01 attempt, ahora también wiring inicial de handlers DDoS y SQLi en el SOAR (~1.5 horas extra).
+- **Día 5** (Viernes): además de notificaciones + Console, ahora también **FP cancellation flow** crítico para UC-07 (~2 horas extra).
+- **Día 6** (Sábado): además de Twilio + UC-04, ahora ensayos UC-06 + UC-07 + UC-08 (~1.5 horas extra).
+- **Día 7** (Domingo): rehearsals cubren los 5 UCs (UC-01, UC-02, UC-04, UC-06, UC-07) — UC-08 opcional.
+
+Si el sprint se siente apretado por estas adiciones, **mantén UC-07 sí o sí** (es la pieza diferenciadora frente a SIEM). UC-08 puede pasarse a semana 2.
 
 ---
 

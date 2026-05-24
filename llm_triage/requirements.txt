@@ -1,2 +1,25 @@
 # Layer 4 — LLM Triage Service
-# Mirror of the [llm] + [dev] extras in pyproject.toml. Kept a
+# Mirror of the [llm] + [dev] extras in pyproject.toml. Kept as a flat file
+# so this module can be installed standalone without touching the root.
+
+# Core service
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.0
+httpx>=0.27
+tenacity>=8.2
+jinja2>=3.1
+python-dotenv>=1.0
+
+# LLM backends (ADR-0001 v2)
+openai>=1.0          # primario — GPT-4o-mini
+
+# RAG pipeline (ver llm_triage/rag/README.md)
+rank-bm25>=0.2.2
+sentence-transformers>=2.5
+faiss-cpu>=1.8
+
+# Testing
+pytest>=8.0
+pytest-asyncio>=0.23
+respx>=0.21

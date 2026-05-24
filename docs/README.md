@@ -1,6 +1,6 @@
 # ARGOS — Documentación
 
-**Adaptive Ransomware Guard with Orchestrated Surveillance**
+**Adaptive Response Guard with Orchestrated Surveillance**
 
 Sistema de detección y respuesta a ransomware con defensa en profundidad: detección por reglas (Sigma + Wazuh), detección de anomalías ML, engaño (canary files) y triage asistido por LLM con SOAR human-in-the-loop.
 

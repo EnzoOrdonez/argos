@@ -227,4 +227,21 @@ demo/local/
 *.avi
 *.mkv
 
-# Local evaluation ou
+# Local evaluation outputs
+evaluation/local-outputs/
+evaluation/temp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Temporary files
+*.tmp
+.cache/
+
+# Backup files from sandbox FUSE mount workarounds
+*.bak.*
+*.preserve.*
+*.truncated.*

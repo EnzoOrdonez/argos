@@ -100,18 +100,21 @@ This file lists every such commitment with its actual current status and the evi
 
 ## 4. Scope-cut order (if calendar pressure forces tradeoffs)
 
-If the implementation window cannot deliver all 5 UCs + all 7 EVs + all 4 channels by the deadline, the sacrifice order — committed here so nobody has to improvise — is:
+If the implementation window cannot deliver all 8 UCs + all 7 EVs + all 4 channels by the deadline, the sacrifice order — committed here so nobody has to improvise — is:
 
 | Priority | Item | Reasoning |
 |:---:|------|-----------|
-| Must-have | UC-01 (classic ransomware) | Demo opens with the canonical case; if this fails the whole live demo fails |
-| Must-have | UC-02 (canary deception) | 1.5 min, shows zero-FP property visually, low integration risk |
-| Must-have | UC-04 (PostgreSQL + two-person rule) | Compliance vocabulary + governance — visible to non-technical evaluators |
-| Strong nice-to-have | UC-03 (split-brain) | Centerpiece if ML lands by Gate 3; otherwise present as planned design with mocked data |
-| Cuttable | UC-05 (stealth attack agent-kill) | Last to land; can be skipped from live demo and shown via pre-recorded video |
-| Cuttable | EV-03 throttle effectiveness, EV-06 split-brain N approvers | Synthetic tests, deliverable as numbers in informe even without live runs |
-| Cuttable | Sigma upstream PRs (P-007 bonus) | Explicitly marked as bonus, low risk-impact in P-007 |
-| Cuttable | Twilio Voice channel | Last in ADR-0007 v2 sacrifice order; Telegram + Discord es el bottom line |
+| Must-have | UC-01 (classic ransomware) | Demo opens with canonical case; si falla, todo el demo falla |
+| Must-have | UC-02 (canary deception) | 1.5 min, muestra zero-FP visualmente, bajo riesgo de integración |
+| Must-have | UC-04 (PostgreSQL + two-person rule) | Compliance vocabulary + governance — visible para evaluadores no técnicos |
+| Must-have | UC-06 (DDoS volumetric, ADR-0008) | Demuestra cobertura multi-vector — argumento XDR profesional |
+| Must-have | UC-07 (SELECT masivo FP cancelado, ADR-0008) | **Pieza clave del HITL** — humano cancela contención cuando ML duda. Diferenciación clave vs SIEM |
+| Strong nice-to-have | UC-03 (split-brain ransomware) | Centerpiece si ML llega a tiempo; si no, mocked data |
+| Strong nice-to-have | UC-08 (SQL injection, ADR-0008) | OWASP Top 10 #1 — refuerza argumento XDR pero recortable si presiona tiempo |
+| Strong nice-to-have | UC-05 (stealth attack agent-kill) | Per decisión usuario 2026-05-24: mantener en vivo, no degradar a video |
+| Cuttable | EV-03 throttle effectiveness, EV-06 split-brain N approvers | Synthetic tests, deliverable como números en informe sin live runs |
+| Cuttable | Sigma upstream PRs (P-007 bonus) | Marcado como bonus explícitamente, low risk-impact en P-007 |
+| Cuttable | Twilio Voice channel | Last en ADR-0007 v2 sacrifice order; Telegram + Discord es el bottom line |
 
 ---
 
@@ -119,5 +122,4 @@ If the implementation window cannot deliver all 5 UCs + all 7 EVs + all 4 channe
 
 | Version | Date | Change | Author |
 |---------|------|--------|--------|
-| 1.0 | Week 7 (calendar) | Initial honest status document. Closes the gap flagged by external audit §1.3 — six processes mandated by docs but with no execution evidence. | P1 |
-| 1.1 | 2026-05-24 | Sync con cleanup pass: tests 64→69, version 1.0.0→1.1.0, TECHNICAL_DEBT eliminado, LLM provider OpenAI/Llama (ADR-0001 v2), canales Telegram/Discord/Twilio (ADR-0007 v2), PostgreSQL como activo defendido formalizado, paths llm-triage→llm_triage. | P1 |
+| 1.0 | Week 7 (calendar) | Initial honest status document. Closes th

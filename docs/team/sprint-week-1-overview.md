@@ -5,7 +5,7 @@
 | Type | Operational plan + deployment decision record |
 | Status | Active |
 | Sprint window | 7 días calendario consecutivos |
-| Goal | UC-01 + UC-02 + UC-04 corriendo end-to-end con dos rehearsals al final del domingo |
+| Goal | UC-01 + UC-02 + UC-04 + UC-06 + UC-07 corriendo end-to-end con dos rehearsals al final del domingo (per ADR-0008 multi-vector). UC-08 nice-to-have. |
 | Owner | P1 (Enzo Ordoñez Flores) coordina, los 4 integrantes ejecutan |
 
 ---

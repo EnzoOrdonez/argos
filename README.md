@@ -2,7 +2,7 @@
 
 # ARGOS
 
-### Adaptive Ransomware Guard with Orchestrated Surveillance
+### Adaptive Response Guard with Orchestrated Surveillance
 
 *Sistema de detección y respuesta a ransomware con defensa en profundidad, SOAR y aprobación humana asistida por LLM.*
 

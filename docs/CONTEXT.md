@@ -1,6 +1,6 @@
 # ARGOS
 
-**Adaptive Ransomware Guard with Orchestrated Surveillance — stack defensivo por capas con triage asistido por LLM para detección y contención automatizada de ransomware**
+**Adaptive Response Guard with Orchestrated Surveillance — stack defensivo por capas con triage asistido por LLM para detección y contención automatizada de ransomware**
 
 > **Nota de rebrand:** este documento de kickoff originalmente nombraba el proyecto "SOC-in-a-Box". En la Semana 2 el sistema se renombró a **ARGOS** (acrónimo en `PROJECT_BRIEF.md`). Las referencias internas, paths de repo y diagramas se actualizaron a la nueva nomenclatura. El contenido técnico y la división de trabajo se mantienen idénticos al acuerdo de kickoff.
 
@@ -159,9 +159,9 @@ Sysmon es freeware Microsoft, no OSS estricto. Lo usamos porque es el estándar 
 | **P3 — Angeles Castillo** | Detection Engineer | Capa 1 (reglas Sigma + mapping MITRE) + Capa 3 (canary files + FIM rules), PRs upstream a SigmaHQ |
 | **P4 — Diego Jara** | Infra / Attack Sim / UI | Lab provisioning (Vagrant/Terraform), Wazuh + OpenSearch deployment, simulador de ransomware, Streamlit dashboard, dashboards Kibana/OpenSearch, métricas |
 
-**Regla operativa crítica:** cada integrante debe poder defender SU módulo en exposición. No se permite que P1 haga el trabajo de otros con Claude Code — P1 puede ayudar con dudas, no escribir código por ellos.
+**Regla operativa crítica:** cada integrante debe poder defender SU módulo en exposición. La regla específica sobre delegación es: P1 no escribe código de otros integrantes con Claude Code. P1 puede asesorar y revisar, no producir el código de otros.
 
-**Claude Code:** P1 tiene Claude Code Max y lo usa intensivo en Capa 4 + integración. Otros pueden usar la versión gratuita o pedir ayuda puntual a P1.
+**Claude Code (política reinterpretada per ADR-0008):** cada integrante puede usar Claude Code (o cualquier asistente de IA: Cursor, GitHub Copilot, etc.) como acelerador para SU propia capa. La condición es no-negociable: cada integrante DEBE entender el código que produce con asistencia de IA y poder defenderlo en viva sin la asistencia presente. Si Sebastian usa Claude Code para entrenar Isolation Forest, debe poder explicarle al profesor por qué eligió 100 árboles vs 50, por qué `contamination=0.1`, qué pasa si la baseline contiene actividad maliciosa, etc. La asistencia de IA es para velocidad, no para reemplazar comprensión.
 
 ---
 
@@ -390,13 +390,4 @@ argos/
 - **SigmaHQ:** https://github.com/SigmaHQ/sigma
 - **Wazuh docs:** https://documentation.wazuh.com/
 - **NIST SP 800-61r2:** https://csrc.nist.gov/pubs/sp/800/61/r2/final
-- **Atomic Red Team:** https://github.com/redcanaryco/atomic-red-team
-- **Caldera:** https://github.com/mitre/caldera
-- **OpenAI API docs:** https://platform.openai.com/docs
-- **Ollama (Llama local):** https://ollama.com/library/llama3.1
-
----
-
-**Última actualización:** 2026-05-24 (cleanup pass — nombres correctos, ADR-0001 v2, ADR-0007 v2)
-**Owner del documento:** P1 (Enzo Ordoñez Flores)
-**Estado:** Aprobado — sincronizado con `PROJECT_BRIEF.md`, `SOLUTION_ARCHITECTURE_DOCUMENT.md` y la estructura actual del repo (`argos/`)
+- *
