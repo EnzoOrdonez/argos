@@ -126,17 +126,9 @@ Si alguien no aparece al standup, los demás siguen y le pingean por DM. Si algu
 
 ### Manuales individuales
 
-Cada integrante tiene su propio manual día-a-día con comandos, instalaciones, y troubleshooting:
+Cada integrante tiene un manual completo organizado por orden de implementación (Fase 1 → 4), con comandos copy-paste, outputs esperados literales, checklists de verificación al final de cada sección, y apéndices de troubleshooting:
 
-- **P1 (Enzo):** `sprint-week-1-p1-enzo.md` (incluido en este sprint)
-- **P2 (Sebastian):** `sprint-week-1-p2-sebastian.md` (a generar — pendiente)
-- **P3 (Angeles):** `sprint-week-1-p3-angeles.md` (a generar — pendiente)
-- **P4 (Diego):** `sprint-week-1-p4-diego.md` (a generar — pendiente)
-
----
-
-## 4. Change log
-
-| Versión | Fecha | Cambio | Autor |
-|---------|-------|--------|-------|
-| 1.0 | 2026-05-24 | Initial sprint operational plan. Documenta decisión de deployment (100% local + hot spare), flujo de demo, convenciones del sprint, y reglas operacionales que no estaban en otros docs del repo. | P1 |
+- **P1 (Enzo):** `sprint-week-1-p1-enzo.md` — SOAR Decision Engine, HITL, Notificaciones, Integración cross-layer.
+- **P2 (Sebastian):** `sprint-week-1-p2-sebastian.md` — ML Layer 2 (Isolation Forest + OC-SVM + Shannon), LLM Triage Layer 4, RAG BM25+BGE.
+- **P3 (Angeles):** `sprint-week-1-p3-angeles.md` — Sigma + Wazuh (Layer 1), Canary FIM (Layer 3), Attack Simulators (ransomware + DDoS + SQLi).
+- **P4 (Diego):** `sprint-week-1-p4-diego.md` — Lab Vagrant/VirtualBox,

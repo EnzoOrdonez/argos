@@ -1,624 +1,815 @@
-# Sprint Semana 1 — Manual de P4 (Diego Jara)
+# Manual P4 — Diego Jara (Infraestructura · UI · Evaluación)
 
-| Field | Value |
+| Campo | Valor |
 |-------|-------|
-| Owner | Diego Jara |
-| Rol | P4 · Infraestructura + UI base + Demo |
-| Goal de la semana | Vagrantfile + Wazuh Manager + OpenSearch + Redis + Windows VM (Sysmon) + Linux VM (auditd) + PostgreSQL con datos sintéticos + simuladores multi-vector (hping3 + slowhttptest + sqlmap) + UI Streamlit base + video demo. |
-| Effort estimado | 6-7 horas/día × 7 días = ~45 horas (el más cargado por ser infrastructure) |
-| Pre-requisitos | Leer `docs/team/sprint-week-1-common-intro.md` y `docs/decisions/0008-multi-vector-scope-expansion.md` |
+| Rol | Owner del lab, DB defendida, observabilidad, UI de aprobación |
+| Owns | `lab/` (Vagrant + scripts) · `lab/postgres/` (PostgreSQL + pgAudit) · OpenSearch + Wazuh manager · `ui/streamlit_app/` · `ui/opensearch-dashboards/` · `evaluation/` |
+| No owns | Detección/ataque (P3) · ML/LLM (P2) · SOAR Engine (P1) |
+| Outputs blocking otros | Lab funcional (TODOS dependen) · Redis disponible · Streamlit Approval Console (centerpiece UC-04) |
+| Deadline | **2026-06-13 (sábado)** — eres el operador del demo |
+| Cómo leer | Sin saltar: tu manual arranca el lab que los demás necesitan. Si la Fase 1 se demora, todo el equipo se atrasa. |
 
 ---
 
-## Antes de empezar — prerequisitos CRÍTICOS
+## 0. Tu charter
 
-P4 tiene el rol más exigente de hardware. Sin esto, el sprint se atasca para todos.
+> Si tu laptop arranca el lab en menos de 5 minutos con `vagrant up`, el equipo trabaja. Si no, todos quedan bloqueados. Eres también el operador del demo: tú clickeas los botones en vivo mientras P1 narra. Tu UI es la pantalla que el profesor mirará 12 minutos seguidos.
 
-### Hardware MÍNIMO
+### 0.1 Tu camino crítico
 
-- Laptop con **16 GB RAM mínimo** (8 GB NO aguanta 3 VMs simultáneas).
-- **80 GB de disco libre** (para boxes Vagrant + VMs + dumps).
-- CPU con **virtualization extensions** (Intel VT-x o AMD-V) **habilitado en BIOS**.
-- Idealmente: SSD externo USB-C de 256 GB (~$30 USD) para portabilidad. Si tu laptop muere, conectas SSD a otro y bootean las VMs.
+```
+FASE 1 ────────→ FASE 2 ──────→ FASE 3 ──────→ FASE 4
+Vagrantfile        Postgres + pgAudit  bridge Wazuh→Redis  rehearsal
+VMs (Win + Lin)    OpenSearch+Dashboards Streamlit UI       hot spare
+Wazuh manager      Redis              Approval Console      checklist
+                                       OpenSearch dashboards demo operador
+```
 
-### Software base
+---
+
+# FASE 1 — Cimientos: el lab
+
+## 1.1 Prerequisites en tu laptop
 
 ```bash
+# VirtualBox 7.x
+VBoxManage --version
+# OUTPUT ESPERADO: 7.0.x o superior
+
 # Vagrant 2.4+
 vagrant --version
+# OUTPUT ESPERADO: Vagrant 2.4.x
 
-# VirtualBox 7.x (o Hyper-V provider)
-VBoxManage --version
+# Espacio disco libre (≥ 60 GB recomendado)
+df -h ~
+# Necesitas ≥ 60 GB en home
+
+# RAM mínima 16 GB (4 GB Windows VM + 4 GB Linux VM + 8 GB host)
+free -h | head -2
 ```
 
-**Si estás en Windows con Hyper-V:** debes elegir uno solo. Vagrant + VirtualBox + Hyper-V chocan. Decide hoy:
-```powershell
-# Opción 1: usar VirtualBox (desactivar Hyper-V)
-bcdedit /set hypervisorlaunchtype off
-# reiniciar
+| Check | Esperado |
+|-------|----------|
+| VirtualBox ≥ 7.0 | sí |
+| Vagrant ≥ 2.4 | sí |
+| Disk ≥ 60 GB free | sí |
+| RAM ≥ 16 GB | sí (si solo tienes 8 GB, levanta una VM a la vez) |
 
-# Opción 2: usar Hyper-V (Vagrant lo soporta)
-vagrant init --box generic/ubuntu2204 --box-version 4.3.12
-```
-
-### Cuentas externas
-
-- **Twilio trial** para UC-04 voice escalation (gratis ~$15 crédito): https://www.twilio.com/try-twilio
-
----
-
-## Día 1 (Lunes) — Vagrantfile + boxes + Wazuh Manager skeleton
-
-**Goal:** Vagrantfile que define 3 VMs (Wazuh manager + Win + Linux), `vagrant up` completa en <15 min, Wazuh manager arranca con servicio corriendo.
-
-**Tiempo:** 7 horas (día más largo).
-
-### Paso 1.1 — Setup repo (15 min)
+## 1.2 Clonar repo
 
 ```bash
-cd ~/projects
-git clone https://github.com/EnzoOrdonez/argos.git
+mkdir -p ~/code && cd ~/code
+git clone git@github.com:enzizoor/argos.git
 cd argos
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
-pytest argos_contracts/tests/ -v
-# Esperado: 69 passed
+pip install -e ./argos_contracts
+pip install -r ui/requirements.txt
+pip install -r lab/requirements.txt
 ```
 
-### Paso 1.2 — Vagrantfile básico (1.5 h)
+## 1.3 Vagrantfile completo
 
-`lab/Vagrantfile`:
+Crear `lab/Vagrantfile`:
 
 ```ruby
-# -*- mode: ruby -*-
+# lab/Vagrantfile
+# Lab ARGOS: 1 Windows victim, 1 Linux victim + Postgres, 1 Linux manager (Wazuh+OpenSearch+Redis).
+# Red interna 192.168.56.0/24
+
 Vagrant.configure("2") do |config|
-  # Network privada para el lab (sin internet)
-  config.vm.network "private_network", type: "dhcp"
 
-  # ===== Wazuh Manager =====
-  config.vm.define "wazuh-mgr" do |mgr|
-    mgr.vm.box = "generic/ubuntu2204"
-    mgr.vm.hostname = "wazuh-mgr"
-    mgr.vm.network "private_network", ip: "10.0.0.10"
-    mgr.vm.provider "virtualbox" do |vb|
-      vb.memory = "4096"
-      vb.cpus = 2
-      vb.name = "argos-wazuh-mgr"
+  # === Wazuh + OpenSearch + Redis manager ===
+  config.vm.define "lab-manager" do |m|
+    m.vm.box = "bento/ubuntu-22.04"
+    m.vm.hostname = "lab-manager"
+    m.vm.network "private_network", ip: "192.168.56.10"
+    m.vm.synced_folder "..", "/vagrant"
+    m.vm.provider "virtualbox" do |vb|
+      vb.memory = 4096
+      vb.cpus   = 2
     end
-    mgr.vm.provision "shell", path: "provision/wazuh-manager.sh"
+    m.vm.provision "shell", path: "provision/manager.sh"
   end
 
-  # ===== Linux Victim (PostgreSQL host) =====
-  config.vm.define "linux-victim" do |lv|
-    lv.vm.box = "generic/ubuntu2204"
-    lv.vm.hostname = "linux-victim"
-    lv.vm.network "private_network", ip: "10.0.0.22"
-    lv.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-      vb.cpus = 2
-      vb.name = "argos-linux-victim"
+  # === Linux victim (postgres + ssh) ===
+  config.vm.define "linux-victim" do |l|
+    l.vm.box = "bento/ubuntu-22.04"
+    l.vm.hostname = "linux-victim"
+    l.vm.network "private_network", ip: "192.168.56.21"
+    l.vm.synced_folder "..", "/vagrant"
+    l.vm.provider "virtualbox" do |vb|
+      vb.memory = 3072
+      vb.cpus   = 2
     end
-    lv.vm.provision "shell", path: "provision/victim-linux.sh"
-    lv.vm.provision "shell", path: "provision/postgres-setup.sh"
+    l.vm.provision "shell", path: "provision/linux_victim.sh"
   end
 
-  # ===== Windows Victim =====
-  config.vm.define "windows-victim" do |wv|
-    wv.vm.box = "gusztavvargadr/windows-10"
-    wv.vm.hostname = "windows-victim"
-    wv.vm.network "private_network", ip: "10.0.0.21"
-    wv.vm.provider "virtualbox" do |vb|
-      vb.memory = "4096"
-      vb.cpus = 2
-      vb.name = "argos-windows-victim"
-      vb.gui = false
+  # === Windows victim ===
+  config.vm.define "windows-victim" do |w|
+    w.vm.box = "gusztavvargadr/windows-10"
+    w.vm.hostname = "win-victim"
+    w.vm.network "private_network", ip: "192.168.56.20"
+    w.vm.provider "virtualbox" do |vb|
+      vb.memory = 4096
+      vb.cpus   = 2
     end
-    wv.vm.provision "shell", path: "provision/victim-windows.ps1"
+    w.vm.provision "shell", path: "provision/windows_victim.ps1"
   end
 end
 ```
 
-### Paso 1.3 — Provisioning Wazuh manager (2 h)
+### Provision scripts (esqueletos referenciados — completar)
 
-`lab/provision/wazuh-manager.sh`:
-
-```bash
-#!/bin/bash
-set -e
-
-echo "[1/4] Updating system..."
-apt-get update -y
-
-echo "[2/4] Installing Wazuh manager..."
-curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
-bash wazuh-install.sh --wazuh-server wazuh-1 --ignore-check
-
-echo "[3/4] Installing OpenSearch..."
-bash wazuh-install.sh --opensearch wazuh-1 --ignore-check
-
-echo "[4/4] Installing Redis 7..."
-apt-get install -y redis-server
-sed -i 's/^bind 127.0.0.1.*/bind 0.0.0.0/' /etc/redis/redis.conf
-systemctl restart redis-server
-
-echo "Wazuh manager + OpenSearch + Redis ready on 10.0.0.10"
+```
+lab/
+├── Vagrantfile           ← arriba
+├── provision/
+│   ├── manager.sh        ← Wazuh manager + OpenSearch + Redis + Docker
+│   ├── linux_victim.sh   ← Wazuh agent + Postgres + auditd
+│   └── windows_victim.ps1 ← Sysmon (referencia P3 §2.1) + Wazuh agent
+└── postgres/
+    └── init.sql          ← schema audit (referencia P1 §3.2)
 ```
 
-### Paso 1.4 — Primer `vagrant up` (2 h)
+> Los provision scripts son largos (300+ líneas combinadas). Patrón estándar: instalar paquete → escribir config → restart servicio → smoke test. Si te trabas, copia patrones de [wazuh-vagrant](https://github.com/wazuh/wazuh-puppet) o de un Ansible público y adapta.
+
+## 1.4 `vagrant up` y verificación
 
 ```bash
-cd lab
-vagrant up wazuh-mgr
-# Esperado: ~15-20 min primera vez (descarga box + provisioning Wazuh)
+cd lab/
+vagrant up --provider=virtualbox
+
+# OUTPUT ESPERADO (resumen, ~10-15 min primera vez):
+# ==> lab-manager: Importing base box 'bento/ubuntu-22.04'...
+# ...
+# ==> windows-victim: Machine booted and ready!
+# ==> linux-victim: Machine booted and ready!
+# ==> lab-manager: Machine booted and ready!
+
 vagrant status
-# wazuh-mgr should be "running"
-
-vagrant ssh wazuh-mgr -c "systemctl status wazuh-manager"
-# Esperado: active (running)
-
-vagrant ssh wazuh-mgr -c "curl -k https://localhost:55000"
-# Esperado: JSON response (Wazuh API)
+# OUTPUT ESPERADO:
+# Current machine states:
+# lab-manager               running (virtualbox)
+# linux-victim              running (virtualbox)
+# windows-victim            running (virtualbox)
 ```
 
-Si falla:
-- VirtualBox / Hyper-V conflict → reiniciar con uno solo
-- Memoria insuficiente → cerrar Chrome/IDE temporalmente
-- Box no descarga → verificar internet, retry
-
-### Paso 1.5 — Commit (15 min)
+### Smoke tests post-up
 
 ```bash
-cd ..
-git checkout -b feature/p4/lab-skeleton
-git add lab/
-git commit -m "feat(p4): Vagrantfile + Wazuh manager provisioning"
-git push origin feature/p4/lab-skeleton
+# Wazuh API responde
+curl -sk -u wazuh:wazuh https://192.168.56.10:55000/?pretty | jq .data.title
+# OUTPUT ESPERADO:
+# "Wazuh API REST"
+
+# OpenSearch responde
+curl -sk -u admin:admin https://192.168.56.10:9200/_cluster/health | jq .status
+# OUTPUT ESPERADO:
+# "green"   (o "yellow" — aceptable single node)
+
+# Redis responde
+redis-cli -h 192.168.56.10 ping
+# OUTPUT ESPERADO:
+# PONG
+
+# Postgres responde
+psql postgresql://argos:argos@192.168.56.21:5432/argos_audit -c "SELECT 1;"
+# OUTPUT ESPERADO:
+#  ?column?
+# ----------
+#         1
+# (1 row)
 ```
 
-### Verificación EOD Día 1
-
-- [ ] `vagrant up wazuh-mgr` completa sin errores
-- [ ] Wazuh API responde en https://10.0.0.10:55000
-- [ ] Redis acepta `PING` desde host
+| Check Fase 1 | Esperado |
+|-------------|----------|
+| 3 VMs en `running` | sí |
+| 4 smoke tests pasan | sí |
+| Tiempo total `vagrant up` ≤ 20 min | sí |
+| Tiempo de `vagrant up` desde halted (no destroy) ≤ 5 min | sí |
 
 ---
 
-## Día 2 (Martes) — Linux + Windows victims con agentes
+# FASE 2 — PostgreSQL defendido + observabilidad
 
-**Goal:** Las 3 VMs corriendo, agentes registrados en el manager, primera telemetría llegando.
+## 2.1 PostgreSQL 15 + pgAudit
 
-**Tiempo:** 7 horas.
-
-### Paso 2.1 — Provisioning Linux victim (2 h)
-
-`lab/provision/victim-linux.sh`:
-
-```bash
-#!/bin/bash
-set -e
-
-echo "[1/3] Installing auditd..."
-apt-get install -y auditd
-
-echo "[2/3] Installing Wazuh agent..."
-WAZUH_MANAGER="10.0.0.10" \
-  bash -c "$(curl -sSL https://packages.wazuh.com/4.7/wazuh-install.sh) --wazuh-agent linux-victim"
-
-echo "[3/3] Starting agent..."
-systemctl enable wazuh-agent
-systemctl start wazuh-agent
-```
-
-### Paso 2.2 — Provisioning Windows victim (2.5 h)
-
-`lab/provision/victim-windows.ps1`:
-
-```powershell
-# Sysmon install
-$sysmonConfig = "https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml"
-Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Sysmon.zip" -OutFile "C:\sysmon.zip"
-Expand-Archive -Path "C:\sysmon.zip" -DestinationPath "C:\sysmon\"
-Invoke-WebRequest -Uri $sysmonConfig -OutFile "C:\sysmon\config.xml"
-& C:\sysmon\Sysmon64.exe -accepteula -i C:\sysmon\config.xml
-
-# Wazuh agent
-$wazuhMsi = "https://packages.wazuh.com/4.x/windows/wazuh-agent-4.7.0-1.msi"
-Invoke-WebRequest -Uri $wazuhMsi -OutFile "C:\wazuh-agent.msi"
-Start-Process msiexec.exe -ArgumentList '/i C:\wazuh-agent.msi /q WAZUH_MANAGER=10.0.0.10 WAZUH_AGENT_NAME=windows-victim' -Wait
-Start-Service WazuhSvc
-
-Write-Host "Sysmon + Wazuh agent installed"
-```
-
-### Paso 2.3 — Levantar las 3 VMs (1.5 h)
-
-```bash
-vagrant up linux-victim
-vagrant up windows-victim
-vagrant status
-# las 3 deben estar running
-
-# Verificar agentes registrados en manager
-vagrant ssh wazuh-mgr -c "sudo /var/ossec/bin/agent_control -l"
-# Esperado: linux-victim + windows-victim listed
-```
-
-### Paso 2.4 — Commit (15 min)
-
-```bash
-git add lab/provision/
-git commit -m "feat(p4): victim VMs + agents registered"
-git push
-```
-
-### Verificación EOD Día 2
-
-- [ ] 3 VMs running (`vagrant status`)
-- [ ] 2 agentes registrados y activos
-- [ ] Logs llegando al manager (`tail -f /var/ossec/logs/alerts/alerts.json` en mgr)
-
----
-
-## Día 3 (Miércoles) — PostgreSQL + datos sintéticos + pgAudit
-
-**Goal:** PostgreSQL 15 corriendo en Linux VM con esquema `argos_demo_prod` poblado.
-
-**Tiempo:** 6 horas.
-
-### Paso 3.1 — Provisioning PostgreSQL (2 h)
-
-`lab/provision/postgres-setup.sh`:
-
-```bash
-#!/bin/bash
-set -e
-
-apt-get install -y postgresql-15 postgresql-contrib-15 postgresql-15-pgaudit
-
-# Configurar pgAudit
-echo "shared_preload_libraries = 'pgaudit'" >> /etc/postgresql/15/main/postgresql.conf
-echo "pgaudit.log = 'read, write'" >> /etc/postgresql/15/main/postgresql.conf
-echo "pgaudit.log_catalog = off" >> /etc/postgresql/15/main/postgresql.conf
-
-systemctl restart postgresql
-
-# Crear DB + user
-sudo -u postgres psql <<EOF
-CREATE DATABASE argos_demo_prod;
-CREATE USER argos_app WITH PASSWORD 'change-me-in-env';
-GRANT ALL PRIVILEGES ON DATABASE argos_demo_prod TO argos_app;
-EOF
-
-# Seed schema + data
-sudo -u postgres psql -d argos_demo_prod -f /vagrant/provision/postgres-seed.sql
-```
-
-### Paso 3.2 — Schema + datos sintéticos (2 h)
-
-`lab/provision/postgres-seed.sql`:
+### En `lab/postgres/init.sql` (completo)
 
 ```sql
--- argos_demo_prod schema
-CREATE TABLE employees (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100),
-    department VARCHAR(50),
-    salary NUMERIC(10, 2),
-    hired_at DATE
+-- lab/postgres/init.sql
+-- Schema y configuración de la DB defendida + audit DB.
+
+-- DB de aplicación (target del ataque)
+CREATE DATABASE app_prod;
+
+-- DB de auditoría (consumida por P1 audit sink)
+CREATE DATABASE argos_audit;
+
+\c argos_audit
+
+CREATE TABLE IF NOT EXISTS audit_incidents (
+    incident_id   text PRIMARY KEY,
+    tier          text NOT NULL,
+    severity      text NOT NULL,
+    host          text NOT NULL,
+    technique     text NOT NULL,
+    created_at    timestamptz NOT NULL,
+    final_outcome text,
+    final_policy  text,
+    final_at      timestamptz,
+    payload       jsonb NOT NULL
 );
 
-CREATE TABLE payroll (
-    id SERIAL PRIMARY KEY,
-    employee_id INT REFERENCES employees(id),
-    period DATE,
-    gross_amount NUMERIC(10, 2),
-    net_amount NUMERIC(10, 2),
-    paid_at TIMESTAMP
+CREATE TABLE IF NOT EXISTS audit_responses (
+    id            bigserial PRIMARY KEY,
+    incident_id   text REFERENCES audit_incidents(incident_id) ON DELETE CASCADE,
+    approver_id   text NOT NULL,
+    channel       text NOT NULL,
+    decision      text NOT NULL,
+    received_at   timestamptz NOT NULL
 );
 
-CREATE TABLE customers (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(100),
-    country VARCHAR(50),
-    created_at TIMESTAMP
-);
+CREATE INDEX idx_audit_incidents_created ON audit_incidents(created_at DESC);
+CREATE INDEX idx_audit_responses_incident ON audit_responses(incident_id);
 
-CREATE TABLE invoices (
-    id SERIAL PRIMARY KEY,
-    customer_id INT REFERENCES customers(id),
-    amount NUMERIC(10, 2),
-    status VARCHAR(20),
-    issued_at TIMESTAMP
-);
+-- Usuarios
+CREATE USER argos WITH PASSWORD 'argos';
+GRANT ALL PRIVILEGES ON DATABASE argos_audit TO argos;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO argos;
 
-CREATE TABLE payments (
-    id SERIAL PRIMARY KEY,
-    invoice_id INT REFERENCES invoices(id),
-    amount NUMERIC(10, 2),
-    paid_at TIMESTAMP
-);
-
--- 1000 employees sintéticos
-INSERT INTO employees (name, email, department, salary, hired_at)
-SELECT
-    'Employee ' || gs,
-    'emp' || gs || '@argos-demo.local',
-    (ARRAY['Engineering', 'Sales', 'Finance', 'HR', 'IT'])[1 + (gs % 5)],
-    50000 + (random() * 100000)::int,
-    date '2020-01-01' + (random() * 1500)::int
-FROM generate_series(1, 1000) gs;
-
--- Similar inserts for payroll, customers, invoices, payments
--- (~10K rows each)
+CREATE USER analyst WITH PASSWORD 'analyst_pwd';
+GRANT CONNECT ON DATABASE app_prod TO analyst;
 ```
 
-### Paso 3.3 — Dumps periódicos para canary (45 min)
-
-`lab/provision/postgres-dumps.sh`:
+### Habilitar pgAudit (en `postgresql.conf`)
 
 ```bash
-#!/bin/bash
-mkdir -p /var/backups/postgres
-cat > /etc/cron.hourly/argos-pg-dump <<'EOF'
-#!/bin/bash
-sudo -u postgres pg_dump argos_demo_prod > /var/backups/postgres/dump-$(date +%Y%m%d-%H%M).sql
+# En linux-victim, después de instalar postgresql-15-pgaudit:
+sudo tee -a /etc/postgresql/15/main/postgresql.conf << 'EOF'
+shared_preload_libraries = 'pgaudit'
+pgaudit.log = 'read, write, ddl, role'
+pgaudit.log_relation = on
+pgaudit.log_parameter = on
+pgaudit.log_catalog = off
+listen_addresses = '*'
 EOF
-chmod +x /etc/cron.hourly/argos-pg-dump
+
+sudo tee -a /etc/postgresql/15/main/pg_hba.conf << 'EOF'
+host    all    all    192.168.56.0/24    md5
+EOF
+
+sudo systemctl restart postgresql
+sudo -u postgres psql -c "CREATE EXTENSION pgaudit;" -d app_prod
+sudo -u postgres psql -c "CREATE EXTENSION pgaudit;" -d argos_audit
 ```
 
-### Paso 3.4 — Tag criticality production-critical en Wazuh (45 min)
-
-En el manager:
-```bash
-# Editar ossec.conf en el agent linux-victim para añadir labels
-sudo /var/ossec/bin/agent_control -i 002 -l
-# añadir: <labels><label key="criticality">production-critical</label></labels>
-```
-
-### Paso 3.5 — Re-vagrant up linux-victim + commit (30 min)
+### Verificar pgAudit
 
 ```bash
-vagrant reload linux-victim --provision
-git add lab/provision/postgres-*.sh lab/provision/postgres-seed.sql
-git commit -m "feat(p4): PostgreSQL 15 + pgAudit + schema argos_demo_prod"
-git push
+sudo -u postgres psql -d app_prod -c "SELECT * FROM pg_extension WHERE extname='pgaudit';"
+# OUTPUT ESPERADO:
+#  oid  | extname | extowner | extnamespace | extrelocatable | extversion | ...
+# ------+---------+----------+--------------+----------------+------------+...
+#  ...  | pgaudit |       10 |         2200 | t              | 1.7        | ...
+
+# Probar audit log
+sudo -u postgres psql -d app_prod -c "SELECT 1;"
+sudo tail -5 /var/log/postgresql/postgresql-15-main.log
+# OUTPUT ESPERADO (línea final):
+# LOG:  AUDIT: SESSION,READ,SELECT,SELECT 1;
 ```
 
-### Verificación EOD Día 3
-
-- [ ] PostgreSQL responde en 10.0.0.22:5432
-- [ ] Schema tiene 5 tablas con datos
-- [ ] Dumps SQL apareciendo en /var/backups/postgres/
+| Check (2.1) | Esperado |
+|-------------|----------|
+| 2 DBs creadas (app_prod, argos_audit) | sí |
+| pgAudit extension instalada en ambas | sí |
+| SELECT genera entrada `AUDIT:` en postgresql log | sí |
 
 ---
 
-## Día 4 (Jueves) — Simuladores ransomware + DDoS + SQLi
+## 2.2 OpenSearch + OpenSearch Dashboards
 
-**Goal:** 3 simuladores funcionales en `attack-simulation/`.
-
-**Tiempo:** 6 horas.
-
-### Paso 4.1 — Ransomware simulator wrapper (1.5 h)
-
-P1 escribe el simulador en `attack-simulation/ransomware_simulator/`. Tú escribes el wrapper que lo ejecuta en la Windows VM remotamente:
+### En `provision/manager.sh` (extracto clave)
 
 ```bash
-# attack-simulation/run_uc01.sh
-#!/bin/bash
-vagrant ssh windows-victim -c "python C:\\argos\\ransomware_simulator\\lockbit_like.py --target localhost"
+# OpenSearch 2.x via Docker
+sudo apt-get install -y docker.io docker-compose-plugin
+sudo mkdir -p /opt/opensearch && cd /opt/opensearch
+sudo tee docker-compose.yml << 'EOF'
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: opensearch
+    environment:
+      - cluster.name=argos-cluster
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports: ["9200:9200", "9600:9600"]
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: opensearch-dashboards
+    environment:
+      - 'OPENSEARCH_HOSTS=["https://opensearch:9200"]'
+    ports: ["5601:5601"]
+volumes:
+  opensearch-data:
+EOF
+
+sudo docker compose up -d
+sleep 30   # OpenSearch tarda ~20-30s en estar listo
+curl -sk https://localhost:9200/_cluster/health | jq .status
+# OUTPUT ESPERADO: "green" o "yellow"
 ```
 
-### Paso 4.2 — DDoS simulator (1.5 h)
-
-`attack-simulation/network_attacks/run_ddos.sh`:
+### Importar dashboards desde `ui/opensearch-dashboards/*.ndjson`
 
 ```bash
-#!/bin/bash
-TARGET_IP=${1:-10.0.0.22}
-TARGET_PORT=${2:-5432}
-sudo hping3 --flood --syn -p $TARGET_PORT $TARGET_IP &
-SLOW_PID=$!
-sleep 30
-kill $SLOW_PID
+for f in ui/opensearch-dashboards/*.ndjson; do
+  echo "Importing $f"
+  curl -X POST "http://localhost:5601/api/saved_objects/_import?overwrite=true" \
+    -H "osd-xsrf: true" \
+    --form file=@"$f"
+done
+# OUTPUT ESPERADO (por archivo):
+# {"successCount":N,"success":true,...}
 ```
 
-### Paso 4.3 — Webapp + sqlmap setup (2 h)
-
-`lab/provision/webapp-flask.sh`:
-
-```bash
-#!/bin/bash
-apt-get install -y python3-pip
-pip3 install flask psycopg2-binary
-mkdir -p /opt/argos-webapp
-cat > /opt/argos-webapp/app.py <<'PYEOF'
-from flask import Flask, request
-import psycopg2
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    user_id = request.args.get('id', '1')
-    # INTENCIONALMENTE vulnerable a SQL injection — es para UC-08
-    conn = psycopg2.connect("dbname=argos_demo_prod user=argos_app password=...")
-    cur = conn.cursor()
-    cur.execute(f"SELECT * FROM employees WHERE id = {user_id}")
-    return str(cur.fetchall())
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
-PYEOF
-nohup python3 /opt/argos-webapp/app.py &
-```
-
-`attack-simulation/webapp_attacks/run_sqli.sh`:
-
-```bash
-#!/bin/bash
-TARGET_URL=${1:-"http://10.0.0.22/?id=1"}
-sqlmap -u "$TARGET_URL" --batch --dbs --threads=5
-```
-
-### Paso 4.4 — Commit (15 min)
-
-```bash
-git add attack-simulation/ lab/provision/webapp-flask.sh
-git commit -m "feat(p4): simuladores DDoS + SQLi + ransomware wrapper"
-git push
-```
-
-### Verificación EOD Día 4
-
-- [ ] `bash run_ddos.sh` genera flood detectable
-- [ ] `bash run_sqli.sh` ejecuta payloads sqlmap
-- [ ] Webapp Flask responde en http://10.0.0.22/
+| Check (2.2) | Esperado |
+|-------------|----------|
+| OpenSearch responde en 9200 (health green/yellow) | sí |
+| Dashboards UI abre en `http://192.168.56.10:5601` | sí |
+| 3 dashboards importados (Alerts Timeline, MITRE Heatmap, Layer Performance) | sí |
 
 ---
 
-## Día 5 (Viernes) — UI Streamlit base + OpenSearch dashboards
+## 2.3 Redis
 
-**Goal:** Streamlit Analyst UI con tabs base (la Approval Console la entrega P1) + 3 dashboards OpenSearch importados.
+```bash
+# En manager.sh:
+sudo apt-get install -y redis-server
+sudo sed -i 's/^bind 127.0.0.1.*/bind 0.0.0.0/' /etc/redis/redis.conf
+sudo sed -i 's/^protected-mode yes/protected-mode no/' /etc/redis/redis.conf
+sudo systemctl restart redis-server
 
-**Tiempo:** 6 horas.
-
-### Paso 5.1 — Streamlit shell (2 h)
-
-`ui/streamlit_app/app.py`:
-
-```python
-import streamlit as st
-
-st.set_page_config(page_title="ARGOS Analyst UI", layout="wide")
-st.title("🛡 ARGOS — Analyst Console")
-st.write("Activo defendido: PostgreSQL Production DB")
-
-st.sidebar.title("Navegación")
-st.sidebar.info("Approval Console está en su propia página")
+# Smoke
+redis-cli -h 192.168.56.10 ping
+# OUTPUT ESPERADO: PONG
 ```
 
-`ui/streamlit_app/pages/01_alert_inspection.py`:
+| Check (2.3) | Esperado |
+|-------------|----------|
+| Redis 7 corriendo y accesible desde host | sí |
+| Persistencia (RDB) habilitada | `redis-cli config get save` no vacío |
+
+---
+
+## ✅ Checklist Fase 2
+
+| # | Check | OK |
+|---|-------|----|
+| 1 | Postgres con pgAudit funcional | ☐ |
+| 2 | Audit log genera entradas para SELECT | ☐ |
+| 3 | OpenSearch health verde/amarillo | ☐ |
+| 4 | Dashboards importados | ☐ |
+| 5 | Redis pingable desde host | ☐ |
+
+---
+
+# FASE 3 — Bridge Wazuh→Redis + Streamlit UI
+
+## 3.1 Bridge Wazuh alerts → Redis stream
+
+### Código (`lab/bridge/wazuh_to_redis.py`)
 
 ```python
-import streamlit as st
+# lab/bridge/wazuh_to_redis.py
+"""
+Tail alerts.json del Wazuh manager y push a Redis stream events:raw_wazuh.
+Corre como service systemd en lab-manager.
+"""
+
+from __future__ import annotations
+
+import json, time, os
+from pathlib import Path
 import redis
 
-st.title("Alert Inspection")
-r = redis.from_url("redis://10.0.0.10:6379/0", decode_responses=True)
+ALERTS_FILE = Path("/var/ossec/logs/alerts/alerts.json")
+STREAM      = "events:raw_wazuh"
 
-# Mostrar últimas 10 alertas del stream
-messages = r.xrevrange("wazuh:alerts", count=10)
-for entry_id, fields in messages:
-    with st.expander(f"Alert {entry_id}"):
-        st.json(fields)
+
+def tail_f(path: Path):
+    with path.open() as f:
+        f.seek(0, 2)   # ir al final
+        while True:
+            line = f.readline()
+            if not line:
+                time.sleep(0.5); continue
+            yield line
+
+
+def main():
+    r = redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
+    for line in tail_f(ALERTS_FILE):
+        try:
+            alert = json.loads(line)
+            # Filtrar bajo nivel (sólo level ≥ 5)
+            if alert.get("rule", {}).get("level", 0) < 5:
+                continue
+            # Adaptar al schema esperado por P2
+            payload = {
+                "host":                alert.get("agent", {}).get("name", "unknown"),
+                "mitre_technique":     (alert.get("rule", {}).get("mitre", {}).get("technique") or ["Unknown"])[0],
+                "syscalls_per_min":    alert.get("data", {}).get("syscalls_per_min", 0),
+                "files_touched_per_min": alert.get("data", {}).get("files_touched_per_min", 0),
+                "entropy_of_written_bytes": alert.get("data", {}).get("entropy", 0.0),
+                "network_kbps":        alert.get("data", {}).get("network_kbps", 0),
+                "command_line":        alert.get("data", {}).get("win", {}).get("eventdata", {}).get("commandLine", ""),
+                "raw":                 alert,
+            }
+            r.xadd(STREAM, {"data": json.dumps(payload)})
+        except Exception as e:
+            print(f"[!] {e}", flush=True)
+
+
+if __name__ == "__main__":
+    main()
 ```
 
-`ui/streamlit_app/pages/03_audit_forensics.py`:
-
-```python
-import streamlit as st
-from opensearchpy import OpenSearch
-
-st.title("Audit & Forensics")
-client = OpenSearch([{"host": "10.0.0.10", "port": 9200}], use_ssl=True, verify_certs=False)
-
-incidents = client.search(index="argos-incidents-*", body={"query": {"match_all": {}}, "size": 50})
-for hit in incidents["hits"]["hits"]:
-    st.json(hit["_source"])
-```
-
-### Paso 5.2 — OpenSearch dashboards JSON (2.5 h)
-
-Diseñar 3 dashboards en OpenSearch Dashboards UI, exportar JSON:
-
-- `ui/opensearch-dashboards/alerts-timeline.ndjson`
-- `ui/opensearch-dashboards/mitre-heatmap.ndjson`
-- `ui/opensearch-dashboards/layer-performance.ndjson`
-
-### Paso 5.3 — Commit (15 min)
-
-### Verificación EOD Día 5
-
-- [ ] `streamlit run ui/streamlit_app/app.py` levanta sin error
-- [ ] Las 3 pages cargan
-- [ ] OpenSearch Dashboards importan correctamente
-
----
-
-## Día 6 (Sábado) — Rehearsals + video demo
-
-**Goal:** 3 corridas de cada UC con OBS grabando.
-
-**Tiempo:** 6 horas.
-
-### Paso 6.1 — OBS Studio setup (30 min)
-
-Instalar OBS, configurar:
-- Scene "Demo": pantalla completa + webcam pequeña abajo-derecha + mic
-- Audio: micrófono USB calidad ≥ phone-level
-
-### Paso 6.2 — Rehearsal UC-01 (1 h)
-
-P1 narra, P4 ejecuta, los 4 con celulares. Grabar 3 takes. El mejor se queda como respaldo.
-
-### Paso 6.3 — Rehearsals UC-02, UC-04, UC-06, UC-07 (3 h)
-
-Mismo formato.
-
-### Paso 6.4 — Edición rápida (1 h)
-
-DaVinci Resolve free o iMovie. Cortar errores, juntar tomas, añadir subtítulos básicos. Output: video MP4 de 12-15 min.
-
-### Verificación EOD Día 6
-
-- [ ] Video MP4 de respaldo grabado
-- [ ] Backup en USB + Google Drive
-
----
-
-## Día 7 (Domingo) — Rehearsals finales + status
-
-**Mañana:** 5 rehearsals seguidos cronometrados.
-
-**Tarde:** Bug bash de infrastructure issues.
-
-**Noche:** Update `docs/PROJECT_STATUS.md` con estado real.
-
----
-
-## Apéndice A — Comandos diarios
+### Servicio systemd
 
 ```bash
-# Estado del lab
-cd ~/projects/argos/lab && vagrant status
+sudo tee /etc/systemd/system/argos-bridge.service << 'EOF'
+[Unit]
+Description=ARGOS Wazuh→Redis bridge
+After=wazuh-manager.service
 
-# Restart Wazuh manager
-vagrant ssh wazuh-mgr -c "sudo systemctl restart wazuh-manager"
+[Service]
+ExecStart=/usr/bin/python3 /vagrant/lab/bridge/wazuh_to_redis.py
+Restart=always
+Environment=REDIS_URL=redis://localhost:6379/0
 
-# Logs Wazuh en tiempo real
-vagrant ssh wazuh-mgr -c "sudo tail -f /var/ossec/logs/alerts/alerts.json"
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable --now argos-bridge
 
-# PostgreSQL queries
-vagrant ssh linux-victim -c "sudo -u postgres psql -d argos_demo_prod -c '\dt'"
+systemctl status argos-bridge --no-pager
+# OUTPUT ESPERADO:
+# ● argos-bridge.service - ARGOS Wazuh→Redis bridge
+#      Active: active (running)
+```
 
-# Reset full
-vagrant destroy -f && vagrant up
+| Check (3.1) | Esperado |
+|-------------|----------|
+| Service activo | sí |
+| Cuando P3 dispara un canary, `XLEN events:raw_wazuh` crece | sí |
+| Latencia alert→stream ≤ 2s | sí |
+
+---
+
+## 3.2 Streamlit Approval Console (CENTERPIECE)
+
+### Código (`ui/streamlit_app/app.py`)
+
+```python
+# ui/streamlit_app/app.py
+"""
+Streamlit Analyst UI — 3 tabs.
+
+Tab 2 (Approval Console) es el centerpiece visual del demo UC-04.
+"""
+
+import os, time, json
+from datetime import datetime, timezone
+
+import streamlit as st
+from streamlit_autorefresh import st_autorefresh
+import redis
+
+st.set_page_config(page_title="ARGOS Analyst", layout="wide", initial_sidebar_state="collapsed")
+st_autorefresh(interval=1500, key="poll")
+
+r = redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+                   decode_responses=True)
+
+
+def load_active_incidents() -> list[dict]:
+    keys = sorted(r.scan_iter(match="incident:inc-*"), reverse=True)[:20]
+    return [json.loads(r.get(k)) for k in keys if r.get(k)]
+
+
+def tier_color(tier: str) -> str:
+    return {"T0": "#E53935", "T1": "#FB8C00", "T2": "#FDD835", "T3": "#1E88E5"}.get(tier, "#888")
+
+
+tab1, tab2, tab3 = st.tabs(["🔍 Alert Inspection", "✅ Approval Console", "📊 Audit & Forensics"])
+
+
+# ============= TAB 2 — APPROVAL CONSOLE ==================================
+with tab2:
+    st.title("Approval Workflow Console")
+    incidents = [i for i in load_active_incidents() if i.get("tier") == "T2"
+                 and i.get("final_decision") is None]
+
+    if not incidents:
+        st.info("No active T2 incidents waiting for approval.")
+    else:
+        inc = incidents[0]
+        st.markdown(
+            f"<div style='background:{tier_color(inc['tier'])};padding:1rem;"
+            f"border-radius:8px;color:white;'>"
+            f"<h2>Incident {inc['incident_id']} — Tier {inc['tier']}</h2>"
+            f"<p>Host: <b>{inc['host']['hostname']}</b> · "
+            f"Technique: <b>{inc['mitre_technique']}</b> · "
+            f"Layers firing: <b>{inc['num_layers_fired']}</b></p></div>",
+            unsafe_allow_html=True,
+        )
+
+        c1, c2 = st.columns([2, 3])
+        with c1:
+            st.subheader("Decision Matrix")
+            for ap in inc.get("approvers", []):
+                emoji = {"APPROVED":"🟢", "REJECTED":"🔴",
+                         "TIMEOUT":"⚫", "PENDING":"🟡"}.get(ap["status"], "❓")
+                latency = (ap["responded_at"] - ap["notified_at"]
+                          if ap.get("responded_at") else None)
+                st.write(f"{emoji} **{ap['approver_id']}** — "
+                         f"{ap['status']} via {ap['channel']} "
+                         f"({latency:.1f}s)" if latency else "(pending)")
+
+        with c2:
+            st.subheader("Consolidation Window")
+            cw = inc.get("consolidation_window") or {}
+            if cw.get("opens_at") and cw.get("closes_at"):
+                remaining = max(0, cw["closes_at"] - time.time())
+                st.metric("Time remaining", f"{remaining:.0f}s")
+                st.progress(min(1.0, 1 - remaining / 60))
+
+            approved = sum(1 for a in inc["approvers"] if a["status"] == "APPROVED")
+            rejected = sum(1 for a in inc["approvers"] if a["status"] == "REJECTED")
+            if approved >= 1 and rejected >= 1:
+                st.warning("⚠️ CONFLICT — conservative-wins will apply.")
+
+# Tab 1 y 3 — read-only, ver código completo en repo
+```
+
+### `requirements.txt`
+
+```
+streamlit==1.30.0
+streamlit-autorefresh==1.0.1
+redis==5.0.1
+plotly==5.18.0
+pydantic==2.6.0
+```
+
+### Correr
+
+```bash
+cd ui/
+pip install -r requirements.txt
+streamlit run streamlit_app/app.py --server.address 0.0.0.0 --server.port 8501
+# OUTPUT ESPERADO:
+# You can now view your Streamlit app in your browser.
+#   Local URL: http://localhost:8501
+#   Network URL: http://192.168.x.x:8501
+```
+
+| Check (3.2) | Esperado |
+|-------------|----------|
+| Streamlit abre en 8501 | sí |
+| Si Redis vacío: muestra "No active T2 incidents" | sí |
+| Si P1 emite incident T2: aparece en ≤ 2s | sí |
+| Decision Matrix actualiza al recibir respuesta | sí |
+
+---
+
+## 3.3 OpenSearch Dashboards exportados a NDJSON
+
+Después de crear los dashboards manualmente en OpenSearch Dashboards UI:
+
+```bash
+# Export
+curl -X POST "http://localhost:5601/api/saved_objects/_export" \
+  -H "osd-xsrf: true" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "dashboard", "includeReferencesDeep": true}' \
+  > ui/opensearch-dashboards/alerts-timeline.ndjson
+# Repetir para mitre-heatmap y layer-performance
+```
+
+| Check (3.3) | Esperado |
+|-------------|----------|
+| 3 `.ndjson` versionados en `ui/opensearch-dashboards/` | sí |
+| Importar desde NDJSON en otra instancia limpia funciona | sí |
+
+---
+
+## ✅ Checklist Fase 3
+
+| # | Check | OK |
+|---|-------|----|
+| 1 | Bridge alerts→Redis activo | ☐ |
+| 2 | Streamlit Approval Console renderiza con incident demo | ☐ |
+| 3 | OpenSearch dashboards exportados a ndjson | ☐ |
+
+---
+
+# FASE 4 — Rehearsal + operador del demo
+
+## 4.1 Rehearsal del rol de operador
+
+Tu rol durante el demo (~12 min):
+
+| Tiempo | Acción | Comando | Pantalla |
+|--------|--------|---------|----------|
+| 0:00 | Anunciar UC-01 | (P1 narra) | Streamlit Tab 2 |
+| 0:05 | Ejecutar | `vagrant ssh linux-victim -c 'python /vagrant/attack-simulation/ransomware_simulator/lockbit_like.py --variant uc01 --target linux-victim'` | Console muestra T0 incident |
+| 2:00 | UC-02 | `vagrant ssh linux-victim -c '... --variant uc02 ...'` | Layer 3 fires alone |
+| 3:30 | UC-04 | `vagrant ssh linux-victim -c '... postgres_attack.py ...'` | Two-person rule |
+| 8:00 | UC-06 (opcional, si tiempo) | `sudo timeout 5 hping3 -S --flood -p 80 192.168.56.21` | Network panel |
+| 10:00 | Q&A | mostrar Dashboard MITRE | OpenSearch Dashboards |
+
+### Tips del operador
+
+- Tener 4 ventanas terminal preparadas con los comandos pre-escritos (no tipear en vivo).
+- Pantalla del proyector = solo Streamlit Tab 2. No mostrar terminales.
+- Si algo falla, **no entres en pánico** — corre `make demo-reset` y reanuda en el último UC.
+
+## 4.2 `Makefile` ayudante
+
+```makefile
+# Makefile (raíz del repo)
+.PHONY: demo-up demo-down demo-reset soar-restart bridge-restart
+
+demo-up:
+	cd lab && vagrant up
+	@echo "Lab up. Waiting 10s for services..."
+	@sleep 10
+
+demo-down:
+	cd lab && vagrant halt
+
+demo-reset:
+	redis-cli -h 192.168.56.10 --scan --pattern 'incident:*' | xargs -r redis-cli -h 192.168.56.10 DEL
+	vagrant ssh lab-manager -c "sudo systemctl restart argos-bridge"
+	@echo "Demo state reset."
+
+soar-restart:
+	pkill -f 'soar.decision_engine.consumer' || true
+	pkill -f 'uvicorn soar.approval_api' || true
+	sleep 1
+	nohup python -m soar.decision_engine.consumer > /tmp/soar-consumer.log 2>&1 &
+	nohup uvicorn soar.approval_api.main:app --port 8001 > /tmp/soar-api.log 2>&1 &
+
+bridge-restart:
+	vagrant ssh lab-manager -c "sudo systemctl restart argos-bridge"
+```
+
+```bash
+make demo-up
+# OUTPUT ESPERADO: vagrant up logs + "Lab up. Waiting 10s for services..."
+
+make demo-reset
+# OUTPUT ESPERADO: "Demo state reset."
+```
+
+## 4.3 Hot spare en laptop de P1
+
+P1 tiene un clon del lab. Tu trabajo es asegurar que:
+
+```bash
+# P1 puede hacer:
+cd ~/code/argos/lab
+vagrant up
+# Y arranca un lab idéntico.
+```
+
+Coordinen una prueba conjunta: tú apagas tu lab, P1 prende el suyo, todos los servicios SOAR/ML cambian env `WAZUH_HOST=p1-espejo` y corren un mini UC-01. Documenta el tiempo de switchover (objetivo ≤ 5 min).
+
+| Check (4.3) | Esperado |
+|-------------|----------|
+| Switchover P4→P1 sin reconfigurar nada manual | ≤ 5 min |
+| Lab espejo de P1 corre los 5 UCs principales | sí |
+
+## 4.4 Video respaldo
+
+```bash
+# Grabar pantalla completa de tu rehearsal final (OBS o vokoscreenNG)
+# Output: docs/team/argos-demo-rehearsal.mp4 (NO commitear si > 100 MB)
+# Subir a Drive/Cloud y compartir link en standup.
+```
+
+## 4.5 Checklist pre-demo (T-2h)
+
+| # | Check | OK |
+|---|-------|----|
+| 1 | `vagrant status` → 3 running | ☐ |
+| 2 | Wazuh API health 200 | ☐ |
+| 3 | OpenSearch health green/yellow | ☐ |
+| 4 | Streamlit Approval Console abre y muestra "No active" (estado limpio) | ☐ |
+| 5 | Bridge service activo | ☐ |
+| 6 | Postgres conectable | ☐ |
+| 7 | Hot spare P1 también `running` | ☐ |
+| 8 | Video respaldo accesible offline | ☐ |
+| 9 | Cargador laptop + cable HDMI/USB-C al proyector | ☐ |
+| 10 | 4 terminales preparadas con comandos UC-01..04 | ☐ |
+
+---
+
+# Apéndice A — Troubleshooting
+
+### A.1 `vagrant up` falla con "Vagrant could not detect VBoxManage"
+
+VirtualBox no instalado o PATH roto. `which VBoxManage` debe responder.
+
+### A.2 VM Windows no arranca (timeout WinRM)
+
+```bash
+vagrant reload windows-victim --provision
+# Si persiste: vagrant destroy + vagrant up
+```
+
+### A.3 OpenSearch container OOM
+
+Aumentar Java heap (vía `OPENSEARCH_JAVA_OPTS`) o asignar más RAM a la VM manager.
+
+### A.4 Bridge no recibe alerts
+
+```bash
+sudo journalctl -u argos-bridge -f
+# Buscar errores de parsing. Si `alerts.json` no existe, el Wazuh manager no
+# arrancó bien — `sudo /var/ossec/bin/wazuh-control status`.
+```
+
+### A.5 Streamlit no refresca
+
+`st_autorefresh` requiere que la página esté en foco. Si fallo crítico,
+ALT+F5 manual; los datos están en Redis y se vuelven a cargar.
+
+### A.6 Postgres `FATAL: password authentication failed`
+
+```bash
+# Verificar pg_hba.conf permite tu rango
+sudo cat /etc/postgresql/15/main/pg_hba.conf | grep 192.168
+# Reset password si es necesario:
+sudo -u postgres psql -c "ALTER USER argos PASSWORD 'argos';"
+```
+
+### A.7 Wazuh agent no aparece en manager
+
+```bash
+# En el agent
+sudo /var/ossec/bin/agent_control -l
+# Si "Never connected", revisar /var/ossec/etc/ossec.conf <server-ip>
+sudo /var/ossec/bin/wazuh-control restart
 ```
 
 ---
 
-## Apéndice B — Troubleshooting
+# Apéndice B — Comandos de emergencia
 
-| Síntoma | Causa | Fix |
-|---------|-------|-----|
-| `vagrant up` cuelga en "Booting VM..." | Hyper-V vs VirtualBox conflict | `bcdedit /set hypervisorlaunchtype off` + reboot |
-| Box no descarga | Conexión lenta | Pre-descargar: `vagrant box add generic/ubuntu2204` |
-| Wazuh agent "Disconnected" | Manager IP no accesible | Verificar `private_network` config |
-| OpenSearch OOM | Heap default muy bajo | Aumentar `-Xms2g -Xmx2g` en jvm.options |
-| PostgreSQL "permission denied" | pg_hba.conf no acepta el cliente | Editar pg_hba.conf, restart |
+```bash
+# Lab caído mid-demo
+make demo-reset            # limpia Redis, reinicia bridge
+vagrant reload lab-manager # último recurso, ~30s downtime
+
+# Switch a lab espejo P1
+export WAZUH_HOST=p1-espejo.local
+export REDIS_URL=redis://p1-espejo.local:6379/0
+make soar-restart
+
+# Postgres lleno
+psql -U argos -d argos_audit -c "DELETE FROM audit_incidents WHERE created_at < NOW() - INTERVAL '24 hours';"
+
+# OpenSearch indexes lentos
+curl -X POST 'http://localhost:9200/_cache/clear?pretty'
+
+# Streamlit no responde
+pkill -f streamlit
+nohup streamlit run ui/streamlit_app/app.py --server.port 8501 > /tmp/streamlit.log 2>&1 &
+```
+
+---
+
+# Apéndice C — Referencias
+
+| Cuando estés en... | Lee |
+|--------------------|-----|
+| `lab/Vagrantfile` | SAD §13 (deployment), `sprint-week-1-overview.md` §1 |
+| `lab/postgres/` | Manual P1 §3.2 (audit consumer) |
+| `ui/streamlit_app/` | SAD §9.2, ADR-0006 (split-brain visualization) |
+| `evaluation/` | EVALUATION_CRITERIA §1.3 |
 
 ---
 
@@ -626,4 +817,4 @@ vagrant destroy -f && vagrant up
 
 | Versión | Fecha | Cambio | Autor |
 |---------|-------|--------|-------|
-| 1.0 | 2026-05-24 | Initial manual P4 — Vagrant + Wazuh + OpenSearch + Redis + VMs + PostgreSQL + pgAudit + simuladores DDoS/SQLi + UI Streamlit base + video demo. | P1 |
+| 2.0 | 2026-05-24 | Reorganización day-by-day → feature-based. Vagrantfile completo, pgAudit setup explícito, bridge code completo, Streamlit Approval Console (centerpiece), Makefile demo-helper, checklists y comandos de emergencia. | P1 |
