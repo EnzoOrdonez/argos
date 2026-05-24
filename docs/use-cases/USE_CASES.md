@@ -450,7 +450,7 @@ Risks specific to running these use cases live:
 | Risk | Scenario | Mitigation |
 |------|----------|-----------|
 | Attack doesn't trigger expected layers | All UCs | Pre-rehearse 10× per scenario; tune thresholds based on rehearsal |
-| LLM API latency spike during demo | All UCs | Pre-cache LLM responses for known scenarios; fallback to Qwen visibly |
+| LLM API latency spike during demo | All UCs | Pre-cache LLM responses for known scenarios; fallback visible a Llama 3.1 local (zero-egress) per ADR-0001 v2 |
 | VM crashes mid-demo | UC-01, UC-04, UC-05 | Snapshot before demo; quick restore script ready |
 | Split-brain choreography fails (P4 forgets to NOT respond) | UC-03 | Written script per person; rehearse timing; pre-recorded backup |
 | Two-person rule misconfigured | UC-04 | Verify host tag in Wazuh before demo starts |
@@ -492,3 +492,4 @@ After this document, the **what to build** is fully specified:
 |---------|------|--------|--------|
 | 1.0 | Week 1 | Initial use case specification with 5 demo scenarios (UC-01 to UC-05) and 7 evaluation scenarios (EV-01 to EV-07). | P1 |
 | 1.1 | Week 9 (post-merge) | Synchronized with ADR-0007 (multi-channel notification escalation): UC-03 approval flow updated to describe Telegram + ntfy + Slack in parallel at t=0 with Twilio voice DTMF escalation at t=60s; email demoted to post-facto summary channel. UC-03 demo narration script updated. Risk table updated to reflect multi-channel resilience. Metadata: version bump, `Related` extended to ADRs 0001-0007. | P1 |
+| 1.2 | 2026-05-24 | Cleanup pass: UC-03 flow actualizado a ADR-0007 v2 (Telegram + Discord en paralelo, Twilio Voice escalación; ntfy y Slack eliminados); UC-04 target ahora menciona PostgreSQL explícitamente como activo defendido (OPEN_QUESTIONS Q2); risk table sincronizado con canales v2 + Llama local fallback (ADR-0001 v2). | P1 |

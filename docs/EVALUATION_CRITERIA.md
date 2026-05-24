@@ -67,7 +67,7 @@ Live presentation to defend the project. Required structure (verbatim):
 **How this repo serves this deliverable:**
 
 - The interactive deck at `docs/use-cases/argos_use_cases.html` covers most of the structure visually (5 demo scenarios, MITRE coverage, SIEM comparison, KPI dashboard).
-- The architecture diagram is at `docs/architecture/architecture_diagram.html` (interactive).
+- El flujo del sistema con asignación por integrante está en `docs/architecture/argos_flow.html` (navegador) y `docs/architecture/argos_flow.drawio` (editable en draw.io).
 - "Aprendizajes y dificultades" → keep an explicit `docs/LESSONS_LEARNED.md` log starting now (Week 7) — every gate retrospective adds an entry.
 
 ### 1.3 Implementación Técnica Funcional
@@ -132,7 +132,7 @@ Decisions where the rubric directly informed the choice:
 To resolve in next office hours (every team member should review this list before that conversation):
 
 1. **Per-section weights** — confirm or correct the assumed split in §3.
-2. **Layer 4 LLM** — is the use of an external LLM API (DeepSeek/Qwen) within course scope? See P-005 risk and `OPEN_QUESTIONS_RESOLUTION.md` §Q1.
+2. **Layer 4 LLM** — is the use of an external LLM API (OpenAI GPT-4o-mini, per ADR-0001 v2) within course scope? Llama 3.1 local fallback elimina la dependencia externa cuando se requiera. See P-005 risk and `OPEN_QUESTIONS_RESOLUTION.md` §Q1.
 3. **Sigma upstream PRs** — does upstream contribution count toward the grade or is it pure bonus?
 4. **Reproducibility test in defense** — will the professor try to rebuild the lab from the repo? If yes, `lab/` Vagrantfile must be bulletproof.
 5. **Late checkpoint penalty** — if Review 1 or Review 2 is missed due to schedule slippage, is there a recovery path?
@@ -142,5 +142,7 @@ To resolve in next office hours (every team member should review this list befor
 ## 6. Change log
 
 | Version | Date | Change | Author |
+| Version | Date | Change | Author |
 |---------|------|--------|--------|
 | 1.0 | Week 7 | Initial document — rubric transcribed from course brief; implicit weights documented; cross-mapped each deliverable to the repo artifacts that serve it. | P1 |
+| 1.1 | 2026-05-24 | Sync con cleanup pass: refs a `architecture_diagram.html` reemplazadas por `argos_flow.html` (que tiene además ownership por integrante); ref a `TECHNICAL_DEBT.md` removida (deuda resuelta en argos_contracts v1.1.0); Q2 al profesor actualizada a "OpenAI GPT-4o-mini" (ADR-0001 v2). | P1 |

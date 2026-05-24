@@ -96,7 +96,7 @@ def _triage_response(incident_id: str = "INC-2026-04-30-001") -> TriageResponse:
         runbook_aplicable="NIST 800-61 §3.4 Containment, Eradication, Recovery",
         accion_recomendada="Isolate host, capture memory, preserve disk snapshot before remediation",
         indicadores_correlacionar=["vssadmin.exe", "high entropy writes"],
-        llm_backend="deepseek-v3",
+        llm_backend="gpt-4o-mini",
         generated_at=UTC_NOW,
     )
 
@@ -398,7 +398,7 @@ def test_triage_response_all_whitelisted_mitre_ids_pass() -> None:
             severidad=Severity.MEDIUM,
             runbook_aplicable="NIST 800-61 §3.4",
             accion_recomendada="Investigate further with full forensic context",
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=UTC_NOW,
         )
         assert r.tecnica_mitre == technique
@@ -413,7 +413,7 @@ def test_triage_response_hallucinated_mitre_id_rejects() -> None:
             severidad=Severity.CRITICAL,
             runbook_aplicable="NIST 800-61 §3.4",
             accion_recomendada="Isolate host immediately and preserve memory",
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=UTC_NOW,
         )
     assert "not in whitelist" in str(exc_info.value)
@@ -429,7 +429,7 @@ def test_triage_response_mitre_id_case_sensitivity() -> None:
             severidad=Severity.CRITICAL,
             runbook_aplicable="NIST 800-61 §3.4",
             accion_recomendada="Isolate host immediately and preserve memory",
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=UTC_NOW,
         )
 
@@ -444,7 +444,7 @@ def test_triage_response_naive_datetime_rejects() -> None:
             severidad=Severity.CRITICAL,
             runbook_aplicable="NIST 800-61 §3.4",
             accion_recomendada="Isolate host immediately and preserve memory",
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=naive,
         )
     assert "timezone-aware" in str(exc_info.value)
@@ -459,7 +459,7 @@ def test_triage_response_runbook_too_short_rejects() -> None:
             severidad=Severity.CRITICAL,
             runbook_aplicable="too",  # min_length=10
             accion_recomendada="Isolate host immediately and preserve memory",
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=UTC_NOW,
         )
 
@@ -473,7 +473,7 @@ def test_triage_response_action_too_short_rejects() -> None:
             severidad=Severity.CRITICAL,
             runbook_aplicable="NIST 800-61 §3.4 Containment",
             accion_recomendada="too short",  # min_length=20
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=UTC_NOW,
         )
 
@@ -487,7 +487,7 @@ def test_triage_response_confianza_out_of_range_rejects() -> None:
             severidad=Severity.CRITICAL,
             runbook_aplicable="NIST 800-61 §3.4 Containment",
             accion_recomendada="Isolate host immediately and preserve memory",
-            llm_backend="deepseek-v3",
+            llm_backend="gpt-4o-mini",
             generated_at=UTC_NOW,
         )
 

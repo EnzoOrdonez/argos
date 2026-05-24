@@ -11,7 +11,7 @@
 | Course | Tópicos Avanzados de Ciberseguridad · 2026-1 |
 | Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `architecture_diagram.html`, ADRs 0001-0007 |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `argos_flow.html` (flujo + ownership), ADRs 0001-0007 |
 
 ---
 
@@ -94,7 +94,7 @@ Threats numbered T-NNN. Mitigations referenced in section 6.
 
 | ID | Component | Threat | L | I | Risk | Mitigation | Residual |
 |----|-----------|--------|---|---|------|------------|----------|
-| T-030 | LLM API request | Sensitive logs (filenames, internal hostnames, command lines with secrets) sent to third-party API (DeepSeek/Qwen, both China-based) | H | M | **High** | Sanitization layer before LLM call: redact patterns matching credentials, internal IP ranges, employee usernames; document the data sent in `docs/data-handling.md` | Medium — accept residual disclosure for academic project; for production deployment use local LLM |
+| T-030 | LLM API request | Sensitive logs (filenames, internal hostnames, command lines with secrets) sent to third-party API (OpenAI, US-based per ADR-0001 v2) | H | M | **Medium** | Sanitization layer before LLM call: redact patterns matching credentials, internal IP ranges, employee usernames; document the data sent in `docs/data-handling.md`; Llama 3.1 local fallback ofrece zero-egress | Low — significativamente reducido vs v1 (DeepSeek/Qwen China-based); air-gap completo disponible vía fallback local |
 | T-031 | Canary path leakage | Attacker reads documentation/repo and learns canary paths to avoid them | M | M | Medium | Canary paths configured via env vars, not hardcoded; production deployment generates random subset of canaries per host; demo uses public paths but documents this limitation | Medium — acceptable for demo, documented |
 | T-032 | OpenSearch API | Attacker reads alert history to learn detection logic | L | L | Low | OpenSearch on internal network only, authentication required, no public exposure | Negligible |
 | T-033 | Wazuh agent key | Attacker on victim extracts agent key to register rogue agents | M | M | Medium | Agent key file root-owned 0600, key rotation supported, anomaly rule on duplicate agent registrations | Low |
@@ -144,7 +144,7 @@ Reliability failures — no adversary required. Numbered F-NNN.
 
 | ID | Failure mode | Effect on system | Detection | Mitigation | Degradation |
 |----|--------------|------------------|-----------|------------|-------------|
-| F-001 | DeepSeek API down | Capa 4 enrichment unavailable | HTTP error / timeout from client | Automatic fallback to Qwen API after 2 failed attempts | Degraded: alerts continue to flow, analyst sees raw alert without LLM analysis |
+| F-001 | OpenAI API down | Capa 4 enrichment unavailable | HTTP error / timeout from client | Automatic fallback to Llama 3.1 local (Ollama) after 2 failed attempts; zero-egress backup garantiza inferencia incluso sin internet | Degraded: alerts continue to flow with Llama-quality enrichment (menor que GPT-4o-mini pero válido) |
 | F-002 | Both LLM APIs down | Full Capa 4 outage | Both fallback attempts fail | Circuit breaker opens, alerts marked `LLM_UNAVAILABLE` | Degraded: same as above; SOAR containment unaffected |
 | F-003 | LLM hallucinates non-existent MITRE technique | Wrong analysis displayed to analyst | Pydantic validator + whitelist of valid ATT&CK IDs catches it | Reject response, retry once, fall through to "needs human triage" state | Degraded: alert without LLM enrichment |
 | F-004 | LLM gives inconsistent verdicts for same input | Analyst confusion | Confidence score + monitoring on response variance over time | Cache responses by input hash (24h TTL), confidence threshold cutoff | Stable verdicts within cache window |
@@ -253,7 +253,7 @@ For high-value hosts (in production deployment), Sysmon writes to local file in 
 
 ### R-8. Vendor portability prevents lock-in failure
 
-LLM backend is abstracted. If DeepSeek is down, Qwen takes over. If both are down, system continues without enrichment. If long-term we want full sovereignty, swap to local Llama 3.1 — change of one config value.
+LLM backend is abstracted (ADR-0001 v2). Si OpenAI cae, Llama 3.1 local toma el relevo (zero-egress). Si ambos fallan, el sistema continúa sin enriquecimiento — las capas 1-3 + SOAR siguen operativas. Swap a Claude/Mistral es one-config-value change.
 
 ### R-9. State persistence across crashes
 
@@ -272,7 +272,7 @@ The exposition is the highest-stakes single event. Specific contingencies:
 | Scenario | Contingency |
 |----------|-------------|
 | Live attack doesn't trigger as expected | Pre-recorded video of full successful run played as backup |
-| LLM API down at demo time | Fall back to Qwen visibly during demo (good story); if both down, narrate "this is where the LLM analysis would appear" with screenshot |
+| LLM API down at demo time | Fallback visible de OpenAI a Llama 3.1 local durante el demo (buena narrativa: "incluso sin internet seguimos analizando"); si ambos caen, narrar "aquí aparecería el análisis del LLM" con screenshot |
 | VM crashes during demo | Snapshot of pre-attack state restored; second laptop with full lab as backup |
 | Network issue (university wifi) | Demo runs entirely on internal lab network; LLM API call cached to last-good response if internet down |
 | Streamlit UI bug surfaces | Show OpenSearch dashboard as alternative view |
@@ -317,6 +317,7 @@ Future expansions (out of scope for v1.0):
 | 1.2 | Week 9 (post Gate 2) | Section 3.7 expanded to cover ADR-0007 (multi-channel notification chain): added T-067 (SIM-swap del aprobador), T-068 (caller-ID spoofing al webhook Twilio), T-069 (compromise del bot Telegram via token leakage). Trust boundary note added implicitly via §3.7 preamble. Metadata: version bump, `Related` extended to ADRs 0001-0007, status note. | P1 |
 | 1.3 | Week 7 calendar | T-062 reframed from "compromised approver **email** account" to channel-agnostic ("any notification channel") with explicit note that email is now post-facto-only per ADR-0007. Cross-references T-067/T-069 as primary-channel threats. | P1 |
 | 1.4 | Week 7 calendar | P-002 mitigation updated to reflect reality: removed "Friday demo" (practice not adopted), kept Monday standup + cross-layer code review + per-module READMEs. Risk score unchanged at High because removed mitigation was aspirational. | P1 |
+| 1.5 | 2026-05-24 | Cleanup pass: T-030 actualizado (riesgo H→M tras cambio a OpenAI US-based + Llama local fallback per ADR-0001 v2); F-001 sincronizado al failover OpenAI→Llama local. T-070 añadido (Discord webhook leak) per ADR-0007 v2. Owner actualizado a Enzo Ordoñez Flores. | P1 |
 
 ---
 

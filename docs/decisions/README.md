@@ -16,13 +16,13 @@ Rejected decisions are documented too — they show that the team evaluated alte
 
 | # | Title | Status | Summary |
 |---|-------|--------|---------|
-| [0001](./0001-llm-vendor-agnostic.md) | LLM vendor-agnostic via LLMClient interface | ✅ Accepted | Abstract LLM behind interface; DeepSeek primary, Qwen fallback. Swap via env var. |
+| [0001](./0001-llm-vendor-agnostic.md) | LLM vendor-agnostic via LLMClient interface (v2) | ✅ Accepted | Abstract LLM behind interface; OpenAI GPT-4o-mini primary (US-based) + Llama 3.1 8B local fallback (zero-egress). v2 reasignó primario por soberanía de datos. Swap via env var. |
 | [0002](./0002-heartbeat-default-60s.md) | Wazuh agent heartbeat — keep default 60s | ✅ Accepted | Reject lowering heartbeat interval; alert fatigue cost outweighs marginal detection improvement. |
 | [0003](./0003-confidence-tiered-automation.md) | Confidence-tiered automation with HITL SOAR | ✅ Accepted | 4-tier classification (T0-T3); auto-execute high confidence, human approval for medium-uncertain. T2 timeout 3min with throttle+snapshot during countdown. |
 | [0004](./0004-auto-rollback-rejected.md) | Auto-rollback "dead man's switch" | ❌ Rejected | Rejected. Contradicts "fails closed" principle. Documented to show the team considered and consciously rejected the option. |
-| [0005](./0005-notification-channel-abstraction.md) | Notification channel abstraction | ✅ Accepted | Strategy pattern for notification channels. Email v1; canales concretos para v1+ definidos en ADR-0007. |
+| [0005](./0005-notification-channel-abstraction.md) | Notification channel abstraction | ✅ Accepted | Strategy pattern for notification channels. Foundation para ADR-0007; canales concretos definidos allí. |
 | [0006](./0006-split-brain-resolution.md) | Split-brain resolution — conservative-wins policy | ✅ Accepted | When approvers disagree, conservative-wins policy with 60s consolidation window. In containment context, conservative = isolate. |
-| [0007](./0007-notification-multichannel-escalation.md) | Multi-channel notification escalation chain | ✅ Accepted | Telegram + ntfy.sh + Slack/Discord en paralelo a t=0; Twilio Voice (DTMF) como escalación a t=60s; email degradado a notificación post-facto. Sustituye el rol de email primario implícito en ADR-0003. |
+| [0007](./0007-notification-multichannel-escalation.md) | Multi-channel notification escalation chain (v2) | ✅ Accepted | Telegram (primario) + Discord (visibilidad del equipo) en paralelo a t=0; Twilio Voice (DTMF) como escalación a t=60s; email degradado a notificación post-facto. v2 reemplazó ntfy.sh y Slack (canales que el equipo no usa) por Discord. |
 
 ---
 
@@ -36,7 +36,7 @@ Rejected decisions are documented too — they show that the team evaluated alte
 
 ## Conventions
 
-- ADRs are **immutable once accepted**. Changes happen via new ADRs that supersede earlier ones.
+- ADRs are **immutable once accepted**. Changes happen via new ADRs that supersede earlier ones, OR via in-place version bumps (v2, v3) when the same decision needs to be revisited honestly — preserving the original rationale and the new one side-by-side.
 - New ADR number = max existing + 1.
 - Status values: `Proposed`, `Accepted`, `Rejected`, `Superseded by ADR-NNNN`, `Deprecated`.
 - Format follows Michael Nygard's template adapted for our needs.

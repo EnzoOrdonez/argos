@@ -70,7 +70,7 @@ class AlertContext(BaseModel):
 class TriageResponse(BaseModel):
     """
     Structured output from LLM Triage. Pydantic validation + MITRE whitelist
-    are the primary defense against LLM hallucination (per SAD §12.1 R-6).
+    are the primary defense against LLM hallucination (per SAD section 12.1 R-6).
 
     Owner: LLM Triage service (P1).
     Consumer: Decision Engine, Streamlit Approval Console (P4).
@@ -92,7 +92,7 @@ class TriageResponse(BaseModel):
     indicadores_correlacionar: list[str] = Field(default_factory=list)
     llm_backend: str = Field(
         ...,
-        description="Identifier of backend used: 'deepseek-v3' | 'qwen2.5-72b-instruct'",
+        description="Identifier of backend used: 'gpt-4o-mini' | 'llama-3.1-8b-local' (per ADR-0001 v2)",
     )
     generated_at: datetime
 

@@ -97,7 +97,7 @@
         <mxCell id="l3" value="LAYER 3&#10;Canary FIM (Deception)&#10;&#10;whodata captura PID + cmdline&#10;FP ≈ 0 por diseño&#10;detección ultra-temprana" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontColor=#1A2C4D;fontSize=11;align=center;" vertex="1" parent="1">
           <mxGeometry x="820" y="715" width="340" height="150" as="geometry" />
         </mxCell>
-        <mxCell id="l4" value="LAYER 4 — LLM Triage&#10;(enrichment-only · NUNCA en path crítico)&#10;&#10;FastAPI + mini-RAG&#10;(MITRE STIX + NIST 800-61 + SANS)&#10;DeepSeek-V3 ↔ Qwen2.5-72B&#10;MITRE whitelist anti-halucinación" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=10;align=center;dashed=0;" vertex="1" parent="1">
+        <mxCell id="l4" value="LAYER 4 — LLM Triage&#10;(enrichment-only · NUNCA en path crítico)&#10;&#10;FastAPI + mini-RAG&#10;(MITRE STIX + NIST 800-61 + SANS)&#10;OpenAI GPT-4o-mini ↔ Llama 3.1 local&#10;MITRE whitelist anti-halucinación" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=10;align=center;dashed=0;" vertex="1" parent="1">
           <mxGeometry x="1190" y="715" width="340" height="150" as="geometry" />
         </mxCell>
 
@@ -184,7 +184,7 @@
         <mxCell id="throttle" value="Process Throttle&#10;cpulimit / ionice" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCF3CF;strokeColor=#B7950B;fontColor=#5F4500;fontSize=11;align=center;" vertex="1" parent="1">
           <mxGeometry x="740" y="1230" width="140" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="postfacto" value="Email / Slack post-facto (T0/T1) con botón &quot;Revert&quot; firmado JWT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FADBD8;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;fontStyle=2;align=center;" vertex="1" parent="1">
+        <mxCell id="postfacto" value="Telegram / Discord / Email post-facto (T0/T1) con botón &quot;Revert&quot; firmado JWT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FADBD8;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;fontStyle=2;align=center;" vertex="1" parent="1">
           <mxGeometry x="80" y="1310" width="800" height="50" as="geometry" />
         </mxCell>
 
@@ -252,5 +252,3 @@
 
       </root>
     </mxGraphModel>
-  </diagram>
-</mxfile>

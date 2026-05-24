@@ -569,7 +569,7 @@
         <div class="card p1">
           <span class="badge">P1</span>
           <h3>Capa 4 — Triage LLM</h3>
-          <p class="what">FastAPI + mini-RAG (MITRE STIX + NIST 800-61) + cliente vendor-agnostic (DeepSeek / Qwen). Enriquece la alerta para el analista; nunca decide contención.</p>
+          <p class="what">FastAPI + mini-RAG (MITRE STIX + NIST 800-61) + cliente vendor-agnostic (OpenAI GPT-4o-mini primario / Llama 3.1 local fallback, per ADR-0001 v2). Enriquece la alerta para el analista; nunca decide contención.</p>
           <span class="status wip"><span class="dot"></span>Esqueletos + TODOs</span>
         </div>
       </div>
@@ -758,7 +758,7 @@
           <ul>
             <li><strong>argos_contracts</strong> (Pydantic v2 compartidos entre equipos) — único módulo ya entregado.</li>
             <li>Simulador de ransomware reproducible para el demo.</li>
-            <li>Capa 4 LLM Triage completa: FastAPI <code>/triage</code>, mini-RAG, cliente vendor-agnostic DeepSeek + Qwen.</li>
+            <li>Capa 4 LLM Triage completa: FastAPI <code>/triage</code>, mini-RAG (BM25 + BGE-large + RRF), cliente vendor-agnostic OpenAI + Llama 3.1 local (per ADR-0001 v2).</li>
             <li>Motor SOAR completo: clasificador de tier, máquina de estados en Redis, lógica de fusión.</li>
             <li>Approval API (FastAPI + JWT con jti anti-replay) + política conservative-wins y regla de dos personas.</li>
             <li>Notificaciones multicanal (Telegram con botones inline + Discord + Twilio Voice de escalación; email post-facto).</li>

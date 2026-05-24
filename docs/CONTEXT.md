@@ -42,7 +42,7 @@ Construir un sistema de detección y respuesta a ransomware que combine cuatro c
 
 ## 3. Arquitectura: 4 capas + SOAR
 
-Ver diagrama interactivo en `docs/architecture/architecture_diagram.html` y la especificación completa en `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`.
+Ver flujo del sistema con asignación por integrante en `docs/architecture/argos_flow.html` (versión renderizable en navegador) o `docs/architecture/argos_flow.drawio` (editable en draw.io), y la especificación completa en `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`.
 
 ### Capa 1 — Rule-Based Detection (Sigma + Wazuh)
 
@@ -89,9 +89,9 @@ Cuando cualquier capa 1-3 dispara, un servicio FastAPI recibe el contexto comple
 
 **Pipeline:** BM25 + BGE-large embeddings + RRF (hybrid retrieval estándar industrial; cross-encoder descartado del scope v1 por relación marginal de costo/beneficio — ver `llm_triage/rag/README.md`). Implementación in-house; corpus 100% nuevo.
 
-**LLM backend (vendor-agnostic):**
-- **Primary:** DeepSeek-V3 (vía API OpenAI-compatible)
-- **Fallback:** Qwen2.5-72B-Instruct
+**LLM backend (vendor-agnostic) — per ADR-0001 v2:**
+- **Primary:** OpenAI GPT-4o-mini (US-based, soberanía de datos aceptable para ciberseguridad)
+- **Fallback:** Llama 3.1 8B local vía Ollama (zero-egress; el sistema sigue funcionando sin internet)
 - Implementado tras `LLMClient` interface — swap en una variable de entorno.
 
 **Output estructurado:** `{tecnica_mitre, confianza, severidad, runbook_aplicable, accion_recomendada, indicadores_correlacionar}`.
@@ -139,8 +139,8 @@ Lógica de fusión de scores con reglas explícitas:
 
 | Componente | Costo aprox | Justificación |
 |------------|-------------|---------------|
-| DeepSeek-V3 API | ~$0.14 / 1M tokens input | Razonamiento estructurado a 1/30 del costo de GPT-4 |
-| Qwen2.5-72B API | Comparable | Fallback con context window largo |
+| OpenAI GPT-4o-mini API | ~$0.15 / 1M tokens input · ~$0.60 / 1M output | Calidad superior en benchmarks de seguridad (HELM, SecEval) a costo comparable a alternativas chinas; US-based para soberanía |
+| Llama 3.1 8B local (Ollama) | $0 marginal · ~8 GB RAM | Fallback con zero-egress: el sistema sigue funcionando si el primario se cae o sin internet |
 
 **Política de vendor lock-in:** todos los componentes propietarios pasan por interfaces abstractas. El sistema completo es swappeable a Claude API, GPT-4, o Llama local con cambio de configuración, sin tocar lógica.
 
@@ -175,7 +175,7 @@ Checkpoints del curso confirmados en **semanas 5, 7 y 9**.
 | 2 | LLMClient interface + prompts | Spec features + dataset baseline | Reglas Sigma v1 (5 reglas core) | Wazuh + agentes + Sysmon | — |
 | 3 | Mini-RAG: ingesta MITRE + NIST | Recolección baseline benigno | Atomic Red Team test reglas v1 | Caldera + primer ataque logged | — |
 | 4 | RAG funcional + eval retrieval | Feature extraction pipeline | Sigma v2 + scaffolding canaries | Ransomware simulator + canary gen | Pre-Gate 1 |
-| **5** | LLM client DeepSeek + Qwen fallback | Isolation Forest + métricas inicial | Capa 1 completa (10+ reglas) | Demo Capa 1 end-to-end | 🚩 **Gate 1 curso** |
+| **5** | LLM client OpenAI + Llama local fallback | Isolation Forest + métricas inicial | Capa 1 completa (10+ reglas) | Demo Capa 1 end-to-end | 🚩 **Gate 1 curso** |
 | 6 | Decision Engine v1 | OC-SVM + ensemble | Canaries + FIM whodata | Pipeline Wazuh→Redis→ML | — |
 | **7** | Integración Capa 4 con SOAR | ML en producción real-time | Capa 3 funcional | Streamlit v1 (analyst view) | 🚩 **Gate 2 curso** |
 | 8 | Playbooks SOAR | Tuning thresholds + FP rate | **PR Sigma #1** + research #2 | OpenSearch dashboards + IaC | — |
@@ -302,7 +302,8 @@ argos/
 │
 ├── docs/
 │   ├── architecture/
-│   │   ├── architecture_diagram.html
+│   │   ├── argos_flow.html      # Flujo + asignación por integrante (navegador)
+│   │   ├── argos_flow.drawio    # Mismo flujo editable en draw.io
 │   │   ├── SOLUTION_ARCHITECTURE_DOCUMENT.md
 │   │   ├── THREAT_MODEL.md
 │   │   └── CONTRACTS_SPECIFICATION.md
@@ -343,8 +344,8 @@ argos/
 │
 ├── llm_triage/
 │   ├── api/                   # FastAPI service
-│   ├── rag/                   # Mini-RAG: ingesta, retrieval, eval
-│   ├── llm-client/            # LLMClient interface + DeepSeek + Qwen
+│   ├── rag/                   # Mini-RAG: BM25 + BGE-large + RRF
+│   ├── llm_client/            # LLMClient interface + OpenAI + Llama local (ADR-0001 v2)
 │   ├── prompts/               # Templates Jinja2
 │   └── README.md
 │
@@ -391,11 +392,11 @@ argos/
 - **NIST SP 800-61r2:** https://csrc.nist.gov/pubs/sp/800/61/r2/final
 - **Atomic Red Team:** https://github.com/redcanaryco/atomic-red-team
 - **Caldera:** https://github.com/mitre/caldera
-- **DeepSeek API docs:** https://platform.deepseek.com/
-- **Qwen API docs:** https://help.aliyun.com/zh/dashscope/
+- **OpenAI API docs:** https://platform.openai.com/docs
+- **Ollama (Llama local):** https://ollama.com/library/llama3.1
 
 ---
 
-**Última actualización:** Semana 2 (rebrand a ARGOS + sync de paths de repo)
-**Owner del documento:** P1 (Enzo)
+**Última actualización:** 2026-05-24 (cleanup pass — nombres correctos, ADR-0001 v2, ADR-0007 v2)
+**Owner del documento:** P1 (Enzo Ordoñez Flores)
 **Estado:** Aprobado — sincronizado con `PROJECT_BRIEF.md`, `SOLUTION_ARCHITECTURE_DOCUMENT.md` y la estructura actual del repo (`argos/`)

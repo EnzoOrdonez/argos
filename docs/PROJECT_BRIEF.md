@@ -18,30 +18,29 @@ Sistema de detección y respuesta a ransomware con **defense-in-depth de 4 capas
 1. **Capa 1 — Rule-Based:** Reglas Sigma mapeadas a MITRE ATT&CK (T1486, T1490, T1083, T1562) ejecutadas en Wazuh. Alta precisión.
 2. **Capa 2 — ML Anomaly:** Isolation Forest + One-Class SVM sobre features de procesos (entropía, syscalls cripto, I/O patterns). Detecta variantes nuevas.
 3. **Capa 3 — Deception:** Canary files con FIM whodata. Zero false-positive por diseño. Detección ultra-temprana.
-4. **Capa 4 — LLM Triage:** FastAPI + mini-RAG (MITRE + NIST 800-61) + LLMClient vendor-agnostic (DeepSeek primary / Qwen fallback). Output estructurado con técnica, severidad, runbook.
+4. **Capa 4 — LLM Triage:** FastAPI + mini-RAG (MITRE + NIST 800-61) + LLMClient vendor-agnostic (GPT-4o-mini primary / Llama 3.1 8B local fallback, per ADR-0001 v2). Output estructurado con técnica, severidad, runbook.
 
-**SOAR Decision Engine** clasifica alertas en 4 tiers (T0-T3) según confianza, fusiona scores y dispara contención automatizada para alta confianza, o solicita aprobación humana vía email para tiers medios. **Approval Workflow Console** visualiza decisiones multi-aprobador en tiempo real con resolución de split-brain por conservative-wins policy.
+**SOAR Decision Engine** clasifica alertas en 4 tiers (T0-T3) según confianza, fusiona scores y dispara contención automatizada para alta confianza, o solicita aprobación humana vía notificación multi-canal (Telegram + Discord + Twilio Voice, per ADR-0007 v2) para tiers medios. **Approval Workflow Console** visualiza decisiones multi-aprobador en tiempo real con resolución de split-brain por conservative-wins policy.
 
 ## Stack
 
-Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera · scikit-learn · FastAPI · Streamlit · Redis · DeepSeek/Qwen API · JWT signing · Jinja2 templates · APScheduler
+Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera · scikit-learn · FastAPI · Streamlit · Redis · OpenAI GPT-4o-mini + Llama 3.1 local (Ollama) · JWT signing · Jinja2 templates · APScheduler · PostgreSQL (activo defendido)
 
 ## Equipo y división
 
-| Rol | Responsabilidad |
-|-----|-----------------|
-| **P1** Lead / LLM-SOAR | Capa 4, RAG, Decision Engine + tier classifier, Approval API, integración, coordinación |
-| **P2** ML Engineer | Capa 2 completa: features, modelos, ensemble, evaluación |
-| **P3** Detection Engineer | Capas 1+3: Sigma rules, MITRE mapping, deception, PRs upstream |
-| **P4** Infra / UI / Eval | Lab, simulador de ataque, Streamlit + Approval Workflow Console, dashboards, métricas |
+| Rol | Integrante | Responsabilidad |
+|-----|-----------|-----------------|
+| **P1** Lead / LLM-SOAR | Enzo Ordoñez Flores | Capa 4, RAG, Decision Engine + tier classifier, Approval API, simulador, playbooks, coordinación |
+| **P2** ML Engineer | Sebastian Montenegro | Capa 2 completa: features, modelos, ensemble, evaluación, métricas, captura forense |
+| **P3** Detection Engineer | Angeles Castillo | Capas 1+3: Sigma rules, MITRE mapping, deception, validación con ART/Caldera, PRs upstream |
+| **P4** Infra / UI / Demo | Diego Jara | Lab Vagrant + Wazuh deployment + PostgreSQL, UI Streamlit base, video demo |
 
-## Plan — 14 semanas con 3 gates
+## Plan — 3 gates antes de la entrega
 
-- **Gate 1 (sem 5):** Capa 1 end-to-end funcional.
-- **Gate 2 (sem 7):** Capas 1+2+3 integradas con SOAR.
-- **Gate 3 (sem 9):** Stack completo + Capa 4 LLM + Approval flow + métricas iniciales.
-- **Sem 10-12:** PRs Sigma upstream, hardening, vídeo demo.
-- **Sem 13-14:** Informe técnico, exposición.
+- **Gate 1:** Capa 1 end-to-end funcional.
+- **Gate 2:** Capas 1+2+3 integradas con SOAR.
+- **Gate 3:** Stack completo + Capa 4 LLM + Approval flow + métricas iniciales.
+- **Entrega final:** 13 de junio de 2026 — informe técnico + demo en vivo + presentación.
 
 ## Resultados esperados
 
@@ -53,11 +52,11 @@ Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera �
 
 ## Resiliencia y manejo de fallos
 
-El sistema está diseñado contra fallos del propio defensor. **El LLM nunca está en el path crítico de contención** — si alucina o falla, el SOAR sigue actuando desde Capas 1-3. **Si el atacante mata el agente Wazuh**, la desconexión es ella misma alerta crítica. **Conservative-wins policy** protege contra cuentas comprometidas que rechacen contenciones legítimas. Tres capas de detección independientes garantizan degradación gradual, no ceguera total. Threat model completo (STRIDE + FMEA + Risk Register, ~50 amenazas analizadas) en `THREAT_MODEL.md`. Decisiones arquitectónicas individuales en ADRs 0001 a 0007 (incluye ADR-0007: cadena de notificación multi-canal con escalación temporal).
+El sistema está diseñado contra fallos del propio defensor. **El LLM nunca está en el path crítico de contención** — si alucina o falla, el SOAR sigue actuando desde Capas 1-3. Si el primario OpenAI cae, fallback automático a Llama 3.1 local (zero-egress) — el sistema sigue funcionando sin internet. **Si el atacante mata el agente Wazuh**, la desconexión es ella misma alerta crítica. **Conservative-wins policy** protege contra cuentas comprometidas que rechacen contenciones legítimas. Tres capas de detección independientes garantizan degradación gradual, no ceguera total. Threat model completo (STRIDE + FMEA + Risk Register, ~50 amenazas analizadas) en `THREAT_MODEL.md`. Decisiones arquitectónicas individuales en ADRs 0001 a 0007.
 
 ## Por qué importa
 
 Replica la arquitectura de productos comerciales de gama alta (Microsoft Defender XDR, CrowdStrike Falcon) con stack 100% open source. El cache profesional viene de la **calidad de ejecución y rigor del informe**, no de originalidad arquitectónica forzada. Proyecto apto para portafolio LinkedIn y referencia técnica en entrevistas blue team.
 
 ---
-*v1.3 · Kickoff + Threat Model + HITL SOAR + multi-channel notification · Owner: P1*
+*v1.4 · Cleanup pass post-ADR-0001v2 + ADR-0007v2 · Owner: P1 (Enzo Ordoñez Flores)*

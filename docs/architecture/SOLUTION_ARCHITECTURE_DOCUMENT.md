@@ -11,13 +11,13 @@
 | Term | 2026-1 |
 | Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
-| Related documents | `PROJECT_BRIEF.md`, `CONTEXT.md`, `architecture_diagram.html`, `THREAT_MODEL.md`, ADRs 0001-0006 |
+| Related documents | `PROJECT_BRIEF.md`, `CONTEXT.md`, `argos_flow.html` / `argos_flow.drawio`, `THREAT_MODEL.md`, ADRs 0001-0007 |
 
 ---
 
 ## 0. Purpose of this document
 
-This Solution Architecture Document (SAD) explains every block of the ARGOS architecture diagram in functional and technical detail. It is the canonical reference when a team member, reviewer, or evaluator asks: *"what does this component do, why is it there, and how does it interact with the rest?"* Each section below corresponds to one block of the architecture diagram (`architecture_diagram.html`).
+This Solution Architecture Document (SAD) explains every block of the ARGOS architecture in functional and technical detail. It is the canonical reference when a team member, reviewer, or evaluator asks: *"what does this component do, why is it there, and how does it interact with the rest?"* Each section below corresponds to a zone of the flow diagram (`argos_flow.html` / `argos_flow.drawio`).
 
 For context, scope, planning, and team conventions see `CONTEXT.md`. For the one-page summary see `PROJECT_BRIEF.md`. For specific design decisions see the `docs/adr/` folder.
 
@@ -279,11 +279,11 @@ Hybrid retrieval pipeline implementado in-house siguiendo el patrón industrial 
 
 #### 7.3 LLMClient — vendor-agnostic interface
 
-Abstract client with two backends:
-- **Primary:** DeepSeek-V3 via OpenAI-compatible API. Selected for quality/cost ratio.
-- **Fallback:** Qwen2.5-72B-Instruct via DashScope. Larger context window, similar cost.
+Abstract client con dos backends (per ADR-0001 v2):
+- **Primary:** OpenAI GPT-4o-mini via official API. US-based, soberanía de datos aceptable para ciberseguridad, calidad superior en benchmarks (HELM, SecEval) a costo comparable a alternativas chinas.
+- **Fallback:** Llama 3.1 8B local via Ollama. Zero-egress: el sistema sigue funcionando si el primario se cae o sin internet. Argumento de defensa fuerte: "podemos operar air-gapped".
 
-Backend selection via environment variable `LLM_BACKEND`. See `ADR-0001` for full rationale.
+Backend selection via environment variable `LLM_BACKEND`. See `ADR-0001` (v2) for full rationale incluyendo el análisis de soberanía de datos.
 
 #### 7.4 Structured output
 
@@ -408,7 +408,7 @@ All natively captured by Wazuh + OpenSearch — no extra work, only reporting.
 2. **Telemetry capture.** Sysmon logs file events, process creations, registry changes. Wazuh agent forwards to manager. Canary file is touched within seconds.
 3. **Parallel detection.** Layer 3 (canary) fires immediately with high confidence. Layer 1 matches T1486 Sigma rule. Layer 2 ML detects entropy spike + crypto syscall pattern.
 4. **Decision fusion.** Decision Engine receives all three signals within the same 5-minute window. Logic: Layer 3 + corroboration → maximum severity → immediate isolation playbook.
-5. **LLM enrichment.** FastAPI receives full context. RAG retrieves MITRE T1486 + NIST 800-61 ransomware playbook. DeepSeek-V3 generates structured analysis with technique, severity, recommended action, and correlating IoCs.
+5. **LLM enrichment.** FastAPI receives full context. RAG retrieves MITRE T1486 + NIST 800-61 ransomware playbook. GPT-4o-mini (or Llama 3.1 local fallback) generates structured analysis with technique, severity, recommended action, and correlating IoCs.
 6. **Automated containment.** Host isolated via firewall rules. Offending PID killed. Disk snapshot captured for forensics. Team notified via Telegram + Discord with LLM analysis attached (per ADR-0007 v2).
 7. **Analyst review.** Streamlit UI shows alert + LLM analysis side-by-side with citations. OpenSearch dashboard updates MITRE coverage heatmap and time-to-detect histogram.
 
@@ -427,7 +427,7 @@ A defensive system that can be silently disabled by an adversary, or that fails 
 5. **Logs ship in real time.** All telemetry forwards to the manager immediately, not buffered locally. An attacker clearing local logs after action cannot prevent the events from being already indexed remotely (mitigation against MITRE T1070.001).
 6. **LLM output validated, never trusted blindly.** Pydantic schema validation, MITRE ATT&CK ID whitelist (rejects hallucinated technique IDs), confidence thresholds, and a hard no-action constraint (LLM cannot trigger isolation or kill commands).
 7. **Redundant log shipping for high-value hosts.** Sysmon writes to local file; a separate Filebeat agent ships to a backup collector. Compromise of one shipping channel does not eliminate the evidence trail.
-8. **Vendor portability prevents lock-in failure.** LLM backend abstracted: DeepSeek primary → Qwen fallback → continue without enrichment if both down → swap to local Llama with one config change.
+8. **Vendor portability prevents lock-in failure.** LLM backend abstracted (ADR-0001 v2): OpenAI primary → Llama 3.1 local fallback (zero-egress) → continue without enrichment if both unavailable → swap to Claude/Mistral with one config change.
 9. **State persistence across crashes.** Decision Engine queue (Redis with persistence), ML consumer state, and OpenSearch indexes all survive process restarts. A 30-second outage does not lose pending alerts.
 10. **Cost-bounded operations.** LLM API calls have per-incident rate limits and monthly budget caps. A pathological attack pattern (or runaway bug) cannot drain the project budget — the system fails closed on cost before exceeding the cap.
 
@@ -442,13 +442,13 @@ A defensive system that can be silently disabled by an adversary, or that fails 
 | Attacker clears local Windows Event Log | Events already shipped to manager; clear event itself is a Sigma rule | Real-time forwarding mitigates the gap |
 | ML model file corrupted | Service crash detected by heartbeat; fallback to last-known-good model | Capas 1+3 still active during recovery |
 | Decision Engine crashes mid-incident | Persistent queue survives crash; on restart processes queued alerts | Brief delay, no alert loss |
-| Live demo: LLM API down at exposition time | Visible failover to Qwen during demo (good story); pre-recorded backup video as last resort | Multiple contingency layers |
+| Live demo: LLM API down at exposition time | Visible failover from OpenAI to Llama local during demo (good story: "incluso sin internet seguimos analizando"); pre-recorded backup video as last resort | Multiple contingency layers |
 
 ### 12.3 Top accepted residual risks
 
 After mitigations, these risks remain and are explicitly accepted:
 
-1. **Sensitive lab data sent to China-based LLM API (DeepSeek/Qwen).** Acceptable for academic project with synthetic data; would require local LLM for production. Documented in threat model T-030.
+1. **Sensitive lab data sent to US-based LLM API (OpenAI).** Reducido frente a la v1 (DeepSeek/Qwen China-based) por ADR-0001 v2. Residual: cualquier API externo está sujeto a requests gubernamentales bajo su jurisdicción. Para air-gap total el fallback es Llama 3.1 local (zero-egress). Documentado en threat model T-030.
 2. **Fast attacker disables agent before alert ships (sub-heartbeat-interval window).** Heartbeat interval can be reduced but trades off network noise. Documented as fundamental limit (T-050).
 3. **Race condition: very fast ransomware encrypts some files before isolation triggers.** Documented theoretical TTD floor of 3–5 seconds; acceptable as a transparent metric (F-052).
 
@@ -475,7 +475,7 @@ For the complete analysis of ~40 identified threats and failure modes with likel
 ### 13.3 Vendor portability
 
 - Every commercial component (LLM APIs) sits behind an abstract interface.
-- Switching DeepSeek to Claude or GPT-4 requires editing one configuration value, not changing application code.
+- Switching OpenAI to Claude, Mistral, o cualquier OpenAI-compatible API requires editing one configuration value, not changing application code.
 
 ### 13.4 Open-source contribution
 
@@ -533,7 +533,7 @@ For production deployment (out of scope, mentioned for honesty in informe): prop
 
 Secrets in scope:
 - Wazuh API tokens.
-- LLM API keys (DeepSeek, Qwen).
+- LLM API keys (OpenAI; Llama local no requiere key).
 - JWT signing secret for approval tokens.
 - SMTP credentials for email service.
 - OpenSearch admin password.
@@ -578,7 +578,8 @@ Items considered and deferred. Documented to demonstrate awareness:
 | 1.3 | Week 2 | Applied pending Q8 patches from `OPEN_QUESTIONS_RESOLUTION.md`: §13.5 tiered coverage targets (Q3), §14 added OpenSearch backup as future work (Q7), §6.5 cross-references incident schema (Q4) and `argos_contracts`, §15 closed tier calibration with reference to Q5 protocol. | P1 |
 | 1.4 | Week 9 | Sync with `ADR-0007` (multi-channel notification escalation): §6.3 step 3 now describes the Telegram + ntfy + Slack parallel chain with Twilio DTMF escalation; §14 item 3 marked implemented (previously "deferred"). §15 item 1 closed (LLM containment path decision was already final, formalized here). | P1 |
 | 1.5 | Week 7 calendar | Audit pass: §5.2 ensemble formula made explicit (0.6·IF + 0.4·SVM); §6.2 fusion table extended to cover all 2³ layer combinations + high-fidelity Sigma `level:` mapping; §6.5 state machine adds `PENDING_SECOND_APPROVAL` per ADR-0003 §"Edge case 3 AM"; cross-references to new `docs/EVALUATION_CRITERIA.md` and `docs/data-handling.md`. | P1 |
+| 1.6 | 2026-05-24 | Cleanup pass: §7.3 reescrita para reflejar ADR-0001 v2 (OpenAI GPT-4o-mini primary + Llama 3.1 local fallback); §6.3 step 3 reescrito para ADR-0007 v2 (Telegram + Discord en paralelo, Twilio Voice escalación, email post-facto); refs a `architecture_diagram.html` (eliminado) reemplazadas por `argos_flow.html`. Tier thresholds marcados explícitamente como preliminares pendientes de calibración Q5. | P1 |
 
 ---
 
-*This document is a living artifact and is updated whenever an Architecture Decision Record (ADR) is accepted or a design changes. Last updated: Week 9.*
+*This document is a living artifact and is updated whenever an Architecture Decision Record (ADR) is accepted or a design changes. Last updated: 2026-05-24.*
