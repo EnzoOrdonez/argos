@@ -6,6 +6,9 @@
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
 *.pem
 *.key
 *.crt
@@ -13,6 +16,13 @@
 *.pfx
 secrets/
 credentials/
+
+# API tokens y claves externas que pudieran caer fuera de .env
+**/openai_key*
+**/telegram_bot_token*
+**/twilio_credentials*
+**/discord_webhook*
+**/postgres_password*
 
 # ----------- Python -----------
 __pycache__/
@@ -217,21 +227,4 @@ demo/local/
 *.avi
 *.mkv
 
-# Local evaluation outputs
-evaluation/local-outputs/
-evaluation/temp/
-
-# Backup files
-*.bak
-*.backup
-*.old
-*.orig
-
-# Temporary files
-*.tmp
-.cache/
-
-# Backup files from sandbox FUSE mount workarounds
-*.bak.*
-*.preserve.*
-*.truncated.*
+# Local evaluation ou
