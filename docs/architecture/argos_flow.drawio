@@ -1,0 +1,256 @@
+<mxfile host="app.diagrams.net" modified="2026-05-23T12:00:00.000Z" agent="ARGOS" version="22.1.16">
+  <diagram id="argos-flow-001" name="ARGOS Pipeline">
+    <mxGraphModel dx="1600" dy="1800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1780" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="ARGOS — Adaptive Ransomware Guard with Orchestrated Surveillance&#10;Activo defendido: PostgreSQL Production DB (alojada en Linux VM · production-critical)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#1F2D3D;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1520" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="Leyenda:  ■ Ataque  ■ Lab víctima  ■ SIEM core  ■ Detección  ■ LLM (enrichment-only)  ■ SOAR/HITL  ■ Storage  &#10;━━ flujo crítico (containment)        ┄┄ enriquecimiento (no bloquea acción)" style="text;html=1;strokeColor=#999;fillColor=#FAFAFA;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=11;fontColor=#444;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1620" width="1520" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="attack-zone" value="1 · ATTACK SIMULATION  (Adversary Emulation)" style="swimlane;startSize=28;fontStyle=1;fillColor=#F8CECC;strokeColor=#B85450;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#5F1F1F;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1520" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="atomic" value="Atomic Red Team&#10;(MITRE TTPs 1-a-1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="120" y="125" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="caldera" value="Caldera (MITRE)&#10;Adversary chains" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="350" y="125" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="customsim" value="Custom Ransomware Simulator&#10;(Python · AES-256 · reproducible)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="580" y="125" width="280" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ttps" value="TTPs MITRE ATT&amp;amp;CK en alcance:&#10;T1486 · T1490 · T1083 · T1562.001 · T1021 · T1071 · T1070" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FADBD8;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="890" y="125" width="560" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="victim-zone" value="2 · VICTIM LAB  (red aislada · sin internet durante ataque)" style="swimlane;startSize=28;fontStyle=1;fillColor=#FFF2CC;strokeColor=#D6B656;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#5F4500;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="240" width="1520" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="winvm" value="Windows VM&#10;Win 10/11&#10;&#10;Sysmon (whodata)&#10;Wazuh agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontColor=#3F2F00;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="90" y="290" width="240" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="linuxvm" value="Linux VM&#10;Ubuntu Server LTS&#10;(criticality = production-critical)&#10;&#10;auditd · Wazuh agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;fontColor=#3F2F00;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="370" y="290" width="280" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="pgdb" value="🛡  PostgreSQL DB&#10;ACTIVO DEFENDIDO&#10;production-critical&#10;&#10;→ dispara Two-Person Rule&#10;(ADR-0003 override)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1F4E79;strokeColor=#FFD700;strokeWidth=3;fontColor=#FFFFFF;fontSize=12;fontStyle=1;align=center;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="305" width="240" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="canaries" value="Canary Files (FIM whodata · zero-FP)&#10;&#10;• financials_Q4_2025.xlsx&#10;• passwords.txt&#10;• db_backup.sql&#10;&#10;ubicaciones que un usuario legítimo nunca tocaría" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCF3CF;strokeColor=#D6B656;fontColor=#3F2F00;fontSize=11;align=left;verticalAlign=middle;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="980" y="290" width="470" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hosts-edge" value="hosts" style="endArrow=classic;html=1;rounded=0;strokeColor=#7F5F00;fontColor=#3F2F00;fontSize=11;fontStyle=2;strokeWidth=2;" edge="1" parent="1" source="linuxvm" target="pgdb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="atk-edge-1" style="endArrow=classic;html=1;rounded=0;strokeColor=#B85450;strokeWidth=2;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="atomic" target="winvm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="atk-edge-2" style="endArrow=classic;html=1;rounded=0;strokeColor=#B85450;strokeWidth=2;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="caldera" target="linuxvm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="atk-edge-3" style="endArrow=classic;html=1;rounded=0;strokeColor=#B85450;strokeWidth=2;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="customsim" target="canaries">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="siem-zone" value="3 · SIEM CORE  (ingesta + normalización + storage)" style="swimlane;startSize=28;fontStyle=1;fillColor=#FFE6CC;strokeColor=#D79B00;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#7F4F00;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="510" width="1520" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="wazuh" value="Wazuh Manager&#10;(rules engine · API · agente registry)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#7F4F00;fontSize=12;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="120" y="555" width="380" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="opensearch" value="OpenSearch Indexer&#10;alertas + audit log" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#7F4F00;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="570" y="555" width="320" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" value="Redis Stream&#10;alert bus + state machine" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FFFFFF;strokeColor=#D79B00;fontColor=#7F4F00;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="950" y="555" width="320" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="contracts" value="argos_contracts&#10;(Pydantic v2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5EEF8;strokeColor=#9673A6;fontColor=#5B2C6F;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="555" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tel-edge-1" value="telemetría" style="endArrow=classic;html=1;rounded=0;strokeColor=#D79B00;strokeWidth=2;fontSize=10;fontColor=#7F4F00;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="winvm" target="wazuh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tel-edge-2" value="telemetría" style="endArrow=classic;html=1;rounded=0;strokeColor=#D79B00;strokeWidth=2;fontSize=10;fontColor=#7F4F00;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="linuxvm" target="wazuh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tel-edge-3" value="FIM events" style="endArrow=classic;html=1;rounded=0;strokeColor=#D79B00;strokeWidth=2;fontSize=10;fontColor=#7F4F00;exitX=0.2;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="canaries" target="wazuh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="det-zone" value="4 · DETECTION LAYERS  (defense in depth · paralelas e independientes)" style="swimlane;startSize=28;fontStyle=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#1A2C4D;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="670" width="1520" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" value="LAYER 1&#10;Sigma Rules + Wazuh&#10;&#10;rule-based · alta precisión&#10;mapeo MITRE explícito&#10;Sigma level → fidelity tier" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontColor=#1A2C4D;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="715" width="340" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="l2" value="LAYER 2&#10;ML Anomaly&#10;&#10;Isolation Forest (0.6) +&#10;One-Class SVM (0.4)&#10;ensemble_score ∈ [0,1]&#10;features 60s window" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontColor=#1A2C4D;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="450" y="715" width="340" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="l3" value="LAYER 3&#10;Canary FIM (Deception)&#10;&#10;whodata captura PID + cmdline&#10;FP ≈ 0 por diseño&#10;detección ultra-temprana" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontColor=#1A2C4D;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="820" y="715" width="340" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="l4" value="LAYER 4 — LLM Triage&#10;(enrichment-only · NUNCA en path crítico)&#10;&#10;FastAPI + mini-RAG&#10;(MITRE STIX + NIST 800-61 + SANS)&#10;DeepSeek-V3 ↔ Qwen2.5-72B&#10;MITRE whitelist anti-halucinación" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=10;align=center;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="715" width="340" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="det-edge-1" style="endArrow=classic;html=1;rounded=0;strokeColor=#6C8EBF;strokeWidth=2;exitX=0.15;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="wazuh" target="l1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="det-edge-2" value="stream" style="endArrow=classic;html=1;rounded=0;strokeColor=#6C8EBF;strokeWidth=2;fontSize=10;fontColor=#1A2C4D;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="redis" target="l2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="det-edge-3" style="endArrow=classic;html=1;rounded=0;strokeColor=#6C8EBF;strokeWidth=2;exitX=0.85;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="wazuh" target="l3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="det-edge-4" value="RAG context" style="endArrow=classic;html=1;rounded=0;strokeColor=#82B366;strokeWidth=2;dashed=1;fontSize=10;fontColor=#1F3D1F;exitX=0.85;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="opensearch" target="l4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="soar-zone" value="5 · SOAR DECISION ENGINE  +  Tier Classifier (P1)" style="swimlane;startSize=28;fontStyle=1;fillColor=#E1D5E7;strokeColor=#9673A6;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#3D1F3D;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="910" width="1520" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="classifier" value="TIER CLASSIFIER&#10;score fusion · ADR-0003 · Sigma level + ML ensemble + canary signal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673A6;fontColor=#3D1F3D;fontSize=12;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="370" y="950" width="860" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t0" value="T0  ≥ 0.95&#10;Critical confirmed&#10;(L3 sola · L1+L2+L3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#922B21;strokeColor=#641A12;fontColor=#FFFFFF;fontSize=11;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1045" width="340" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" value="T1  0.80–0.95&#10;High confirmed&#10;(L1 + L2 corroboran)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CA6F1E;strokeColor=#935116;fontColor=#FFFFFF;fontSize=11;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="450" y="1045" width="340" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="T2  0.60–0.80&#10;Medium uncertain&#10;(L1 high-fidelity sola · L2 high score)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1C40F;strokeColor=#B7950B;fontColor=#1F2D3D;fontSize=11;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1045" width="340" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" value="T3  0.40–0.60&#10;Low uncertain&#10;(L1 experimental · L2 medium)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2874A6;strokeColor=#1B4F72;fontColor=#FFFFFF;fontSize=11;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="1045" width="340" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l1-cls" value="score" style="endArrow=classic;html=1;rounded=0;strokeColor=#6C8EBF;strokeWidth=2;fontSize=10;fontColor=#1A2C4D;exitX=0.5;exitY=1;entryX=0.15;entryY=0;" edge="1" parent="1" source="l1" target="classifier">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l2-cls" value="ensemble_score" style="endArrow=classic;html=1;rounded=0;strokeColor=#6C8EBF;strokeWidth=2;fontSize=10;fontColor=#1A2C4D;exitX=0.5;exitY=1;entryX=0.4;entryY=0;" edge="1" parent="1" source="l2" target="classifier">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l3-cls" value="canary hit" style="endArrow=classic;html=1;rounded=0;strokeColor=#6C8EBF;strokeWidth=2;fontSize=10;fontColor=#1A2C4D;exitX=0.5;exitY=1;entryX=0.65;entryY=0;" edge="1" parent="1" source="l3" target="classifier">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l4-cls" value="enriches (NO bloquea)" style="endArrow=classic;html=1;rounded=0;strokeColor=#82B366;strokeWidth=2;dashed=1;fontSize=10;fontColor=#1F3D1F;exitX=0.5;exitY=1;entryX=0.9;entryY=0;" edge="1" parent="1" source="l4" target="classifier">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cls-t0" style="endArrow=classic;html=1;rounded=0;strokeColor=#922B21;strokeWidth=2;exitX=0.15;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="classifier" target="t0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cls-t1" style="endArrow=classic;html=1;rounded=0;strokeColor=#CA6F1E;strokeWidth=2;exitX=0.38;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="classifier" target="t1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cls-t2" style="endArrow=classic;html=1;rounded=0;strokeColor=#B7950B;strokeWidth=2;exitX=0.62;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="classifier" target="t2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cls-t3" style="endArrow=classic;html=1;rounded=0;strokeColor=#2874A6;strokeWidth=2;exitX=0.85;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="classifier" target="t3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pgcrit-edge" value="si target = PostgreSQL&#10;⇒ override Two-Person Rule" style="endArrow=classic;html=1;rounded=0;strokeColor=#FFD700;strokeWidth=3;fontSize=10;fontColor=#5F4500;fontStyle=2;dashed=0;exitX=1;exitY=0.5;entryX=0;entryY=0.3;" edge="1" parent="1" source="pgdb" target="classifier">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1480" y="375" />
+              <mxPoint x="1480" y="975" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="auto-zone" value="6 · AUTOMATED RESPONSE  (T0 / T1 · sin aprobación humana)" style="swimlane;startSize=28;fontStyle=1;fillColor=#F8CECC;strokeColor=#B85450;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#5F1F1F;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1180" width="900" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="iso" value="Host Isolation&#10;iptables / firewall" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1230" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="kill" value="Process Kill&#10;por PID (whodata)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="1230" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="snap" value="Disk Snapshot&#10;VSS / dd · forense" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1230" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="throttle" value="Process Throttle&#10;cpulimit / ionice" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCF3CF;strokeColor=#B7950B;fontColor=#5F4500;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="740" y="1230" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="postfacto" value="Email / Slack post-facto (T0/T1) con botón &quot;Revert&quot; firmado JWT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FADBD8;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;fontStyle=2;align=center;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1310" width="800" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hitl-zone" value="7 · HITL APPROVAL FLOW  (T2 · production-critical override)" style="swimlane;startSize=28;fontStyle=1;fillColor=#D5E8D4;strokeColor=#82B366;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#1F3D1F;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="970" y="1180" width="590" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="notif" value="Multi-channel Notifications&#10;Telegram (botones inline) · Discord · Twilio Voice" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="1230" width="280" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="approval-api" value="Approval API&#10;FastAPI · JWT · jti replay-prev" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="1230" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="console" value="Streamlit Approval Console&#10;tiempo real · split-brain visible" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="1310" width="280" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="policy" value="Conservative-wins · Two-Person Rule&#10;(reversible vs irreversible)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontColor=#1F3D1F;fontSize=11;fontStyle=2;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="1310" width="240" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t0-auto" style="endArrow=classic;html=1;rounded=0;strokeColor=#922B21;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="t0" target="iso">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t1-auto" style="endArrow=classic;html=1;rounded=0;strokeColor=#CA6F1E;strokeWidth=3;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="t1" target="snap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t2-throttle" value="immediate" style="endArrow=classic;html=1;rounded=0;strokeColor=#B7950B;strokeWidth=3;fontSize=10;fontColor=#5F4500;exitX=0.25;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="t2" target="throttle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t2-approval" value="3-min countdown" style="endArrow=classic;html=1;rounded=0;strokeColor=#B7950B;strokeWidth=3;fontSize=10;fontColor=#5F4500;exitX=0.75;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="t2" target="notif">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3-notif" value="LLM enriched · sin acción" style="endArrow=classic;html=1;rounded=0;strokeColor=#2874A6;strokeWidth=2;fontSize=10;fontColor=#1B4F72;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="t3" target="notif">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="approval-loop" value="Approve → ejecutar isolation full&#10;Reject → rollback throttle/snapshot&#10;Timeout (180s) → auto-execute (excepto Two-Person)" style="endArrow=classic;html=1;rounded=0;strokeColor=#1F3D1F;strokeWidth=2;dashed=1;fontSize=10;fontColor=#1F3D1F;fontStyle=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="approval-api" target="iso">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="950" y="1260" />
+              <mxPoint x="950" y="1340" />
+              <mxPoint x="60" y="1340" />
+              <mxPoint x="60" y="1260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="obs-zone" value="8 · STORAGE + OBSERVABILITY" style="swimlane;startSize=28;fontStyle=1;fillColor=#EAEDED;strokeColor=#7B7D7D;rounded=1;whiteSpace=wrap;html=1;fontSize=13;fontColor=#2C3E50;align=center;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1410" width="1520" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="redis-state" value="Redis&#10;Incident state machine&#10;TTL countdowns" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FFFFFF;strokeColor=#7B7D7D;fontColor=#2C3E50;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="120" y="1455" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="os-audit" value="OpenSearch&#10;Audit log + alertas&#10;argos-audit-decisions" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FFFFFF;strokeColor=#7B7D7D;fontColor=#2C3E50;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="420" y="1455" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="os-dash" value="OpenSearch Dashboards&#10;MITRE coverage heatmap&#10;TTD histogram · layer perf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7B7D7D;fontColor=#2C3E50;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="720" y="1455" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="streamlit" value="Streamlit Analyst UI&#10;Alert Inspection · Approval Console&#10;Audit &amp;amp; Forensics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7B7D7D;fontColor=#2C3E50;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="1455" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="heartbeat" value="External Heartbeat&#10;(cron + curl · SAD §13.6)&#10;monitorea Wazuh/Redis/OS/FastAPI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FADBD8;strokeColor=#B85450;fontColor=#5F1F1F;fontSize=11;fontStyle=2;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="1455" width="220" height="100" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

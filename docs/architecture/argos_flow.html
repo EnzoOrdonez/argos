@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARGOS · Flujo Secuencial del Sistema</title>
+  <style>
+    :root {
+      --p1: #6c3483;
+      --p2: #1f618d;
+      --p3: #b9770e;
+      --p4: #1e8449;
+
+      --ink: #1f2937;
+      --ink-soft: #4b5563;
+      --line: #e5e7eb;
+      --line-strong: #9ca3af;
+      --bg: #ffffff;
+      --bg-soft: #f9fafb;
+
+      --zone-attack: #fef2f2;
+      --zone-attack-bd: #fca5a5;
+      --zone-victim: #fefce8;
+      --zone-victim-bd: #facc15;
+      --zone-siem: #fff7ed;
+      --zone-siem-bd: #fdba74;
+      --zone-detect: #eff6ff;
+      --zone-detect-bd: #93c5fd;
+      --zone-soar: #faf5ff;
+      --zone-soar-bd: #c4b5fd;
+      --zone-resp: #fef2f2;
+      --zone-resp-bd: #fca5a5;
+      --zone-hitl: #f0fdf4;
+      --zone-hitl-bd: #86efac;
+      --zone-obs: #f8fafc;
+      --zone-obs-bd: #cbd5e1;
+
+      --highlight: #d97706;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+    }
+
+    /* Encabezado */
+    header.doc-header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+    header.doc-header .eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 0 0 6px;
+    }
+    header.doc-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+    header.doc-header .subtitle {
+      font-size: 14px;
+      color: var(--ink-soft);
+      margin: 0 0 12px;
+    }
+    .asset-callout {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff7ed;
+      border: 1px solid var(--highlight);
+      color: #92400e;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    .asset-callout::before { content: "🛡"; font-size: 14px; }
+
+    /* Equipo */
+    .team {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 22px 0 32px;
+    }
+    .member-card {
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--ink);
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: var(--bg);
+    }
+    .member-card.p1 { border-left-color: var(--p1); }
+    .member-card.p2 { border-left-color: var(--p2); }
+    .member-card.p3 { border-left-color: var(--p3); }
+    .member-card.p4 { border-left-color: var(--p4); }
+    .member-card .role {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 2px;
+    }
+    .member-card.p1 .role { color: var(--p1); }
+    .member-card.p2 .role { color: var(--p2); }
+    .member-card.p3 .role { color: var(--p3); }
+    .member-card.p4 .role { color: var(--p4); }
+    .member-card .name {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 3px;
+    }
+    .member-card .scope {
+      font-size: 11px;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+
+    /* Paso secuencial */
+    .step {
+      position: relative;
+      border-radius: 10px;
+      padding: 18px 22px 20px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .step.attack { background: var(--zone-attack); border-color: var(--zone-attack-bd); }
+    .step.victim { background: var(--zone-victim); border-color: var(--zone-victim-bd); }
+    .step.siem   { background: var(--zone-siem);   border-color: var(--zone-siem-bd); }
+    .step.detect { background: var(--zone-detect); border-color: var(--zone-detect-bd); }
+    .step.soar   { background: var(--zone-soar);   border-color: var(--zone-soar-bd); }
+    .step.resp   { background: var(--zone-resp);   border-color: var(--zone-resp-bd); }
+    .step.hitl   { background: var(--zone-hitl);   border-color: var(--zone-hitl-bd); }
+    .step.obs    { background: var(--zone-obs);    border-color: var(--zone-obs-bd); }
+
+    .step-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .step-num {
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .step-head h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.005em;
+    }
+    .step-head .sub {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-left: auto;
+      font-style: italic;
+    }
+
+    /* Flecha entre pasos */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 14px 0;
+      color: var(--line-strong);
+    }
+    .arrow .line {
+      width: 2px;
+      height: 24px;
+      background: var(--line-strong);
+    }
+    .arrow .head {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 10px solid var(--line-strong);
+    }
+    .arrow .label {
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* Tarjetas de componentes */
+    .cards {
+      display: grid;
+      gap: 10px;
+    }
+    .cards.c2 { grid-template-columns: repeat(2, 1fr); }
+    .cards.c3 { grid-template-columns: repeat(3, 1fr); }
+    .cards.c4 { grid-template-columns: repeat(4, 1fr); }
+
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 11px 12px 12px 14px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-height: 100px;
+    }
+    .card.p1 { border-left: 4px solid var(--p1); }
+    .card.p2 { border-left: 4px solid var(--p2); }
+    .card.p3 { border-left: 4px solid var(--p3); }
+    .card.p4 { border-left: 4px solid var(--p4); }
+
+    .card .badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #fff;
+    }
+    .card.p1 .badge { background: var(--p1); }
+    .card.p2 .badge { background: var(--p2); }
+    .card.p3 .badge { background: var(--p3); }
+    .card.p4 .badge { background: var(--p4); }
+
+    .card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0;
+      padding-right: 38px;
+    }
+    .card .what {
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      margin: 0;
+      line-height: 1.45;
+    }
+    .card .status {
+      margin-top: auto;
+      font-size: 10.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status.ok    { color: var(--p4); }
+    .status.wip   { color: var(--p3); }
+    .status.todo  { color: var(--ink-soft); }
+    .status .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status.ok   .dot { background: var(--p4); }
+    .status.wip  .dot { background: var(--p3); }
+    .status.todo .dot { background: var(--line-strong); }
+
+    /* PostgreSQL destacada */
+    .card.asset {
+      background: #fffbeb;
+      border: 2px solid var(--highlight);
+      border-left-width: 6px;
+    }
+    .card.asset .badge { background: #92400e; }
+    .card.asset h3 { color: #92400e; }
+    .card.asset .what { color: #78350f; }
+
+    /* Tiers T0–T3 */
+    .tier-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tier {
+      border-radius: 6px;
+      padding: 9px 11px;
+      color: #fff;
+      font-size: 11.5px;
+    }
+    .tier .tname { font-weight: 700; font-size: 13px; }
+    .tier .trange { font-size: 10.5px; opacity: 0.92; }
+    .tier .taction { font-size: 10.5px; margin-top: 3px; opacity: 0.95; }
+    .tier.t0 { background: #991b1b; }
+    .tier.t1 { background: #c2410c; }
+    .tier.t2 { background: #a16207; }
+    .tier.t3 { background: #1d4ed8; }
+
+    /* Sub-flujo dentro del paso de respuesta */
+    .branch {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .branch-col {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 10px;
+      border: 1px dashed var(--line-strong);
+    }
+    .branch-col h4 {
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: var(--ink);
+    }
+
+    /* Resumen final por integrante */
+    .summary {
+      margin-top: 40px;
+      border-top: 1px solid var(--line);
+      padding-top: 28px;
+    }
+    .summary h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 16px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .summary-card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--ink);
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .summary-card.p1 { border-top-color: var(--p1); }
+    .summary-card.p2 { border-top-color: var(--p2); }
+    .summary-card.p3 { border-top-color: var(--p3); }
+    .summary-card.p4 { border-top-color: var(--p4); }
+    .summary-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    .summary-card .who {
+      font-size: 11px;
+      color: var(--ink-soft);
+      margin: 0 0 10px;
+    }
+    .summary-card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12.5px;
+      color: var(--ink);
+    }
+    .summary-card ul li { margin-bottom: 3px; }
+    .summary-card .gate {
+      margin-top: 9px;
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+
+    @media print {
+      .wrap { padding: 16px; }
+      .step, .summary-card, .card { break-inside: avoid; }
+    }
+    @media (max-width: 880px) {
+      .team { grid-template-columns: repeat(2, 1fr); }
+      .cards.c3, .cards.c4 { grid-template-columns: repeat(2, 1fr); }
+      .tier-row { grid-template-columns: repeat(2, 1fr); }
+      .branch { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="doc-header">
+      <p class="eyebrow">Tópicos Avanzados de Ciberseguridad · 2026-1 · Universidad de Lima</p>
+      <h1>ARGOS — Flujo Secuencial del Sistema</h1>
+      <p class="subtitle">Detección y respuesta a ransomware con defensa en profundidad de 4 capas + SOAR + aprobación humana</p>
+      <span class="asset-callout">Activo defendido: Base de datos PostgreSQL en producción (Linux VM · criticidad alta)</span>
+    </header>
+
+    <!-- Equipo -->
+    <div class="team">
+      <div class="member-card p1">
+        <p class="role">P1 · Líder</p>
+        <p class="name">Enzo Ordoñez</p>
+        <p class="scope">LLM Triage · SOAR · Aprobación · Simulador · Coordinación</p>
+      </div>
+      <div class="member-card p2">
+        <p class="role">P2 · Ingeniero ML</p>
+        <p class="name">Sebastian Montenegro</p>
+        <p class="scope">Capa 2 ML · Calibración · Métricas · Forensia</p>
+      </div>
+      <div class="member-card p3">
+        <p class="role">P3 · Detección y Engaño</p>
+        <p class="name">Angeles Castillo</p>
+        <p class="scope">Reglas Sigma · Canary FIM · Validación con Atomic / Caldera</p>
+      </div>
+      <div class="member-card p4">
+        <p class="role">P4 · Infraestructura</p>
+        <p class="name">Diego Jara</p>
+        <p class="scope">Lab Vagrant · Wazuh + OpenSearch · UI básica · Video demo</p>
+      </div>
+    </div>
+
+    <!-- PASO 1 — ATAQUE -->
+    <section class="step attack">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <h2>Ataque controlado</h2>
+        <span class="sub">TTPs MITRE: T1486 · T1490 · T1083 · T1562 · T1021 · T1071</span>
+      </div>
+      <div class="cards c3">
+        <div class="card p3">
+          <span class="badge">P3</span>
+          <h3>Atomic Red Team</h3>
+          <p class="what">Pruebas 1-a-1 contra técnicas MITRE. Valida que cada regla Sigma dispare contra su técnica objetivo.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p3">
+          <span class="badge">P3</span>
+          <h3>Caldera (MITRE)</h3>
+          <p class="what">Cadenas de ataque multi-paso. Sirve para probar la lógica de fusión del Decision Engine.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p1">
+          <span class="badge">P1</span>
+          <h3>Simulador de ransomware</h3>
+          <p class="what">Script Python reproducible: enumera archivos, borra Volume Shadow Copies, cifra con AES-256, deja nota, simula beacon C2.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow"><div class="line"></div><div class="head"></div><div class="label">se ejecuta contra las víctimas</div></div>
+
+    <!-- PASO 2 — VÍCTIMAS -->
+    <section class="step victim">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <h2>Lab víctima</h2>
+        <span class="sub">red aislada · sin acceso a internet durante el ataque</span>
+      </div>
+      <div class="cards c4">
+        <div class="card p4">
+          <span class="badge">P4</span>
+          <h3>Windows VM</h3>
+          <p class="what">Win 10/11 con Sysmon (whodata) y agente Wazuh registrado al manager.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p4">
+          <span class="badge">P4</span>
+          <h3>Linux VM</h3>
+          <p class="what">Ubuntu Server LTS con auditd y agente Wazuh. Etiquetada como production-critical.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card asset">
+          <span class="badge">P4</span>
+          <h3>🛡 PostgreSQL</h3>
+          <p class="what">Base de datos defendida. Su criticidad obliga al Decision Engine a aplicar la regla de dos personas para cualquier contención.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p3">
+          <span class="badge">P3</span>
+          <h3>Archivos canary</h3>
+          <p class="what">Señuelos con FIM whodata en rutas que un usuario legítimo nunca tocaría. Falso positivo ≈ 0 por diseño.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow"><div class="line"></div><div class="head"></div><div class="label">telemetría: Sysmon · auditd · eventos FIM</div></div>
+
+    <!-- PASO 3 — SIEM CORE -->
+    <section class="step siem">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <h2>Núcleo SIEM — ingesta y almacenamiento</h2>
+        <span class="sub">Wazuh 4.7 + OpenSearch + Redis como bus interno</span>
+      </div>
+      <div class="cards c4">
+        <div class="card p4">
+          <span class="badge">P4</span>
+          <h3>Wazuh Manager</h3>
+          <p class="what">Motor de reglas, API y registro de agentes. Punto único de ingesta de telemetría desde las víctimas.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p4">
+          <span class="badge">P4</span>
+          <h3>OpenSearch</h3>
+          <p class="what">Almacenamiento de alertas y audit log. También sirve para dashboards y para el corpus RAG interno.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p4">
+          <span class="badge">P4</span>
+          <h3>Redis</h3>
+          <p class="what">Bus de alertas entre Wazuh y el consumer ML. Soporta la máquina de estados del flujo de incidentes.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p1">
+          <span class="badge">P1</span>
+          <h3>argos_contracts</h3>
+          <p class="what">Modelos Pydantic v2 que cruzan equipos. 25 modelos + 9 enums. Interfaz común entre las 4 capas.</p>
+          <span class="status ok"><span class="dot"></span>Entregado · 64 tests · v1.0.0</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow"><div class="line"></div><div class="head"></div><div class="label">alertas normalizadas hacia las 4 capas en paralelo</div></div>
+
+    <!-- PASO 4 — DETECCIÓN -->
+    <section class="step detect">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <h2>Capas de detección en paralelo</h2>
+        <span class="sub">defensa en profundidad · la Capa 4 enriquece, nunca decide</span>
+      </div>
+      <div class="cards c4">
+        <div class="card p3">
+          <span class="badge">P3</span>
+          <h3>Capa 1 — Reglas Sigma</h3>
+          <p class="what">Reglas YAML mapeadas a MITRE, convertidas a Wazuh con sigma-cli. Alta precisión, recall limitado frente a variantes nuevas.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p2">
+          <span class="badge">P2</span>
+          <h3>Capa 2 — ML Anomalía</h3>
+          <p class="what">Isolation Forest (0.6) + One-Class SVM (0.4). Features de ventana 60s: entropía, tasa de escritura, llamadas crypto. Mayor recall frente a variantes nuevas.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p3">
+          <span class="badge">P3</span>
+          <h3>Capa 3 — Canary FIM</h3>
+          <p class="what">whodata captura PID + línea de comando + proceso padre al tocar un canary. Detección ultra-temprana sin falsos positivos.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p1">
+          <span class="badge">P1</span>
+          <h3>Capa 4 — Triage LLM</h3>
+          <p class="what">FastAPI + mini-RAG (MITRE STIX + NIST 800-61) + cliente vendor-agnostic (DeepSeek / Qwen). Enriquece la alerta para el analista; nunca decide contención.</p>
+          <span class="status wip"><span class="dot"></span>Esqueletos + TODOs</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow"><div class="line"></div><div class="head"></div><div class="label">scores y señales se entregan al motor de decisión</div></div>
+
+    <!-- PASO 5 — SOAR -->
+    <section class="step soar">
+      <div class="step-head">
+        <div class="step-num">5</div>
+        <h2>Motor SOAR — clasificación por confianza</h2>
+        <span class="sub">fusiona señales y elige el tier de respuesta</span>
+      </div>
+      <div class="cards c2">
+        <div class="card p1">
+          <span class="badge">P1</span>
+          <h3>Clasificador de Tier</h3>
+          <p class="what">Lee el campo Sigma <code>level:</code>, el ensemble_score de ML y la señal de canary. Aplica las reglas de fusión y el override de regla de dos personas cuando el host es PostgreSQL.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p1">
+          <span class="badge">P1</span>
+          <h3>Máquina de estados</h3>
+          <p class="what">Persistida en Redis: RECEIVED → AWAITING_APPROVAL → PENDING_EXECUTION → EXECUTED / REVERTED / REJECTED / TIMEOUT_ESCALATED. Sobrevive a reinicios.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+      </div>
+      <div class="tier-row">
+        <div class="tier t0">
+          <div class="tname">T0 — Crítico confirmado</div>
+          <div class="trange">≥ 0.95 · canary solo · L1+L2+L3</div>
+          <div class="taction">Aislamiento automático inmediato</div>
+        </div>
+        <div class="tier t1">
+          <div class="tname">T1 — Alto confirmado</div>
+          <div class="trange">0.80–0.95 · L1+L2 corroboran</div>
+          <div class="taction">Aislamiento automático + snapshot</div>
+        </div>
+        <div class="tier t2">
+          <div class="tname">T2 — Medio incierto</div>
+          <div class="trange">0.60–0.80 · una capa sola</div>
+          <div class="taction">Throttle + snapshot + aprobación humana 3 min</div>
+        </div>
+        <div class="tier t3">
+          <div class="tname">T3 — Bajo incierto</div>
+          <div class="trange">0.40–0.60 · regla experimental</div>
+          <div class="taction">Solo notificación con análisis LLM</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow"><div class="line"></div><div class="head"></div><div class="label">tres rutas según el tier asignado</div></div>
+
+    <!-- PASO 6 — RESPUESTA con 3 ramas -->
+    <section class="step resp">
+      <div class="step-head">
+        <div class="step-num">6</div>
+        <h2>Respuesta del sistema</h2>
+        <span class="sub">tres flujos paralelos según tier</span>
+      </div>
+
+      <div class="branch">
+        <!-- Rama A: T0/T1 -->
+        <div class="branch-col">
+          <h4>A · T0 y T1 — Contención automática</h4>
+          <div class="cards">
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Aislamiento de host</h3>
+              <p class="what">iptables (Linux) o reglas de firewall PowerShell (Windows). Mantiene la red de gestión accesible.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Terminación + snapshot</h3>
+              <p class="what">kill por PID y snapshot de disco (VSS / dd) para preservar evidencia forense.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Aviso posterior</h3>
+              <p class="what">Telegram y Discord con resumen LLM, comandos ejecutados y botón "Revertir" firmado con JWT. Email post-facto como resumen asíncrono.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rama B: T2 / Two-person -->
+        <div class="branch-col">
+          <h4>B · T2 o regla de dos personas — Aprobación humana</h4>
+          <div class="cards">
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Throttle inmediato</h3>
+              <p class="what">cpulimit / ionice baja la velocidad del proceso ofensor mientras corre el countdown de 3 min.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Notificaciones multicanal</h3>
+              <p class="what">Telegram (botones inline firmados con JWT) + Discord (webhook con @mention) en paralelo a t=0. Twilio Voice DTMF como escalación a t=60s.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Approval API + política</h3>
+              <p class="what">POST /approval/{token}. Aplica conservative-wins (reversible) o regla de dos personas (irreversible o PostgreSQL).</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Consola de Aprobación</h3>
+              <p class="what">Streamlit en tiempo real con la matriz de aprobadores, countdown y resolución de split-brain. Pieza visual central del demo.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rama C: T3 -->
+        <div class="branch-col">
+          <h4>C · T3 — Solo notificación</h4>
+          <div class="cards">
+            <div class="card p1">
+              <span class="badge">P1</span>
+              <h3>Notificación enriquecida</h3>
+              <p class="what">Análisis LLM enviado al analista. Sin botones de acción ni cambios de estado en hosts.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+            <div class="card p2">
+              <span class="badge">P2</span>
+              <h3>Captura forense</h3>
+              <p class="what">Process tree, conexiones de red, hashes SHA-256, línea de comando completa. Insumo para el informe.</p>
+              <span class="status todo"><span class="dot"></span>Pendiente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow"><div class="line"></div><div class="head"></div><div class="label">persistencia, métricas y observabilidad</div></div>
+
+    <!-- PASO 7 — OBSERVABILIDAD -->
+    <section class="step obs">
+      <div class="step-head">
+        <div class="step-num">7</div>
+        <h2>Persistencia, UI y observabilidad</h2>
+        <span class="sub">trazabilidad completa · auto-monitoreo del sistema</span>
+      </div>
+      <div class="cards c4">
+        <div class="card p2">
+          <span class="badge">P2</span>
+          <h3>Métricas P/R/F1</h3>
+          <p class="what">Precision, recall y F1 por capa. Mapa de cobertura MITRE. Ablation rules vs ML vs ensemble para el informe técnico.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p2">
+          <span class="badge">P2</span>
+          <h3>Dashboards OpenSearch</h3>
+          <p class="what">Modelo de datos para heatmap MITRE, histograma de tiempo de detección y rendimiento por capa.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p4">
+          <span class="badge">P4</span>
+          <h3>UI del analista</h3>
+          <p class="what">App Streamlit base con dos tabs: Inspección de alerta + Auditoría y forensia. La Consola de Aprobación la entrega P1.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+        <div class="card p1">
+          <span class="badge">P1</span>
+          <h3>Heartbeat externo</h3>
+          <p class="what">Cron + curl cada 30s validando Wazuh, Redis, OpenSearch y FastAPI. Canal independiente: si ARGOS cae, el heartbeat avisa.</p>
+          <span class="status todo"><span class="dot"></span>Pendiente</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resumen por integrante -->
+    <section class="summary">
+      <h2>Resumen de responsabilidades por integrante</h2>
+      <div class="summary-grid">
+
+        <div class="summary-card p1">
+          <h3>P1 — Enzo Ordoñez</h3>
+          <p class="who">Líder · LLM Triage · SOAR · Coordinación</p>
+          <ul>
+            <li><strong>argos_contracts</strong> (Pydantic v2 compartidos entre equipos) — único módulo ya entregado.</li>
+            <li>Simulador de ransomware reproducible para el demo.</li>
+            <li>Capa 4 LLM Triage completa: FastAPI <code>/triage</code>, mini-RAG, cliente vendor-agnostic DeepSeek + Qwen.</li>
+            <li>Motor SOAR completo: clasificador de tier, máquina de estados en Redis, lógica de fusión.</li>
+            <li>Approval API (FastAPI + JWT con jti anti-replay) + política conservative-wins y regla de dos personas.</li>
+            <li>Notificaciones multicanal (Telegram con botones inline + Discord + Twilio Voice de escalación; email post-facto).</li>
+            <li>Consola de Aprobación en Streamlit (pieza visual central del demo).</li>
+            <li>Playbooks de respuesta: aislamiento, kill, snapshot, throttle.</li>
+            <li>Heartbeat externo sobre canal independiente.</li>
+            <li>Coordinación general y actualización de <code>PROJECT_STATUS.md</code>.</li>
+          </ul>
+          <p class="gate">Camino crítico: SOAR + LLM + Approval son interdependientes. Bloqueante para Gates 2 y 3.</p>
+        </div>
+
+        <div class="summary-card p2">
+          <h3>P2 — Sebastian Montenegro</h3>
+          <p class="who">Ingeniero ML · Métricas · Forensia</p>
+          <ul>
+            <li>Recolección del baseline benigno (~2 semanas de actividad normal en el lab).</li>
+            <li>Pipeline de features ventana 60s: file_write_rate, entropía Shannon, ratio de extensiones, llamadas crypto, conexiones nuevas, bursts CPU/IO.</li>
+            <li>Modelos Isolation Forest + One-Class SVM y ensemble 0.6/0.4.</li>
+            <li>Consumer Redis (Wazuh → features → score → alerta enriquecida).</li>
+            <li>Calibración de thresholds de tier (Q5): dataset ~100 ransomware + ~500 benignos, curvas P/R, deliverable <code>evaluation/tier_calibration.ipynb</code>.</li>
+            <li>Métricas A/B/C: P/R/F1 por capa, MITRE coverage matrix, ablation, latencias.</li>
+            <li>Pipeline de captura forense (process tree, hashes, command-line) para el informe.</li>
+            <li>Modelo de datos de los dashboards OpenSearch.</li>
+            <li>ROC curves + plots ablation para el informe técnico.</li>
+          </ul>
+          <p class="gate">Su capa es la pieza central de UC-03 (variante novel + split-brain).</p>
+        </div>
+
+        <div class="summary-card p3">
+          <h3>P3 — Angeles Castillo</h3>
+          <p class="who">Detección · Engaño</p>
+          <ul>
+            <li>Reglas Sigma en YAML mapeadas a MITRE: T1486, T1490, T1083, T1562.001, T1021, T1071.</li>
+            <li>Conversión a Wazuh con <code>sigma-cli</code> y despliegue en <code>/var/ossec/etc/rules/</code>.</li>
+            <li>Uso correcto del campo Sigma <code>level:</code> (critical/high → T2; medium/low → T3).</li>
+            <li>Validación 1-a-1 con Atomic Red Team y cadenas Caldera para probar fusión de detección.</li>
+            <li>Generador de canary files (Python): nombres realistas, contenido dummy, timestamps.</li>
+            <li>Configuración FIM whodata (Windows) y auditd (Linux) sobre rutas de canary.</li>
+            <li>Regla Wazuh custom: write/rename/delete en canary → severidad 12.</li>
+            <li>Objetivo bonus: 2-4 PRs Sigma aceptados upstream en <code>SigmaHQ/sigma</code>.</li>
+          </ul>
+          <p class="gate">Bloqueante para Gate 1 — Capa 1 end-to-end funcional.</p>
+        </div>
+
+        <div class="summary-card p4">
+          <h3>P4 — Diego Jara</h3>
+          <p class="who">Infraestructura · UI base · Demo</p>
+          <ul>
+            <li>Vagrantfile y provisioners reproducibles en menos de 30 min para el lab aislado.</li>
+            <li>Despliegue de Wazuh Manager, OpenSearch y Redis con configuración base.</li>
+            <li>Setup de Windows VM (Sysmon) y Linux VM (auditd) con agentes registrados.</li>
+            <li>PostgreSQL en producción con datos sintéticos representativos (la base que ARGOS defiende).</li>
+            <li>UI base Streamlit con dos tabs: Inspección de alerta + Auditoría y forensia. La Consola de Aprobación la entrega P1.</li>
+            <li>Grabación y edición del video demo de 3 min.</li>
+            <li>Coordinación de los rehearsals (mínimo 10 pases en semanas 13-14).</li>
+          </ul>
+          <p class="gate">Su trabajo es prerequisito de todo lo demás — si el lab no levanta, ninguna otra capa puede correr.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

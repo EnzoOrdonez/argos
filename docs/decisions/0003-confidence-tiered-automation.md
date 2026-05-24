@@ -45,10 +45,10 @@ Implementación: `soar/decision_engine/tier_classifier.py` lee `rule.level` del 
 
 | Tier | Disparado por | Confianza | Acción | Email |
 |------|---------------|-----------|--------|-------|
-| **T0 — Critical confirmed** | Capa 3 (canary) sola, o Capas 1+2+3 simultáneas | ≥0.95 | Auto-isolate inmediato | Post-facto multi-canal (ADR-0007: Telegram + ntfy + Slack en paralelo + email post-facto) con botón "Revertir" |
-| **T1 — High confirmed** | Capa 1 + Capa 2 corroboran (sin canary) | 0.80–0.95 | Auto-isolate inmediato | Post-facto multi-canal idem T0 con botón "Revertir" |
-| **T2 — Medium uncertain** | Capa 1 sola con regla high-fidelity (Sigma `level: high\|critical`), o Capa 2 sola con score muy alto | 0.60–0.80 | Pendiente con countdown 3 min | Pre-aprobación multi-canal (ADR-0007: Telegram con botones inline + ntfy + Slack en paralelo; Twilio voice DTMF como escalación a t=60s) |
-| **T3 — Low uncertain** | Capa 2 score medio, Capa 1 con regla experimental (Sigma `level: medium\|low`) | 0.40–0.60 | Solo notificación, sin acción | Análisis LLM al analista vía Telegram + Slack, sin botón ejecutar |
+| **T0 — Critical confirmed** | Capa 3 (canary) sola, o Capas 1+2+3 simultáneas | ≥0.95 (preliminar, ver §Calibración) | Auto-isolate inmediato | Post-facto multi-canal (ADR-0007 v2: Telegram + Discord en paralelo + email post-facto) con botón "Revertir" |
+| **T1 — High confirmed** | Capa 1 + Capa 2 corroboran (sin canary) | 0.80–0.95 (preliminar) | Auto-isolate inmediato | Post-facto multi-canal idem T0 con botón "Revertir" |
+| **T2 — Medium uncertain** | Capa 1 sola con regla high-fidelity (Sigma `level: high\|critical`), o Capa 2 sola con score muy alto | 0.60–0.80 (preliminar) | Pendiente con countdown 3 min | Pre-aprobación multi-canal (ADR-0007 v2: Telegram con botones inline + Discord en paralelo; Twilio voice DTMF como escalación a t=60s) |
+| **T3 — Low uncertain** | Capa 2 score medio, Capa 1 con regla experimental (Sigma `level: medium\|low`) | 0.40–0.60 (preliminar) | Solo notificación, sin acción | Análisis LLM al analista vía Telegram + Discord, sin botón ejecutar |
 
 ## Lógica de ejecución por tier
 

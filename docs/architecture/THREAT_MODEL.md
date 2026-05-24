@@ -9,7 +9,7 @@
 | Status | Baseline · Approved at Kickoff · Updated with ADR-0007 threats + W7 audit pass |
 | Methodology | STRIDE (security) + FMEA (reliability) + Project Risk Register |
 | Course | Tópicos Avanzados de Ciberseguridad · 2026-1 |
-| Owner | P1 (Enzo Cáceres) |
+| Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
 | Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `architecture_diagram.html`, ADRs 0001-0007 |
 
@@ -119,7 +119,7 @@ Threats numbered T-NNN. Mitigations referenced in section 6.
 
 ### 3.7 Approval system threats (new — added with ADR-0003/0005/0006/0007)
 
-The introduction of email-based approval flow (ADR-0003) and multi-recipient notifications (ADR-0005) introduces a new attack surface. ADR-0007 expands el canal único a una cadena multi-canal (Telegram + ntfy + Slack + Twilio voz), lo que añade T-067, T-068, T-069. Threats analyzed:
+The introduction of email-based approval flow (ADR-0003) and multi-recipient notifications (ADR-0005) introduces a new attack surface. ADR-0007 v2 expands el canal único a una cadena multi-canal (Telegram + Discord + Twilio voz + email post-facto), lo que añade T-067, T-068, T-069 y T-070. Threats analyzed:
 
 | ID | Component | Threat | L | I | Risk | Mitigation | Residual |
 |----|-----------|--------|---|---|------|------------|----------|
