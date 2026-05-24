@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P4 · Loli Jara** (Infra · UI · Eval) |
+| Owner | **P4 · Diego Jara** (Infra · UI · Eval) |
 | Status | 📅 Planned · Weeks 4-9 (simulator W4 · per-UC variants W5-9) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §2 (Block 01), [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) §3 (all 5 scenarios) |
 
@@ -81,7 +81,7 @@ The implicit contract: the simulator **must produce signals that the detection l
 | UC-01 | `lockbit_like.py` | L1 (vssadmin + .locked + ransom note rules) + L2 (entropy spike) + L3 (canaries touched) |
 | UC-02 | `canary_path.py` | L3 alone (interrupted before L1/L2 produce signal) |
 | UC-03 | `novel_evasive.py` | L2 alone (WMIC bypasses L1 Sigma rules; canaries not in path) |
-| UC-04 | Atomic Red Team T1490 (Linux) | L1 + L2 (btrfs snapshot delete + tar archive) |
+| UC-04 | Atomic Red Team T1490 (Linux) + `postgres_dump_attack.py` | L1 + L2 (btrfs snapshot delete + `pg_dump` exports cifrados + tar archive de `/var/lib/postgresql/15/main/`) — target real: la base PostgreSQL del lab |
 | UC-05 | `stealth_kill_agent.py` | L1 (Stop-Service rule before agent dies) + heartbeat-loss rule 502 |
 
 ---

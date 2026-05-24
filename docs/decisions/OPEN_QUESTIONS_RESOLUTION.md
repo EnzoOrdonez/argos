@@ -26,13 +26,18 @@ After kickoff documentation (PROJECT_BRIEF, SAD, THREAT_MODEL, ADRs 0001-0006), 
 
 ## Q2. "Production critical" host for two-person rule demo
 
-**Decision:** The Linux Ubuntu Server VM in the lab acts symbolically as "production database server". Two-person rule applied to its containment in the demo scenario.
+**Decision:** The Linux Ubuntu Server VM in the lab hosts a **PostgreSQL 15** instance with synthetic but representative data — this is the concrete asset ARGOS defends. The VM is tagged in Wazuh with `criticality=production-critical`, and that tag triggers the two-person rule for any containment action.
 
-**Rationale:** Brings the two-person rule from documented theory to demonstrable behaviour at minimal cost. Adds vocabulary (compliance, governance, four-eyes principle) to the demo narrative.
+**Rationale:** Naming a concrete defended asset turns the abstract "production database server" into something a viewer can point at on the screen. PostgreSQL was chosen because it is the de-facto reference for relational databases in modern infrastructure, it is OSS, and the simulator can target its data directory (`/var/lib/postgresql`) and dump exports (`*.sql`) as plausible ransomware targets. Adds vocabulary (compliance, governance, four-eyes principle) to the demo narrative.
 
-**Implementation:** Tag the host in Wazuh with `criticality=production-critical`. Decision Engine routes containment of any tagged host through the two-person approval path regardless of tier.
+**Implementation:**
 
-**Demo storyline:** "When the attack pivots to our database server, the system requires two approvers — even at T1 confidence, because some actions are too costly to delegate to a single human."
+- `lab/` provisioning installs PostgreSQL 15 on the Linux VM during `vagrant up` and seeds it with a synthetic schema `argos_demo_prod` containing tables that look like a small business backend (employees, payroll, customers, invoices, payments — no real PII).
+- The same provisioning script also dumps `pg_dump` exports to `/var/backups/postgres/*.sql` so the canary FIM and the ransomware simulator have file-level targets to interact with.
+- The host is tagged in Wazuh with `criticality=production-critical` so the Decision Engine routes any containment through the two-person approval path regardless of tier (ADR-0003 override).
+- `.env.example` exposes `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` so other modules can connect for evaluation queries; secrets never leave the lab subnet.
+
+**Demo storyline:** "Our crown-jewel asset is this PostgreSQL database — payroll, customers, invoices. When the attack reaches its host, the system requires two approvers — even at T1 confidence, because some actions are too costly to delegate to a single human."
 
 ---
 
@@ -309,10 +314,10 @@ This closes the architectural design phase. Next step: **use-case definition**.
 
 | Role | Name | Status |
 |------|------|--------|
-| P1 (Lead) | Enzo | ✅ Approved |
+| P1 (Lead) | Enzo Ordoñez Flores | ✅ Approved |
 | P2 (ML) | Sebastian Montenegro | ✅ Confirmed |
 | P3 (Detection) | Angeles Castillo | ✅ Confirmed |
-| P4 (Infra/UI) | Loli Jara | ✅ Confirmed |
+| P4 (Infra/UI) | Diego Jara | ✅ Confirmed |
 
 ---
 
@@ -323,4 +328,5 @@ This closes the architectural design phase. Next step: **use-case definition**.
 | 1.0 | Week 1 | Initial closure document. Resolves Q1 through Q8. | P1 |
 | 1.1 | Week 1 | Added Q9: T2 timeout correction. Original recommendation of long timeout was incompatible with ransomware encryption velocity. Corrected to 3min fixed timeout with proactive throttle + snapshot during countdown. | P1 |
 | 1.2 | Week 2 | Q8 closure status updated: confirmed all 10 cross-document patches were applied (six remaining patches applied this week — SAD §13.5/§14/§6.5/§15, ADR-0003 override por criticidad, ADR-0006 política JWT). | P1 |
-| 1.3 | Week 7 calendar | Sign-off table updated with confirmed names (Sebastian Montenegro P2, Angeles Castillo P3, Loli Jara P4). Cross-references added to new `EVALUATION_CRITERIA.md` and `data-handling.md`. | P1 |
+| 1.3 | Week 7 calendar | Sign-off table updated with confirmed names (Sebastian Montenegro P2, Angeles Castillo P3, Diego Jara P4). Cross-references added to new `EVALUATION_CRITERIA.md` and `data-handling.md`. | P1 |
+| 1.4 | 2026-05-23 | Name corrections: P1 ahora "Enzo Ordoñez Flores" (era "Enzo Cáceres"); P4 ahora "Diego Jara" (era "Loli Jara"). | P1 |

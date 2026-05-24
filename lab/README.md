@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P4 · Loli Jara** (Infra · UI · Eval) |
+| Owner | **P4 · Diego Jara** (Infra · UI · Eval) |
 | Status | 📅 Planned · Weeks 2-3 |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §3 (Block 02 — Victim Lab), [`docs/decisions/0002-heartbeat-default-60s.md`](../docs/decisions/0002-heartbeat-default-60s.md) |
 
@@ -24,6 +24,7 @@ The lab is the **substrate** that every other layer assumes exists. Without it, 
 | VirtualBox 7.x | Hypervisor for local dev |
 | Terraform 1.7+ (optional) | Azure deployment for the stretch goal "hybrid on-prem / cloud" demo |
 | Bash / PowerShell | Provisioning scripts inside each VM |
+| PostgreSQL 15 | Activo defendido — corre en Linux VM, esquema `argos_demo_prod` con datos sintéticos |
 
 **Network topology:** isolated host-only or internal network. No internet access from victim hosts during attack runs (mitigates accidental real-world impact — see THREAT_MODEL.md §3.1).
 
@@ -38,7 +39,9 @@ lab/
 ├── provision/
 │   ├── wazuh-manager.sh       # Wazuh manager + OpenSearch install
 │   ├── victim-windows.ps1     # Sysmon (SwiftOnSecurity baseline) + Wazuh agent
-│   ├── victim-linux.sh        # auditd + Wazuh agent
+│   ├── victim-linux.sh        # auditd + Wazuh agent + PostgreSQL 15 install + seed
+│   ├── postgres-seed.sql      # Esquema argos_demo_prod + datos sintéticos
+│   ├── postgres-dumps.sh      # Genera dumps en /var/backups/postgres/ para targets de canary y ransomware
 │   └── network-isolation.sh   # iptables / NetFirewallRule rules
 ├── terraform/                 # Optional Azure stretch goal
 │   ├── main.tf
@@ -53,7 +56,7 @@ lab/
 
 This layer **does not consume or produce** any `argos_contracts` models directly — it's pure infrastructure. The contract it *enables* is "Wazuh manager API is reachable at `${WAZUH_API_URL}`, victim agents are registered, FIM is configured on canary paths".
 
-Tag hosts in Wazuh with `criticality=production-critical` on the Linux victim per `OPEN_QUESTIONS_RESOLUTION.md` §Q2 — this is what triggers the two-person rule in UC-04.
+Tag hosts in Wazuh with `criticality=production-critical` on the Linux victim per `OPEN_QUESTIONS_RESOLUTION.md` §Q2 — this is what triggers the two-person rule in UC-04. The Linux VM hosts a **PostgreSQL 15** instance with synthetic data (`argos_demo_prod` schema), which is the concrete asset ARGOS defends. The provisioning script seeds the database and dumps periodic `pg_dump` exports to `/var/backups/postgres/` so the canary FIM and the ransomware simulator have file-level targets.
 
 ---
 
