@@ -1,12 +1,12 @@
 # ARGOS — Introducción al proyecto y arquitectura
 
-**Documento común a todos los manuales de integrante.** Contiene contexto que cada miembro del equipo (P1/P2/P3/P4) necesita antes de leer su manual individual.
+**Documento común a todos los manuales de integrante.** Contiene el contexto que cada miembro del equipo (P1/P2/P3/P4) necesita antes de leer su manual individual.
 
-| Field | Value |
+| Campo | Valor |
 |-------|-------|
-| Type | Manual de introducción común para los 4 integrantes |
-| Status | Active |
-| Última actualización | 2026-05-24 |
+| Tipo | Introducción común para los 4 integrantes |
+| Estado | Activo |
+| Entrega final | 13 de junio de 2026 (sábado) |
 | Pre-requisito | Ninguno. Léelo de cero. |
 
 ---
@@ -15,7 +15,7 @@
 
 **ARGOS** es la **Adaptive Response Guard with Orchestrated Surveillance** — una plataforma multi-vector de detección y respuesta a amenazas que replica la arquitectura de productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando exclusivamente componentes open source más una API LLM de bajo costo para la capa de triage.
 
-El proyecto es para el curso **Tópicos Avanzados de Ciberseguridad** en la Universidad de Lima · 2026-1. La entrega final es el **13 de junio de 2026** y consta de tres deliverables obligatorios: informe técnico (~30% del peso), demo en vivo (~40%) y presentación (~20%) más los seguimientos en semanas 5/7/9 (~10%).
+El proyecto es parte del curso **Tópicos Avanzados de Ciberseguridad** en la Universidad de Lima · 2026-1. La entrega final es el **13 de junio de 2026** y consta de tres deliverables obligatorios: informe técnico (~30 % del peso), demo en vivo (~40 %), y presentación (~20 %). Los seguimientos intermedios pesan el ~10 % restante.
 
 **El activo defendido** es una base de datos **PostgreSQL 15** corriendo sobre una Linux VM en el lab. Tiene esquema `argos_demo_prod` con tablas que simulan datos de RRHH y finanzas (employees, payroll, customers, invoices, payments) con datos sintéticos. El host está tagged en Wazuh como `criticality=production-critical`, lo que dispara la regla de dos personas (two-person rule) para cualquier acción de containment sobre él.
 
@@ -387,7 +387,7 @@ Las técnicas relevantes al alcance del proyecto, ordenadas por categoría (tact
 - **Feature branches:** `feature/<persona>/<descripcion-corta>` — ejemplo: `feature/p2/isolation-forest-baseline`.
 - **Commits convencionales:** `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`.
 - **PRs requieren:** CI verde + 1 review. Pairing: P1↔P2, P3↔P4.
-- **Push diario obligatorio** antes de las 22:00 durante el sprint.
+- **Push diario obligatorio** antes de las 22:00 cada día de trabajo.
 
 ### Estructura del repo (post ADR-0008)
 
@@ -468,7 +468,7 @@ argos/
     ├── architecture/          # SAD, threat model, flow diagrams
     ├── decisions/             # 8 ADRs + OPEN_QUESTIONS
     ├── use-cases/             # 8 UCs detallados
-    └── team/                  # Sprint manuals (este documento + 4 individuales)
+    └── team/                  # Manuales de integrante (este documento + 4 individuales)
 ```
 
 ### Variables de entorno (.env)
@@ -488,7 +488,7 @@ El `.env.example` documenta TODAS las variables. Las críticas para tu rol está
 
 ## 10. Quick start del entorno común
 
-Estos pasos son comunes a TODOS los integrantes antes de empezar el sprint. Tu manual individual asume que esto está hecho.
+Estos pasos son comunes a TODOS los integrantes antes de empezar a implementar. Tu manual individual asume que esto está hecho.
 
 ### Paso 1 — Clonar repo
 
@@ -542,12 +542,12 @@ cp .env.example .env
 git config user.name "<Tu Nombre>"
 git config user.email "<tu@email.com>"
 # Crear tu branch:
-git checkout -b feature/<tu-pX>/sprint-w1-init
+git checkout -b feature/<tu-pX>/setup-inicial
 ```
 
 ---
 
-## 11. Comunicación del equipo durante el sprint
+## 11. Comunicación del equipo durante la implementación
 
 ### Standup diario
 
@@ -568,8 +568,8 @@ git checkout -b feature/<tu-pX>/sprint-w1-init
 
 ### Reglas operativas (post ADR-0008)
 
-1. **No tocar la doc esta semana.** Los docs están sincronizados con la realidad. Si descubres algo arquitectónico nuevo, abre un ADR-0009 en lugar de modificar SAD/threat model/README.
-2. **No optimizar prematuramente.** El objetivo es que los 8 UCs corran end-to-end, no que sean óptimos. Performance fine-tuning en semana 2.
+1. **No tocar la doc arquitectónica.** Los docs están sincronizados con la realidad. Si descubres algo arquitectónico nuevo, abre un ADR-0009 en lugar de modificar SAD/threat model/README.
+2. **No optimizar prematuramente.** El objetivo es que los 8 UCs corran end-to-end, no que sean óptimos. Performance fine-tuning queda para después del demo.
 3. **Mocks son OK al inicio.** Si tu pieza depende de otra que aún no está lista, usa FakeRedis, mocked HTTP, o synthetic data. Integración real cuando ambas piezas estén listas.
 4. **Verificar en lab real al menos 2 veces al día.** Cada integrante corre el flow E2E en su Vagrant antes del almuerzo y antes de pushear.
 5. **Pedir ayuda en menos de 30 minutos.** Si llevas más de media hora atascado, pingueas en `#argos-help` o llamas a otro integrante. No debug solitario.
@@ -583,19 +583,19 @@ Cada integrante puede usar Claude Code (o cualquier asistente IA: Cursor, GitHub
 
 ---
 
-## 12. Lo que NO se entrega en esta semana 1
+## 12. Lo que NO se entrega para el demo
 
-Para que no te sorprendas cuando llegue Día 7 sin estas cosas:
+Para que no te sorprendas cuando llegue el demo sin estas cosas:
 
-- **Calibración Q5 protocol** con dataset etiquetado real (~100 ransomware + ~500 benignas). Semana 2.
-- **UC-03 split-brain con 4 aprobadores reales** no scripted. Semana 2-3.
-- **UC-05 stealth attack** end-to-end pulido. Semana 2.
-- **PRs Sigma upstream aceptados** por SigmaHQ maintainers (depende de tiempos externos). Semana 2-3.
-- **Video demo final editado**. Semana 3.
-- **Informe técnico final**. Semana 3.
+- **Calibración Q5 protocol** con dataset etiquetado real (~100 ransomware + ~500 benignas).
+- **UC-03 split-brain con 4 aprobadores reales** no scripted.
+- **UC-05 stealth attack** end-to-end pulido.
+- **PRs Sigma upstream aceptados** por SigmaHQ maintainers (depende de tiempos externos).
+- **Video demo final editado**.
+- **Informe técnico final**.
 - **Cross-encoder reranker en RAG** (descartado del scope v1 per ADR-0001 v2).
 
-Lo que SÍ se completa al cierre del sprint Día 7: 5 UCs corriendo end-to-end (UC-01, UC-02, UC-04, UC-06, UC-07), con UC-08 como nice-to-have, con dos rehearsals al domingo.
+Lo que SÍ se completa para el demo: 5 UCs corriendo end-to-end (UC-01, UC-02, UC-04, UC-06, UC-07), con UC-08 como nice-to-have, más dos rehearsals previos.
 
 ---
 
@@ -613,8 +613,8 @@ Si algo de este documento no quedó claro o necesitas más profundidad:
 | Rúbrica del curso y mapping a deliverables | [`docs/EVALUATION_CRITERIA.md`](../EVALUATION_CRITERIA.md) |
 | Estado real vs. documentado del proyecto | [`docs/PROJECT_STATUS.md`](../PROJECT_STATUS.md) |
 | Flujo del sistema visualmente | [`docs/architecture/argos_flow.html`](../architecture/argos_flow.html) |
-| Tu manual de sprint individual | `docs/team/sprint-week-1-p<X>-<nombre>.md` |
-| Plan operacional general del sprint | [`docs/team/sprint-week-1-overview.md`](./sprint-week-1-overview.md) |
+| Tu manual individual | `docs/team/manual-p<X>-<nombre>.md` |
+| Plan operacional general | [`docs/team/manual-equipo.md`](./manual-equipo.md) |
 
 ---
 

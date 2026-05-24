@@ -1,0 +1,2706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>ARGOS — Manual Sebastian Montenegro</title>
+<style>/* ============================================================
+   ARGOS Manual — shared style for HTML (interactive) and PDF.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --c-primary:   #0a3d62;
+  --c-primary-2: #1e6091;
+  --c-accent:    #e58e26;
+  --c-bg:        #ffffff;
+  --c-fg:        #1f2933;
+  --c-muted:     #5f6c7b;
+  --c-line:      #d8dee8;
+  --c-soft:      #f3f6fa;
+  --c-card:      #ffffff;
+  --c-code-bg:   #0d1f2d;
+  --c-code-fg:   #e7eef8;
+  --c-code-bar:  #1a3548;
+  --c-out-bg:    #f1f5f9;
+  --c-out-bar:   #cbd5e1;
+  --c-verify-bg: #f3fdf3;
+  --c-verify-bar:#16a34a;
+  --c-warn:      #b45309;
+  --c-danger:    #b91c1c;
+  --c-ok:        #15803d;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--c-fg);
+  background: var(--c-bg);
+  margin: 0;
+  padding: 0;
+}
+
+.page-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 4rem;
+}
+
+/* ---------- typography ---------- */
+h1 {
+  color: var(--c-primary);
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-top: 2.4rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px solid var(--c-primary);
+}
+h2 {
+  color: var(--c-primary-2);
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--c-line);
+}
+h3 {
+  color: var(--c-primary-2);
+  font-size: 1.18rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+h4 {
+  color: #2e5984;
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin-top: 1.2rem;
+}
+
+p { margin: 0.5rem 0 0.7rem; }
+strong { color: #0e2b44; font-weight: 600; }
+hr { border: none; border-top: 1px solid var(--c-line); margin: 1.6rem 0; }
+
+ul, ol { margin: 0.3rem 0 0.7rem 1.4rem; padding: 0; }
+li { margin: 0.25rem 0; }
+li > p { margin: 0.2rem 0; }
+
+a { color: var(--c-primary-2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- inline code ---------- */
+code {
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.88em;
+  background: #f0f3f7;
+  color: #b94a1f;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ---------- code blocks (fenced) ---------- */
+pre {
+  margin: 0.6rem 0 1rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 8px;
+  page-break-inside: avoid;
+}
+
+pre > code {
+  display: block;
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  padding: 0.9rem 1rem 1rem;
+  white-space: pre;
+  overflow-x: auto;
+  border-radius: 0 0 8px 8px;
+  background: var(--c-code-bg);
+  color: var(--c-code-fg);
+  border: none;
+}
+
+/* code block wrapper (added by post-processor) */
+.codeblock {
+  position: relative;
+  margin: 0.8rem 0 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(15, 31, 45, 0.08);
+  overflow: hidden;
+}
+
+.codeblock .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: var(--c-code-bar);
+  border-radius: 8px 8px 0 0;
+}
+.codeblock .bar .lang { color: #94c3e7; }
+.codeblock .bar .dots {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-right: 0.6rem;
+}
+.codeblock .bar .dots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #ff5f56;
+  display: inline-block;
+}
+.codeblock .bar .dots span:nth-child(2) { background: #ffbd2e; }
+.codeblock .bar .dots span:nth-child(3) { background: #27c93f; }
+
+.codeblock .copy-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e7eef8;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.codeblock .copy-btn:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+}
+.codeblock .copy-btn.copied {
+  background: var(--c-ok);
+  border-color: var(--c-ok);
+  color: white;
+}
+
+/* ---------- output blocks (language=text or output) ---------- */
+.codeblock.output .bar {
+  background: var(--c-out-bar);
+  color: #475569;
+}
+.codeblock.output .bar .lang { color: #1e293b; }
+.codeblock.output .bar .dots { display: none; }
+.codeblock.output > pre > code {
+  background: var(--c-out-bg);
+  color: #1e293b;
+  font-size: 0.78rem;
+}
+
+/* ---------- verify blocks (custom label) ---------- */
+.codeblock.verify .bar {
+  background: var(--c-verify-bar);
+  color: white;
+}
+.codeblock.verify .bar .lang { color: #ecfdf5; }
+
+/* ---------- callouts ---------- */
+.callout {
+  margin: 1rem 0 1.2rem;
+  padding: 0.8rem 1rem 0.8rem 1.1rem;
+  border-left: 4px solid var(--c-primary-2);
+  background: #eef5fb;
+  border-radius: 0 6px 6px 0;
+  page-break-inside: avoid;
+}
+.callout.warn   { border-color: var(--c-warn);   background: #fef3c7; }
+.callout.danger { border-color: var(--c-danger); background: #fee2e2; }
+.callout.ok     { border-color: var(--c-ok);     background: #dcfce7; }
+.callout strong { color: inherit; }
+
+blockquote {
+  margin: 0.9rem 0;
+  padding: 0.6rem 1rem;
+  background: #eef5fb;
+  border-left: 4px solid var(--c-primary-2);
+  border-radius: 0 6px 6px 0;
+  color: #1f2933;
+  font-style: normal;
+}
+
+/* ---------- tables ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0 1.2rem;
+  font-size: 0.92rem;
+  page-break-inside: avoid;
+}
+thead { background: var(--c-soft); }
+th {
+  text-align: left;
+  font-weight: 600;
+  color: #0e2b44;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--c-line);
+}
+td {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--c-line);
+  vertical-align: top;
+}
+tr:nth-child(even) td { background: #f9fbfd; }
+
+/* ---------- checklists ---------- */
+.checklist {
+  border: 1px solid var(--c-line);
+  border-left: 4px solid var(--c-primary);
+  border-radius: 0 6px 6px 0;
+  background: #fafcff;
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+}
+.checklist h4 { margin-top: 0; }
+
+/* ---------- cover ---------- */
+.cover {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-2) 60%, #2a7bbf 100%);
+  color: white;
+  padding: 3rem;
+}
+.cover .brand { font-size: 4rem; font-weight: 700; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.cover .tag   { font-size: 1.05rem; color: #bcdcef; font-style: italic; margin-bottom: 3rem; }
+.cover h2     { color: white; border: none; font-size: 1.7rem; margin: 1rem 0 0.4rem; }
+.cover .role  { color: #cfe2f3; font-size: 1.05rem; }
+.cover .meta  {
+  margin-top: 3rem;
+  font-size: 0.95rem;
+  color: #cfe2f3;
+  line-height: 1.7;
+}
+.cover .deadline {
+  margin-top: 2rem;
+  padding: 0.6rem 1.4rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.page-break { page-break-after: always; }
+
+/* ---------- nav (HTML only) ---------- */
+.toc {
+  background: var(--c-soft);
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  padding: 0.8rem 1.2rem;
+  margin: 1.5rem 0;
+}
+.toc-title {
+  font-weight: 600;
+  color: var(--c-primary);
+  margin-bottom: 0.4rem;
+}
+.toc ul { margin: 0.2rem 0 0.2rem 1rem; padding: 0; }
+.toc li { margin: 0.15rem 0; list-style: none; position: relative; }
+.toc li::before { content: '›'; color: var(--c-primary-2); margin-right: 0.4rem; }
+
+/* ---------- print / PDF tweaks ---------- */
+@page {
+  size: Letter;
+  margin: 2cm 1.8cm 2.4cm 1.8cm;
+  @bottom-center {
+    content: "ARGOS · Manual del integrante · página " counter(page) " de " counter(pages);
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: #5f6c7b;
+  }
+}
+@page :first { margin: 0; @bottom-center { content: none; } }
+
+@media print {
+  .copy-btn { display: none !important; }
+  .toc      { page-break-after: always; }
+  body      { font-size: 10pt; }
+  .page-wrap { max-width: 100%; padding: 0; }
+  h1 { page-break-before: auto; }
+}
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="brand">ARGOS</div>
+  <div class="tag">Adaptive Response Guard with Orchestrated Surveillance</div>
+  <h2>Manual del integrante</h2>
+  <div class="role">Sebastian Montenegro</div>
+  <div class="role" style="margin-top:0.4rem;font-size:0.9rem;opacity:0.85">ML Layer 2 + LLM Triage Layer 4</div>
+  <div class="deadline">Entrega final: <strong>13 de junio de 2026</strong></div>
+  <div class="meta">Universidad de Lima · Tópicos Avanzados de Ciberseguridad · 2026-1<br/>Versión 3.0 — manual organizado por orden de implementación</div>
+</div>
+<div class="page-break"></div>
+<div class="page-wrap">
+<h1>Parte I — Introducción común al proyecto</h1>
+<h1 id="argos--introducción-al-proyecto-y-arquitectura">ARGOS — Introducción al proyecto y arquitectura</h1>
+<p><strong>Documento común a todos los manuales de integrante.</strong> Contiene el contexto que cada miembro del equipo (P1/P2/P3/P4) necesita antes de leer su manual individual.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tipo</td>
+<td>Introducción común para los 4 integrantes</td>
+</tr>
+<tr class="even">
+<td>Estado</td>
+<td>Activo</td>
+</tr>
+<tr class="odd">
+<td>Entrega final</td>
+<td>13 de junio de 2026 (sábado)</td>
+</tr>
+<tr class="even">
+<td>Pre-requisito</td>
+<td>Ninguno. Léelo de cero.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-qué-es-argos-en-una-página">1. Qué es ARGOS en una página</h2>
+<p><strong>ARGOS</strong> es la <strong>Adaptive Response Guard with Orchestrated Surveillance</strong> — una plataforma multi-vector de detección y respuesta a amenazas que replica la arquitectura de productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando exclusivamente componentes open source más una API LLM de bajo costo para la capa de triage.</p>
+<p>El proyecto es parte del curso <strong>Tópicos Avanzados de Ciberseguridad</strong> en la Universidad de Lima · 2026-1. La entrega final es el <strong>13 de junio de 2026</strong> y consta de tres deliverables obligatorios: informe técnico (~30 % del peso), demo en vivo (~40 %), y presentación (~20 %). Los seguimientos intermedios pesan el ~10 % restante.</p>
+<p><strong>El activo defendido</strong> es una base de datos <strong>PostgreSQL 15</strong> corriendo sobre una Linux VM en el lab. Tiene esquema <code>argos_demo_prod</code> con tablas que simulan datos de RRHH y finanzas (employees, payroll, customers, invoices, payments) con datos sintéticos. El host está tagged en Wazuh como <code>criticality=production-critical</code>, lo que dispara la regla de dos personas (two-person rule) para cualquier acción de containment sobre él.</p>
+<p><strong>El alcance multi-vector</strong> (post ADR-0008) cubre tres categorías de ataques distintas:</p>
+<ul>
+<li><strong>Ransomware</strong>: cifrado de archivos via técnicas T1486/T1490/T1083/T1562. Es el énfasis primario.</li>
+<li><strong>Network Denial of Service</strong>: ataques de red contra el puerto del servicio (T1498/T1499) con <code>hping3</code> o <code>slowhttptest</code>.</li>
+<li><strong>Application Abuse</strong>: SQL injection contra una app web delante de la DB (T1190) usando <code>sqlmap</code>, y false positives de actividad legítima de usuario (T1078 Valid Accounts) — un SELECT masivo a las 3 AM se parece a exfiltración pero puede ser un reporte mensual legítimo.</li>
+</ul>
+<p><strong>Por qué este alcance y no más:</strong> ARGOS no busca cobertura exhaustiva multi-vector. Busca cobertura mínima representativa que demuestre que la arquitectura de 4 capas + SOAR + HITL es genuinamente adaptativa. Cubrir 3 vectores con profundidad real es más defendible que cubrir 10 superficialmente.</p>
+<hr />
+<h2 id="2-arquitectura-de-4-capas-defensivas">2. Arquitectura de 4 capas defensivas</h2>
+<p>ARGOS sigue el patrón industrial estándar de <strong>defense-in-depth</strong>: cuatro capas independientes y paralelas, cada una con trade-offs distintos, fallan independientemente. Si una capa cae o es evadida, las otras tres mantienen cobertura. No hay un solo punto de falla en la detección.</p>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">código</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-">                    [Atacante / Simulador]
+                            │
+                            ▼
+        ┌───────────────────────────────────────┐
+        │   Lab víctima (Vagrant + VirtualBox)  │
+        │   Windows VM (Sysmon)                 │
+        │   Linux VM (auditd) + PostgreSQL      │
+        │   Canary files (FIM whodata)          │
+        └───────────────────────────────────────┘
+                            │ telemetría
+                            ▼
+        ┌───────────────────────────────────────┐
+        │   Wazuh Manager + OpenSearch + Redis  │
+        │   (ingesta + storage + alert bus)     │
+        └───────────────────────────────────────┘
+                            │ alertas
+                            ▼
+    ┌───────────────┬───────────────┬───────────────┬──────────────────┐
+    │   CAPA 1      │   CAPA 2      │   CAPA 3      │   CAPA 4         │
+    │   Sigma rules │   ML anomaly  │   Canary FIM  │   LLM Triage     │
+    │   (P3 dueño)  │   (P2 dueño)  │   (P3 dueño)  │   (P1 dueño)     │
+    │   alta prec.  │   alta recall │   zero-FP     │   enrichment-only│
+    │   bajo recall │   mayor FPR   │   ultra-temp  │   NUNCA decide   │
+    └───────┬───────┴───────┬───────┴───────┬───────┴──────────┬───────┘
+            │ score         │ score         │ canary hit       │ análisis
+            └───────────────┼───────────────┴──────────────────┘
+                            ▼
+              ┌─────────────────────────────────┐
+              │   SOAR Decision Engine          │
+              │   (Tier Classifier · P1 dueño)  │
+              │   Tier T0/T1/T2/T3              │
+              └─────────────────────────────────┘
+                            │
+            ┌───────────────┼─────────────────────────┐
+            ▼               ▼                         ▼
+        ┌─────────┐   ┌─────────────────┐   ┌─────────────────┐
+        │  T0/T1  │   │  T2 (countdown  │   │   T3            │
+        │  Auto-  │   │  3min)          │   │   Solo          │
+        │  isolate│   │  Throttle +     │   │   notificación  │
+        │ +snapshot│  │  approval       │   │                 │
+        └─────────┘   │  multi-canal    │   └─────────────────┘
+                      │  (Telegram +    │
+                      │   Discord +     │
+                      │   Twilio Voice) │
+                      └─────────────────┘
+</code></pre></div>
+<h3 id="capa-1--rule-based-detection-sigma--wazuh">Capa 1 — Rule-Based Detection (Sigma + Wazuh)</h3>
+<p><strong>Dueño: P3 (Angeles).</strong> Reglas YAML escritas en formato Sigma, convertidas a Wazuh con <code>sigma-cli</code>, mapeadas explícitamente a técnicas MITRE ATT&amp;CK. Detectan patrones conocidos.</p>
+<p><strong>Sub-categorías por dominio</strong> (post ADR-0008):</p>
+<ul>
+<li><code>detection/sigma-rules/ransomware/</code> — vssadmin, T1486 cifrado, T1083 enumeración, T1562 disable defender, T1021 lateral, T1071 C2</li>
+<li><code>detection/sigma-rules/network/</code> — rate-based rules para T1498/T1499 (DDoS, slow-rate)</li>
+<li><code>detection/sigma-rules/database/</code> — query pattern anomalies para UC-07</li>
+<li><code>detection/sigma-rules/webapp/</code> — T1190 SQL injection signatures</li>
+</ul>
+<p><strong>Trade-off honesto:</strong> alta precisión, recall limitado contra variantes nuevas. Por eso existe Capa 2.</p>
+<h3 id="capa-2--ml-anomaly-detection">Capa 2 — ML Anomaly Detection</h3>
+<p><strong>Dueño: P2 (Sebastian).</strong> Modelos no supervisados entrenados sobre baseline benigno. Detectan desviaciones que las reglas no captan.</p>
+<p><strong>Modelos especializados por dominio</strong> (post ADR-0008):</p>
+<ul>
+<li><code>ml/models/ransomware_ensemble.pkl</code> — Isolation Forest + One-Class SVM. Features ventana 60s: file_write_rate, avg_entropy (Shannon), extension_modification_ratio, crypto_api_calls, new_outbound_connections, cpu_burst_score, io_burst_score.</li>
+<li><code>ml/models/network_traffic_anomaly.pkl</code> — para UC-06 DDoS. Features: connections/sec, packet rate, source IP entropy, packet size variance.</li>
+<li><code>ml/models/query_pattern_anomaly.pkl</code> — para UC-07 SELECT masivo. Features: rows_returned, query_duration_ms, hour_of_day, user_id, query_template_hash.</li>
+</ul>
+<p><strong>Ensemble ransomware:</strong> <code>ensemble_score = 0.6 × isolation_forest_score + 0.4 × one_class_svm_score</code>. Los demás modelos retornan score único.</p>
+<p><strong>Trade-off honesto:</strong> mayor recall contra variantes nuevas, mayor false positive rate. Requiere baseline limpio.</p>
+<h3 id="capa-3--canary-deception">Capa 3 — Canary Deception</h3>
+<p><strong>Dueño: P3 (Angeles).</strong> Archivos-cebo (<code>financials_Q4_2025.xlsx</code>, <code>passwords.txt</code>, <code>db_backup.sql</code>) en ubicaciones donde un usuario legítimo nunca tocaría. FIM (File Integrity Monitoring) con Sysmon whodata (Windows) o auditd (Linux) captura QUÉ proceso accedió.</p>
+<p><strong>Lógica:</strong> primera modificación / lectura / rename de un canary = alerta crítica con confianza máxima. Por diseño, FP rate ≈ 0.</p>
+<p><strong>Esta capa es estrictamente ransomware-specific.</strong> No tiene sub-categorías por dominio. Documentado deliberadamente en ADR-0008: defender contra DDoS o SQL injection requiere otras primitivas, no canaries.</p>
+<h3 id="capa-4--llm-assisted-triage">Capa 4 — LLM-Assisted Triage</h3>
+<p><strong>Dueño: P1 (Enzo).</strong> FastAPI service que recibe el contexto completo de una alerta (process tree, network connections, file modifications) y produce análisis estructurado: técnica MITRE, severidad, runbook NIST aplicable, acción recomendada, IoCs a correlar.</p>
+<p><strong>Backend vendor-agnostic (per ADR-0001 v2):</strong></p>
+<ul>
+<li><strong>Primary:</strong> OpenAI GPT-4o-mini (US-based, soberanía de datos aceptable)</li>
+<li><strong>Fallback:</strong> Llama 3.1 8B local vía Ollama (zero-egress, funciona sin internet)</li>
+</ul>
+<p><strong>Invariante crítico R-02:</strong> el LLM <strong>NUNCA está en el path crítico de containment</strong>. El SOAR decide desde Capas 1-3 solamente. El LLM enriquece la vista del analista; si halucina, miente, o cae, el sistema sigue funcionando.</p>
+<p><strong>Pipeline RAG:</strong> BM25 (léxico) + BGE-large embeddings (denso) + RRF (Reciprocal Rank Fusion). Hybrid retrieval estándar industrial. Sin cross-encoder reranker (descartado en ADR-0001 v2 por marginal gain vs costo).</p>
+<hr />
+<h2 id="3-soar-decision-engine-y-los-4-tiers-de-confianza">3. SOAR Decision Engine y los 4 tiers de confianza</h2>
+<p>El <strong>SOAR (Security Orchestration, Automation and Response)</strong> es el cerebro que fusiona señales de las 4 capas y decide la acción. Lo dueño es <strong>P1</strong>. Implementa la lógica de tiers per ADR-0003.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Tier</th>
+<th>Disparado por</th>
+<th style="text-align: center;">Confianza</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">🟥 <strong>T0</strong></td>
+<td>Canary solo, OR las 3 capas corroboran</td>
+<td style="text-align: center;">≥ 0.95</td>
+<td>Aislamiento automático inmediato + snapshot</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🟧 <strong>T1</strong></td>
+<td>Layer 1 + Layer 2 corroboran (sin canary)</td>
+<td style="text-align: center;">0.80–0.95</td>
+<td>Aislamiento automático inmediato + snapshot</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">🟨 <strong>T2</strong></td>
+<td>Capa sola con score alto</td>
+<td style="text-align: center;">0.60–0.80</td>
+<td><strong>Throttle + snapshot ahora</strong>, aislamiento full pendiente de aprobación 3-min</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🟦 <strong>T3</strong></td>
+<td>Corroboración baja</td>
+<td style="text-align: center;">0.40–0.60</td>
+<td>Solo notificación enriquecida con LLM</td>
+</tr>
+</tbody>
+</table>
+<p>⁽*⁾ <strong>Los thresholds son preliminares</strong> pendientes de calibración empírica per <code>OPEN_QUESTIONS_RESOLUTION.md</code> §Q5.</p>
+<h3 id="tier-t2--el-más-interesante">Tier T2 — el más interesante</h3>
+<p>Ransomware moderno cifra ~25,000 archivos/min. Un countdown de 3 minutos para aprobación humana sin protección parece estúpido. Por eso T2 NO es "pendiente": es "throttle + snapshot AHORA, full isolation pendiente de aprobación". El throttle (cpulimit/ionice) reduce la tasa de cifrado a ~100-500 files/min mientras los aprobadores ven el contexto LLM y deciden. Si el timeout de 3 min expira sin respuesta, el sistema auto-ejecuta (no espera más). Si el aprobador clickea Reject, el throttle se levanta y el caso queda registrado como false positive con razón documentada — esto es UC-07.</p>
+<h3 id="split-brain-conflicto-multi-aprobador">Split-brain (conflicto multi-aprobador)</h3>
+<p>Per ADR-0006: cuando hay 4 aprobadores y dan respuestas contradictorias (2 approve, 1 reject, 1 timeout), se aplica <strong>conservative-wins policy</strong> con ventana de consolidación de 60 segundos: cualquier "approve" gana sobre rechazos, excepto para acciones irreversibles que requieren <strong>two-person rule</strong> (dos approves explícitos, un reject cancela).</p>
+<p>El <strong>two-person rule</strong> se activa cuando el host afectado tiene <code>criticality=production-critical</code> (nuestro PostgreSQL). Esto es UC-04 en el demo.</p>
+<h3 id="canales-de-notificación-per-adr-0007-v2">Canales de notificación (per ADR-0007 v2)</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Tiempo</th>
+<th>Canal</th>
+<th>Propósito</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>t=0</td>
+<td><strong>Telegram bot</strong> con botones inline JWT</td>
+<td>Primario — push agresivo a celulares de aprobadores</td>
+</tr>
+<tr class="even">
+<td>t=0</td>
+<td><strong>Discord webhook</strong> con @-mention de role</td>
+<td>Visibilidad en server del equipo, presión social</td>
+</tr>
+<tr class="odd">
+<td>t=60s</td>
+<td><strong>Twilio Voice DTMF</strong> (sin STT)</td>
+<td>Escalación si nadie respondió. "Presione 1 para aprobar, 2 para rechazar"</td>
+</tr>
+<tr class="even">
+<td>post-decisión</td>
+<td><strong>Email</strong></td>
+<td>Resumen asíncrono, NUNCA en path crítico</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-equipo-y-responsabilidades">4. Equipo y responsabilidades</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;"></th>
+<th>Integrante</th>
+<th>Rol</th>
+<th>Alcance principal</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">🟣</td>
+<td><strong>Enzo Ordoñez Flores</strong></td>
+<td>P1 · Líder · LLM/SOAR</td>
+<td><code>argos_contracts</code> (entregado), Capa 4 LLM Triage, motor SOAR + Tier Classifier, Approval API con JWT, notificaciones multi-canal, Consola de Aprobación Streamlit, simulador de ransomware, playbooks de containment, coordinación</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🔵</td>
+<td><strong>Sebastian Montenegro</strong></td>
+<td>P2 · Ingeniero ML</td>
+<td>Capa 2 completa (Isolation Forest + One-Class SVM ensemble + modelos especializados), feature extraction, calibración thresholds, métricas P/R/F1, captura forense</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">🟠</td>
+<td><strong>Angeles Castillo</strong></td>
+<td>P3 · Detección y Engaño</td>
+<td>Capa 1 (Sigma rules ransomware + network + database + webapp), Capa 3 (canary FIM + whodata), validación con Atomic Red Team y Caldera, bonus: PRs upstream a SigmaHQ</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🟢</td>
+<td><strong>Diego Jara</strong></td>
+<td>P4 · Infraestructura</td>
+<td>Vagrantfile + Wazuh/OpenSearch/Redis deployment, PostgreSQL con datos sintéticos, simuladores (ransomware + DDoS + SQL injection), UI Streamlit base, video demo</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Regla operativa crítica:</strong> cada integrante debe poder defender su capa en exposición. P1 no escribe código de otros con Claude Code. Cada integrante puede usar Claude Code (o cualquier asistente IA) como <strong>acelerador en SU propia parte</strong>, siempre que entienda lo que produce y pueda defenderlo en viva (per CONTEXT.md §5 reinterpretado post ADR-0008).</p>
+<hr />
+<h2 id="5-los-8-use-cases-del-demo">5. Los 8 use cases del demo</h2>
+<p>El demo en vivo cubre 8 escenarios (per ADR-0008 multi-vector). Cada UC tiene narrativa específica que demuestra una propiedad distinta del sistema.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">UC</th>
+<th>Vector</th>
+<th style="text-align: center;">Tier</th>
+<th>Capas que firing</th>
+<th>Qué demuestra</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>UC-01</strong></td>
+<td>Ransomware (LockBit-like)</td>
+<td style="text-align: center;">T0</td>
+<td>1+2+3</td>
+<td>Full-stack end-to-end. Las 3 capas firing simultáneo. Auto-isolate + email post-facto.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-02</strong></td>
+<td>Canary deception</td>
+<td style="text-align: center;">T0</td>
+<td>3 sola</td>
+<td>Detección ultra-temprana. <strong>Zero archivos reales cifrados</strong>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⭐ <strong>UC-03</strong></td>
+<td>Variante novel + split-brain</td>
+<td style="text-align: center;">T2</td>
+<td>2 sola</td>
+<td><strong>Centerpiece HITL ransomware</strong>. ML atrapa lo que reglas no. 4 aprobadores. Conservative-wins live.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-04</strong></td>
+<td>PostgreSQL + two-person rule</td>
+<td style="text-align: center;">T1</td>
+<td>1+2</td>
+<td>Compliance vocabulary. Four-eyes principle. Governance.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong>UC-05</strong></td>
+<td>Stealth attack (agent-kill)</td>
+<td style="text-align: center;">T0</td>
+<td>1+3+heartbeat</td>
+<td>Resiliencia: agent disconnect = signal.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-06</strong></td>
+<td>DDoS volumetric</td>
+<td style="text-align: center;">T0</td>
+<td>1 (rate)+2 (network)</td>
+<td><strong>Cobertura multi-vector</strong>. Defiende contra ataques de red, no solo endpoint. T1498.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⭐ <strong>UC-07</strong></td>
+<td>SELECT masivo legítimo FP</td>
+<td style="text-align: center;">T2</td>
+<td>2 sola</td>
+<td><strong>Pieza clave del HITL</strong>. Humano cancela contención por FP reconocido. T1078.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-08</strong></td>
+<td>SQL injection</td>
+<td style="text-align: center;">T1</td>
+<td>1+2</td>
+<td>OWASP Top 10 #1. T1190 Exploit Public-Facing Application.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Los dos ⭐ son los UCs que más venden el HITL.</strong> UC-03 muestra split-brain con conservative-wins; UC-07 muestra cancelación de FP por humano. Ambos son lo que diferencia un EDR/XDR con HITL de un SIEM tradicional.</p>
+<hr />
+<h2 id="6-ejemplo-end-to-end-de-uc-01-paso-a-paso">6. Ejemplo end-to-end de UC-01 paso a paso</h2>
+<p>Para que tengas un modelo mental concreto de cómo fluye una alerta a través del sistema, aquí está UC-01 (ransomware clásico LockBit-like) desglosado segundo a segundo.</p>
+<h3 id="setup-pre-ataque-t-5-min">Setup pre-ataque (T-5 min)</h3>
+<ul>
+<li>Lab está corriendo: Wazuh manager + Windows VM + Linux VM con PostgreSQL.</li>
+<li>Los 4 aprobadores tienen Telegram abierto en sus celulares.</li>
+<li>La pantalla del proyector muestra: Streamlit Approval Console (vacía) + terminal de P4 listo para ejecutar el simulador.</li>
+<li>P1 narra el contexto: "Este es nuestro endpoint Windows típico de la organización. Tiene documentos en <code>C:\Users\Demo\Documents\</code>. El atacante acaba de obtener acceso inicial."</li>
+</ul>
+<h3 id="t0--atacante-ejecuta">T=0 — Atacante ejecuta</h3>
+<p>P4 corre:</p>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python attack-simulation/ransomware_simulator/lockbit_like.py --target windows-victim --speed full
+</code></pre></div>
+<p>Esto inicia el simulador. Behavior chain:</p>
+<ol>
+<li>T+1s: enumera archivos en <code>C:\Users\Demo\Documents\</code> (técnica T1083 File and Directory Discovery)</li>
+<li>T+2s: invoca <code>vssadmin delete shadows /all /quiet</code> (técnica T1490 Inhibit System Recovery)</li>
+<li>T+3s: comienza a cifrar archivos con AES-256, renombrando a <code>.locked</code> (técnica T1486 Data Encrypted for Impact)</li>
+<li>T+4s: toca el canary file <code>financials_Q4_2025.xlsx</code></li>
+<li>T+5s: deja la ransom note <code>README_RESTORE_FILES.txt</code> en el desktop</li>
+</ol>
+<h3 id="t1-a-t5-segundos--capas-detectan-en-paralelo">T+1 a T+5 segundos — Capas detectan en paralelo</h3>
+<p><strong>Capa 1 (Sigma + Wazuh)</strong> detecta:</p>
+<ul>
+<li>T+2s: regla <code>T1490_vssadmin_delete_shadows</code> dispara cuando ve el comando vssadmin.</li>
+<li>T+3s: regla <code>T1486_mass_file_encryption_extension</code> dispara al ver renames masivos a <code>.locked</code>.</li>
+<li>Wazuh manager normaliza estas alertas y las publica al stream Redis <code>wazuh:alerts</code>.</li>
+</ul>
+<p><strong>Capa 2 (ML)</strong> detecta:</p>
+<ul>
+<li>ML consumer (Python proceso corriendo en bg) lee el stream Redis.</li>
+<li>Cada 60s genera features para los procesos activos. La ventana T+1 a T+60 captura el simulator process.</li>
+<li>Features observadas: file_write_rate=347 archivos/min, avg_entropy=7.8 (alta), extension_modification_ratio=0.95, crypto_api_calls=42, cpu_burst_score=0.9.</li>
+<li>Isolation Forest score: 0.94. One-Class SVM score: 0.91. Ensemble: 0.93.</li>
+<li>Publica <code>MLScore</code> con score 0.93 al stream Redis <code>ml:scores</code>.</li>
+</ul>
+<p><strong>Capa 3 (Canary FIM)</strong> detecta:</p>
+<ul>
+<li>T+4s: el simulator toca <code>financials_Q4_2025.xlsx</code>.</li>
+<li>Sysmon whodata captura el evento con PID del simulator y command-line completo.</li>
+<li>Wazuh dispara regla custom <code>canary_file_accessed</code> con severity 12 (crítica).</li>
+<li>Score implícito: 1.0 (canary fire = certeza máxima).</li>
+</ul>
+<h3 id="t5-segundos--soar-decision-engine-fusiona">T+5 segundos — SOAR Decision Engine fusiona</h3>
+<p>El <strong>SOAR orchestrator</strong> (proceso de P1 corriendo el FastAPI Approval API en port 8003) se entera de las 3 alertas dentro del mismo incident window de 5 segundos.</p>
+<p><strong>Tier Classifier</strong> (<code>soar/decision_engine/tier_classifier.py</code>) aplica reglas:</p>
+<ul>
+<li><code>canary_fired=True</code> → tier T0 (canary alone wins to T0).</li>
+<li>Pero también L1 + L2 corroboran con high scores → tier T0 confirmed.</li>
+<li><strong>Decisión:</strong> <code>Tier.T0</code> con confidence 0.95+.</li>
+</ul>
+<p><strong>State machine</strong> (<code>soar/decision_engine/state_machine.py</code>):</p>
+<ol>
+<li>Crea Incident con <code>incident_id=INC-2026-05-26-001</code>, state <code>RECEIVED</code>.</li>
+<li>Persiste en Redis con key <code>incident:INC-2026-05-26-001</code>.</li>
+<li>Llama al LLM Triage en paralelo (Capa 4 enrichment-only, NO bloquea decisión).</li>
+<li>Transición de estado: <code>RECEIVED</code> → <code>PENDING_EXECUTION</code>.</li>
+</ol>
+<p><strong>Capa 4 LLM Triage</strong> (en paralelo, T+5 a T+8s):</p>
+<ul>
+<li>FastAPI <code>/triage</code> endpoint recibe el AlertContext con las 3 alertas.</li>
+<li>Llama a OpenAI GPT-4o-mini con prompt enriquecido.</li>
+<li>Devuelve TriageResponse: <code>tecnica_mitre=T1486</code>, <code>confianza=0.94</code>, <code>severidad=critical</code>, <code>runbook_aplicable="NIST 800-61 §3.4 Containment"</code>, <code>accion_recomendada="Isolate host immediately and capture memory snapshot before remediation"</code>.</li>
+<li>El Incident se actualiza en Redis con el <code>llm_analysis</code> campo.</li>
+</ul>
+<h3 id="t8-segundos--playbook-automático">T+8 segundos — Playbook automático</h3>
+<p>Como es T0 sin override de criticality (es una Windows VM standard, no production-critical), no requiere approval. El SOAR ejecuta el playbook directamente:</p>
+<ol>
+<li><strong>Host isolation</strong> (<code>soar/playbooks/host_isolation.py</code>): conecta vía PowerShell al Windows VM y crea regla firewall: <code>New-NetFirewallRule -DisplayName "ARGOS-Isolation" -Direction Outbound -Action Block</code>.</li>
+<li><strong>Process kill</strong>: identifica el PID del simulator desde el whodata FIM, ejecuta <code>Stop-Process -Force -Id &lt;PID&gt;</code>.</li>
+<li><strong>Disk snapshot</strong>: invoca Volume Shadow Copy <code>vssadmin create shadow /for=C:</code> para preservar evidencia forense.</li>
+<li>Transición de estado: <code>PENDING_EXECUTION</code> → <code>EXECUTED</code>.</li>
+</ol>
+<h3 id="t10-segundos--notificación-post-facto">T+10 segundos — Notificación post-facto</h3>
+<p>El SOAR envía notificación multi-canal (per ADR-0007 v2):</p>
+<ul>
+<li><strong>Telegram</strong> a los 4 chat_ids configurados: mensaje con incident_id, técnica, análisis LLM, y botón inline "Revertir" firmado con JWT.</li>
+<li><strong>Discord</strong> webhook al server del equipo con embed coloreado por tier (T0 = rojo) y <code>@argos-approvers</code> mention.</li>
+<li><strong>Email post-facto</strong> a <code>APPROVER_EMAILS</code> (los 4 emails del equipo) con resumen + link al audit log en OpenSearch.</li>
+</ul>
+<h3 id="t10-a-t30-segundos--streamlit-console-muestra">T+10 a T+30 segundos — Streamlit Console muestra</h3>
+<p>La <strong>Streamlit Approval Console</strong> (proceso de P1 corriendo en port 8501, proyectado en pantalla) refresca cada 2 segundos vía <code>streamlit-autorefresh</code>. Muestra:</p>
+<ul>
+<li><strong>Panel izquierdo (Incident Card):</strong> badge T0 en rojo, incident_id, host afectado, técnica MITRE T1486, análisis LLM compacto.</li>
+<li><strong>Panel central (Decision Matrix):</strong> vacío porque es T0 auto-execute, no requirió aprobación.</li>
+<li><strong>Panel derecho (System Logic):</strong> estado actual <code>EXECUTED</code>, decisión <code>EXECUTE_ISOLATION</code>, política aplicada <code>auto-execute</code>, justificación "T0 confirmed: canary + L1 + L2 corroborate".</li>
+<li><strong>Panel inferior (Action Timeline):</strong> línea de tiempo horizontal mostrando: alert created → tier classified → playbook executed → notifications sent.</li>
+</ul>
+<h3 id="t30-segundos--análisis-forense-visible">T+30 segundos — Análisis forense visible</h3>
+<p>P1 narra: "El sistema isló el host en menos de 10 segundos. 31 archivos cifrados de 500. El canary salvó los restantes. Los 4 aprobadores tienen el incidente en su Telegram con la opción de Revertir si fuera falso. Audit log completo en OpenSearch con cada decisión justificada."</p>
+<h3 id="métricas-que-se-muestran-en-pantalla">Métricas que se muestran en pantalla</h3>
+<ul>
+<li><strong>TTD (Time to Detect):</strong> 4.2 segundos desde T=0 hasta primera alerta válida.</li>
+<li><strong>TTI (Time to Isolate):</strong> 8.7 segundos desde T=0 hasta playbook completado.</li>
+<li><strong>Archivos cifrados antes de containment:</strong> 31 de 500 (94% preservados).</li>
+<li><strong>MITRE coverage:</strong> T1083 + T1490 + T1486 cubiertos por L1, ratificados por L2 entropy spike, confirmados por canary L3.</li>
+</ul>
+<h3 id="lo-que-no-se-ve-pero-pasó">Lo que NO se ve pero pasó</h3>
+<ul>
+<li>LLM Triage tardó ~3 segundos en responder. NUNCA bloqueó la decisión de containment.</li>
+<li>El throttle preventivo NO se aplicó porque fue T0 (auto-execute directo). En T2 sí se habría aplicado mientras corre el countdown.</li>
+<li>El audit log en OpenSearch capturó: triggering layers, scores individuales, fusion logic, LLM analysis, playbook commands executed, notification channels disparados, timestamps de cada paso.</li>
+</ul>
+<hr />
+<h2 id="7-glosario-mitre-attck">7. Glosario MITRE ATT&amp;CK</h2>
+<p>Las técnicas relevantes al alcance del proyecto, ordenadas por categoría (tactic).</p>
+<h3 id="initial-access">Initial Access</h3>
+<ul>
+<li><strong>T1078 — Valid Accounts</strong>: atacante usa credenciales legítimas. Relevante para UC-07 (escenario FP: usuario legítimo, NO atacante).</li>
+<li><strong>T1190 — Exploit Public-Facing Application</strong>: explotación de vulnerabilidad en aplicación web expuesta. T1190.001 sub-técnica = SQL Injection. Relevante para UC-08.</li>
+</ul>
+<h3 id="defense-evasion">Defense Evasion</h3>
+<ul>
+<li><strong>T1562 — Impair Defenses</strong>: atacante deshabilita herramientas de seguridad. T1562.001 sub-técnica = Disable Defender. Relevante para UC-05 (agent-kill attempt).</li>
+<li><strong>T1070 — Indicator Removal</strong>: atacante borra rastros. T1070.001 = Clear Windows Event Logs, T1070.004 = File Deletion.</li>
+</ul>
+<h3 id="discovery">Discovery</h3>
+<ul>
+<li><strong>T1083 — File and Directory Discovery</strong>: ransomware enumera archivos antes de cifrar. Relevante para UC-01.</li>
+</ul>
+<h3 id="lateral-movement">Lateral Movement</h3>
+<ul>
+<li><strong>T1021 — Remote Services</strong>: SMB/RDP/SSH usados por atacante para moverse. T1021.001 = RDP, T1021.002 = SMB, T1021.004 = SSH.</li>
+</ul>
+<h3 id="command-and-control">Command and Control</h3>
+<ul>
+<li><strong>T1071 — Application Layer Protocol</strong>: beacon a C2 server vía HTTP/HTTPS. T1071.001 sub-técnica = Web Protocols.</li>
+</ul>
+<h3 id="impact-la-más-rica-para-argos">Impact (la más rica para ARGOS)</h3>
+<ul>
+<li><strong>T1486 — Data Encrypted for Impact</strong>: ransomware cifrando archivos. Núcleo de UC-01, UC-02, UC-03.</li>
+<li><strong>T1490 — Inhibit System Recovery</strong>: borrar Volume Shadow Copies, snapshots btrfs, etc. Pre-cursor a T1486.</li>
+<li><strong>T1498 — Network Denial of Service</strong>: ataques de red contra disponibilidad. T1498.001 = Direct Network Flood (UC-06), T1498.002 = Reflection Amplification.</li>
+<li><strong>T1499 — Endpoint Denial of Service</strong>: saturación de recursos del endpoint. T1499.002 = Service Exhaustion, T1499.004 = Application Exploitation.</li>
+</ul>
+<hr />
+<h2 id="8-stack-tecnológico-completo">8. Stack tecnológico completo</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Categoría</th>
+<th>Componente</th>
+<th>Función</th>
+<th style="text-align: center;">Owner principal</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>SIEM</strong></td>
+<td>Wazuh 4.7</td>
+<td>Manager + agentes</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>SIEM</strong></td>
+<td>OpenSearch</td>
+<td>Storage de alertas y audit log</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>SIEM</strong></td>
+<td>Sigma + sigma-cli</td>
+<td>Reglas de detección</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="even">
+<td><strong>Telemetría</strong></td>
+<td>Sysmon (Windows)</td>
+<td>Eventos detallados de proceso/archivo/red</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>Telemetría</strong></td>
+<td>auditd (Linux)</td>
+<td>Eventos detallados de syscall</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Telemetría</strong></td>
+<td>pgAudit (PostgreSQL)</td>
+<td>Audit log de queries</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>Telemetría</strong></td>
+<td>Wazuh FIM whodata</td>
+<td>Captura qué proceso tocó archivo (canary)</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="even">
+<td><strong>Simulación</strong></td>
+<td>Atomic Red Team</td>
+<td>TTPs MITRE 1-a-1</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="odd">
+<td><strong>Simulación</strong></td>
+<td>Caldera</td>
+<td>Cadenas de ataque multi-step</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="even">
+<td><strong>Simulación</strong></td>
+<td>Custom ransomware simulator (Python)</td>
+<td>UC-01, UC-02, UC-03 reproducibles</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Simulación</strong></td>
+<td>hping3 + slowhttptest</td>
+<td>UC-06 DDoS</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Simulación</strong></td>
+<td>sqlmap</td>
+<td>UC-08 SQL injection</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>ML</strong></td>
+<td>scikit-learn 1.4+</td>
+<td>Isolation Forest + One-Class SVM</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="even">
+<td><strong>ML</strong></td>
+<td>scipy</td>
+<td>Shannon entropy</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="odd">
+<td><strong>ML</strong></td>
+<td>pandas + numpy</td>
+<td>Data wrangling</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="even">
+<td><strong>ML</strong></td>
+<td>joblib</td>
+<td>Model serialization</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="odd">
+<td><strong>Backend</strong></td>
+<td>FastAPI</td>
+<td>LLM Triage API + Approval API</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>Backend</strong></td>
+<td>Redis 7+</td>
+<td>Alert bus + incident state machine</td>
+<td style="text-align: center;">P4 (deploy) / P1 (usage)</td>
+</tr>
+<tr class="odd">
+<td><strong>Backend</strong></td>
+<td>APScheduler</td>
+<td>Timeouts + consolidation windows</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>Backend</strong></td>
+<td>PyJWT</td>
+<td>JWT signing para approval tokens</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Backend</strong></td>
+<td>Pydantic v2</td>
+<td>argos_contracts (cross-team interfaces)</td>
+<td style="text-align: center;">P1 (shipped)</td>
+</tr>
+<tr class="even">
+<td><strong>LLM</strong></td>
+<td>OpenAI GPT-4o-mini</td>
+<td>Primary backend (cloud, US-based)</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>LLM</strong></td>
+<td>Llama 3.1 8B vía Ollama</td>
+<td>Fallback (local, zero-egress)</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>LLM</strong></td>
+<td>BGE-large embeddings</td>
+<td>Retrieval en RAG</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Notifications</strong></td>
+<td>python-telegram-bot</td>
+<td>Telegram bot con inline buttons</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>Notifications</strong></td>
+<td>discord-webhook</td>
+<td>Discord notifications con role mention</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Notifications</strong></td>
+<td>twilio</td>
+<td>Voice DTMF escalación</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>UI</strong></td>
+<td>Streamlit 1.30+</td>
+<td>Analyst Console + Approval Console</td>
+<td style="text-align: center;">P4 (base) / P1 (Approval)</td>
+</tr>
+<tr class="odd">
+<td><strong>UI</strong></td>
+<td>OpenSearch Dashboards</td>
+<td>MITRE heatmap, TTD histogram, layer perf</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Infra</strong></td>
+<td>Vagrant 2.4+</td>
+<td>Provisioning de 3 VMs</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>Infra</strong></td>
+<td>VirtualBox 7.x</td>
+<td>Hypervisor para lab local</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Testing</strong></td>
+<td>pytest + respx + fakeredis</td>
+<td>Tests cross-module</td>
+<td style="text-align: center;">Todos</td>
+</tr>
+<tr class="odd">
+<td><strong>DB</strong></td>
+<td>PostgreSQL 15</td>
+<td><strong>Activo defendido</strong></td>
+<td style="text-align: center;">P4 (deploy + datos sintéticos)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-convenciones-del-repo">9. Convenciones del repo</h2>
+<h3 id="git-workflow">Git workflow</h3>
+<ul>
+<li><strong>Branch principal:</strong> <code>main</code>, protegida en GitHub.</li>
+<li><strong>Feature branches:</strong> <code>feature/&lt;persona&gt;/&lt;descripcion-corta&gt;</code> — ejemplo: <code>feature/p2/isolation-forest-baseline</code>.</li>
+<li><strong>Commits convencionales:</strong> <code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>test:</code>, <code>refactor:</code>, <code>chore:</code>.</li>
+<li><strong>PRs requieren:</strong> CI verde + 1 review. Pairing: P1↔︎P2, P3↔︎P4.</li>
+<li><strong>Push diario obligatorio</strong> antes de las 22:00 cada día de trabajo.</li>
+</ul>
+<h3 id="estructura-del-repo-post-adr-0008">Estructura del repo (post ADR-0008)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">código</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-">argos/
+├── README.md                  # Entry point del proyecto
+├── LICENSE                    # MIT
+├── pyproject.toml             # Metadata + extras por módulo
+├── .env.example               # Plantilla de variables (REAL .env va en .gitignore)
+│
+├── argos_contracts/           # ✅ Pydantic v2 cross-team (entregado · v1.1.0 · 69 tests)
+│   ├── _mitre_data.py         #     MITRE_WHITELIST curado
+│   ├── alert.py               #     WazuhAlert, NormalizedAlert
+│   ├── ml_score.py            #     MLScore (P2)
+│   ├── triage.py              #     AlertContext, TriageResponse (P1)
+│   ├── incident.py            #     Incident state machine (P1)
+│   ├── approval.py            #     ApprovalRequest, ApprovalResponse (P1)
+│   ├── enums.py               #     Tier, Severity, NotificationChannelType, ...
+│   └── tests/                 #     69 validation tests
+│
+├── llm_triage/                # P1 — Capa 4 LLM Triage
+│   ├── api/main.py            #     FastAPI /triage endpoint
+│   ├── llm_client/            #     OpenAI primary + Llama local fallback
+│   ├── rag/                   #     BM25 + BGE-large + RRF
+│   └── prompts/               #     Jinja2 templates
+│
+├── soar/                      # P1 — SOAR Decision Engine + Approval API
+│   ├── decision_engine/       #     tier_classifier, state_machine, orchestrator
+│   ├── approval/              #     api, jwt_signer, consolidation
+│   ├── notification/          #     telegram, discord, twilio_voice, email
+│   └── playbooks/             #     host_isolation, process_kill, snapshot, throttle
+│
+├── ml/                        # P2 — Capa 2 ML
+│   ├── features/              #     Feature extractors por dominio
+│   ├── models/                #     ransomware_ensemble, network_traffic, query_pattern
+│   └── consumer/              #     Redis stream consumer
+│
+├── detection/                 # P3 — Capa 1 Sigma rules
+│   ├── sigma-rules/
+│   │   ├── ransomware/        #     T1486, T1490, T1083, T1562
+│   │   ├── network/           #     T1498, T1499 rate-based
+│   │   ├── database/          #     query patterns
+│   │   └── webapp/            #     T1190 SQLi signatures
+│   └── wazuh-rules/           #     Convertidas con sigma-cli
+│
+├── deception/                 # P3 — Capa 3 Canary
+│   ├── canary_generator.py    #     Genera canary files
+│   └── fim-configs/           #     Wazuh FIM rules
+│
+├── ui/                        # P4 (base) + P1 (Approval Console)
+│   ├── streamlit_app/
+│   │   ├── pages/
+│   │   │   ├── 01_alert_inspection.py
+│   │   │   ├── 02_approval_console.py     # P1 - PIEZA CLAVE DEL DEMO
+│   │   │   └── 03_audit_forensics.py
+│   └── opensearch-dashboards/             # JSON dashboards exportados
+│
+├── attack-simulation/         # Simuladores multi-vector
+│   ├── ransomware_simulator/  # P1 (LockBit-like, canary, novel)
+│   ├── network_attacks/       # P4 (hping3, slowhttptest)
+│   ├── webapp_attacks/        # P4 (sqlmap)
+│   └── pg_simulator/          # P4 (SELECT masivo para UC-07)
+│
+├── lab/                       # P4 — Vagrant + Terraform
+│   ├── Vagrantfile
+│   ├── provision/             # Scripts bash/PowerShell
+│   └── inventory.yaml
+│
+├── evaluation/                # P2 + P4 — Métricas, datasets, reportes
+│
+└── docs/
+    ├── PROJECT_BRIEF.md       # 90-second overview
+    ├── CONTEXT.md             # Onboarding completo
+    ├── PROJECT_STATUS.md      # Honest snapshot
+    ├── EVALUATION_CRITERIA.md # Rúbrica del curso
+    ├── data-handling.md       # T-030 sanitization policy
+    ├── README.md              # Mapa de docs
+    ├── architecture/          # SAD, threat model, flow diagrams
+    ├── decisions/             # 8 ADRs + OPEN_QUESTIONS
+    ├── use-cases/             # 8 UCs detallados
+    └── team/                  # Manuales de integrante (este documento + 4 individuales)
+</code></pre></div>
+<h3 id="variables-de-entorno-env">Variables de entorno (.env)</h3>
+<p>El <code>.env.example</code> documenta TODAS las variables. Las críticas para tu rol están en tu manual individual. Reglas globales:</p>
+<ul>
+<li><strong>NUNCA commitear el <code>.env</code></strong> — está en <code>.gitignore</code>.</li>
+<li>Cada integrante genera su propio <code>.env</code> partir del <code>.env.example</code>.</li>
+<li>Las credenciales compartidas (Telegram bot token, Discord webhook URL, OpenAI API key) las distribuye P1 vía canal privado (no en GitHub, no en Discord público).</li>
+<li>El <code>JWT_SECRET</code> se genera localmente con <code>openssl rand -hex 32</code>.</li>
+</ul>
+<h3 id="convención-de-incident-ids">Convención de incident IDs</h3>
+<p><code>INC-YYYY-MM-DD-NNN</code> donde NNN es contador diario zero-padded a 3 dígitos. Ejemplo: <code>INC-2026-05-26-001</code>. El contador se persiste en Redis con TTL diario.</p>
+<hr />
+<h2 id="10-quick-start-del-entorno-común">10. Quick start del entorno común</h2>
+<p>Estos pasos son comunes a TODOS los integrantes antes de empezar a implementar. Tu manual individual asume que esto está hecho.</p>
+<h3 id="paso-1--clonar-repo">Paso 1 — Clonar repo</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">cd ~/projects                       # o donde guardes proyectos
+git clone https://github.com/EnzoOrdonez/argos.git
+cd argos
+</code></pre></div>
+<h3 id="paso-2--crear-virtualenv-python">Paso 2 — Crear virtualenv Python</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python3 -m venv .venv
+source .venv/bin/activate          # Linux/macOS
+# .venv\Scripts\activate           # Windows PowerShell
+pip install -U pip setuptools wheel
+</code></pre></div>
+<h3 id="paso-3--instalar-dependencias-core--tu-rol">Paso 3 — Instalar dependencias core + tu rol</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Todos instalan estos:
+pip install -e &quot;.[dev]&quot;
+
+# Además según tu rol:
+pip install -e &quot;.[contracts]&quot;       # P1 (siempre + más abajo)
+pip install -e &quot;.[ml]&quot;              # P2
+pip install -e &quot;.[soar,llm]&quot;        # P1 (servicios)
+pip install -e &quot;.[ui]&quot;              # P4
+</code></pre></div>
+<h3 id="paso-4--verificar-contracts">Paso 4 — Verificar contracts</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">pytest argos_contracts/tests/ -v
+# Esperado: 69 passed
+</code></pre></div>
+<p>Si no pasan los 69 tests, revisa que el venv esté activado (<code>which python</code> debe apuntar a <code>.venv/bin/python</code>).</p>
+<h3 id="paso-5--copiar-plantilla-de-variables">Paso 5 — Copiar plantilla de variables</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">cp .env.example .env
+# Editar .env con tus valores reales (tu manual individual te dice cuáles)
+</code></pre></div>
+<h3 id="paso-6--configurar-git">Paso 6 — Configurar git</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">git config user.name &quot;&lt;Tu Nombre&gt;&quot;
+git config user.email &quot;&lt;tu@email.com&gt;&quot;
+# Crear tu branch:
+git checkout -b feature/&lt;tu-pX&gt;/setup-inicial
+</code></pre></div>
+<hr />
+<h2 id="11-comunicación-del-equipo-durante-la-implementación">11. Comunicación del equipo durante la implementación</h2>
+<h3 id="standup-diario">Standup diario</h3>
+<ul>
+<li><strong>Hora:</strong> 9:00 AM</li>
+<li><strong>Canal:</strong> Discord <code>#argos-standup</code>, llamada de voz</li>
+<li><strong>Duración:</strong> 20 minutos (cada integrante ~3-4 min)</li>
+<li><strong>Formato (per <code>docs/team/standup-template.md</code>):</strong>
+<ul>
+<li>Lo que cerré ayer (PRs mergeados, tests passing)</li>
+<li>Lo que cierro hoy (objetivos del día)</li>
+<li>Bloqueos (qué necesito de otro integrante)</li>
+</ul></li>
+</ul>
+<h3 id="canales-discord-del-equipo">Canales Discord del equipo</h3>
+<ul>
+<li><code>#argos-standup</code> — standup diario</li>
+<li><code>#argos-help</code> — preguntas técnicas urgentes</li>
+<li><code>#argos-prs</code> — notificación de PRs abiertos (GitHub bot)</li>
+<li><code>#argos-incidents</code> — donde el bot ARGOS enviará notificaciones del demo</li>
+</ul>
+<h3 id="reglas-operativas-post-adr-0008">Reglas operativas (post ADR-0008)</h3>
+<ol>
+<li><strong>No tocar la doc arquitectónica.</strong> Los docs están sincronizados con la realidad. Si descubres algo arquitectónico nuevo, abre un ADR-0009 en lugar de modificar SAD/threat model/README.</li>
+<li><strong>No optimizar prematuramente.</strong> El objetivo es que los 8 UCs corran end-to-end, no que sean óptimos. Performance fine-tuning queda para después del demo.</li>
+<li><strong>Mocks son OK al inicio.</strong> Si tu pieza depende de otra que aún no está lista, usa FakeRedis, mocked HTTP, o synthetic data. Integración real cuando ambas piezas estén listas.</li>
+<li><strong>Verificar en lab real al menos 2 veces al día.</strong> Cada integrante corre el flow E2E en su Vagrant antes del almuerzo y antes de pushear.</li>
+<li><strong>Pedir ayuda en menos de 30 minutos.</strong> Si llevas más de media hora atascado, pingueas en <code>#argos-help</code> o llamas a otro integrante. No debug solitario.</li>
+<li><strong>Push diario obligatorio</strong> antes de las 22:00. Si no pusheas, tu nombre aparece en el standup del día siguiente.</li>
+</ol>
+<h3 id="claude-code--asistentes-ia--política-reinterpretada-adr-0008">Claude Code / asistentes IA — política reinterpretada (ADR-0008)</h3>
+<p>Cada integrante puede usar Claude Code (o cualquier asistente IA: Cursor, GitHub Copilot, ChatGPT) como <strong>acelerador en SU propia parte</strong>. La condición no-negociable: cada integrante DEBE entender el código que produce con asistencia de IA y poder defenderlo en viva sin la asistencia presente. La asistencia es para velocidad, NO para reemplazar comprensión.</p>
+<p><strong>La regla específica que se mantiene:</strong> P1 (Enzo) no escribe código de otros integrantes con Claude Code. P1 puede asesorar y revisar, no producir el código de otros.</p>
+<hr />
+<h2 id="12-lo-que-no-se-entrega-para-el-demo">12. Lo que NO se entrega para el demo</h2>
+<p>Para que no te sorprendas cuando llegue el demo sin estas cosas:</p>
+<ul>
+<li><strong>Calibración Q5 protocol</strong> con dataset etiquetado real (~100 ransomware + ~500 benignas).</li>
+<li><strong>UC-03 split-brain con 4 aprobadores reales</strong> no scripted.</li>
+<li><strong>UC-05 stealth attack</strong> end-to-end pulido.</li>
+<li><strong>PRs Sigma upstream aceptados</strong> por SigmaHQ maintainers (depende de tiempos externos).</li>
+<li><strong>Video demo final editado</strong>.</li>
+<li><strong>Informe técnico final</strong>.</li>
+<li><strong>Cross-encoder reranker en RAG</strong> (descartado del scope v1 per ADR-0001 v2).</li>
+</ul>
+<p>Lo que SÍ se completa para el demo: 5 UCs corriendo end-to-end (UC-01, UC-02, UC-04, UC-06, UC-07), con UC-08 como nice-to-have, más dos rehearsals previos.</p>
+<hr />
+<h2 id="13-documentos-relacionados-referencia-completa">13. Documentos relacionados (referencia completa)</h2>
+<p>Si algo de este documento no quedó claro o necesitas más profundidad:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Si quieres saber...</th>
+<th>Lee</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Arquitectura completa de cada bloque</td>
+<td><a href="../architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md"><code>docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Por qué se tomó cada decisión arquitectónica</td>
+<td><a href="../decisions/"><code>docs/decisions/</code></a> (ADRs 0001-0008)</td>
+</tr>
+<tr class="odd">
+<td>Análisis de amenazas STRIDE/FMEA</td>
+<td><a href="../architecture/THREAT_MODEL.md"><code>docs/architecture/THREAT_MODEL.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Detalle de los 8 UCs</td>
+<td><a href="../use-cases/USE_CASES.md"><code>docs/use-cases/USE_CASES.md</code></a></td>
+</tr>
+<tr class="odd">
+<td>Política de manejo de datos sensibles a LLM</td>
+<td><a href="../data-handling.md"><code>docs/data-handling.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Rúbrica del curso y mapping a deliverables</td>
+<td><a href="../EVALUATION_CRITERIA.md"><code>docs/EVALUATION_CRITERIA.md</code></a></td>
+</tr>
+<tr class="odd">
+<td>Estado real vs. documentado del proyecto</td>
+<td><a href="../PROJECT_STATUS.md"><code>docs/PROJECT_STATUS.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Flujo del sistema visualmente</td>
+<td><a href="../architecture/argos_flow.html"><code>docs/architecture/argos_flow.html</code></a></td>
+</tr>
+<tr class="odd">
+<td>Tu manual individual</td>
+<td><code>docs/team/manual-p&lt;X&gt;-&lt;nombre&gt;.md</code></td>
+</tr>
+<tr class="even">
+<td>Plan operacional general</td>
+<td><a href="./manual-equipo.md"><code>docs/team/manual-equipo.md</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="change-log">Change log</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Versión</th>
+<th>Fecha</th>
+<th>Cambio</th>
+<th>Autor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1.0</td>
+<td>2026-05-24</td>
+<td>Initial — sección común de introducción para los 4 manuales individuales. Cubre arquitectura, UCs, ejemplo end-to-end UC-01, glosario MITRE, stack tecnológico, convenciones del repo, política Claude Code, quick start.</td>
+<td>P1 (Enzo Ordoñez Flores)</td>
+</tr>
+</tbody>
+</table>
+
+<div class="page-break"></div><h1>Parte II — Manual de Sebastian Montenegro</h1>
+<h1 id="manual-p2--sebastian-montenegro--ml--llm-triage">Manual P2 — Sebastian Montenegro · ML + LLM Triage</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Rol</td>
+<td>Owner de capas estadísticas e IA</td>
+</tr>
+<tr class="even">
+<td>Owns</td>
+<td>Layer 2 — Isolation Forest + OC-SVM + Shannon entropy (<code>ml/</code>) · Layer 4 — LLM Triage + RAG (<code>ml/llm_triage/</code>, <code>ml/rag/</code>)</td>
+</tr>
+<tr class="odd">
+<td>No owns</td>
+<td>Sigma/Wazuh (P3) · Canary FIM (P3) · SOAR Decision Engine (P1) · Infra (P4)</td>
+</tr>
+<tr class="even">
+<td>Outputs blocking</td>
+<td><code>events:normalized</code> con <code>layer_origin=ml</code> y <code>layer_origin=llm</code> → consumido por P1</td>
+</tr>
+<tr class="odd">
+<td>Entrega final</td>
+<td><strong>13 de junio de 2026</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="0-tu-charter">0. Tu charter</h2>
+<blockquote>
+<p>Tus capas convierten señales débiles (un proceso raro, una secuencia de syscalls) en confianza numérica que el Tier Router de P1 pueda usar. Si tus modelos sobreajustan o tu LLM alucina, ARGOS pierde su mejor argumento de diferenciación frente a un SIEM tradicional.</p>
+</blockquote>
+<h3 id="01-recursos-requeridos">0.1 Recursos requeridos</h3>
+<ul>
+<li>Espacio disco: ~12 GB (Llama 3.1 8B Q4 ≈ 5 GB + BGE-large ≈ 1.4 GB + datasets + venv).</li>
+<li>RAM: 16 GB mínimo si vas a correr Llama local (8 GB efectivos para el modelo).</li>
+<li>GPU: opcional pero acelera Llama 10×. Sin GPU el CPU inference da ~3 tokens/s — suficiente para demo (incidents llegan de a uno).</li>
+</ul>
+<h3 id="02-cómo-leer-cada-sub-sección">0.2 Cómo leer cada sub-sección</h3>
+<p>Cada componente sigue: <strong>Contexto</strong> → <strong>Pasos manuales</strong> si aplica → <strong>Comandos</strong> → <strong>Salida esperada</strong> → <strong>Verificación</strong> → <strong>Si algo falla</strong>.</p>
+<hr />
+<h1 id="fase-1--cimientos">Fase 1 — Cimientos</h1>
+<h2 id="11-prerequisites">1.1 Prerequisites</h2>
+<h3 id="comandos">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python3 --version
+docker --version
+nvidia-smi 2&gt;/dev/null &amp;&amp; echo &quot;GPU OK&quot; || echo &quot;No GPU - CPU mode&quot;
+free -h | head -2
+df -h ~ | tail -1
+</code></pre></div>
+<h3 id="salida-esperada">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">Python 3.11.7
+Docker version 24.x.x
+No GPU - CPU mode
+              total  used  free  shared  buff/cache  available
+Mem:           15Gi  6.0Gi 3.0Gi 400Mi   6.0Gi       8.0Gi
+/dev/sda1     200G  150G  50G   75% /home/usuario
+</code></pre></div>
+<h3 id="verificación">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">python3 -c &quot;import sys; assert sys.version_info[:2]==(3,11); print(&#39;Python OK&#39;)&quot;
+docker ps &gt;/dev/null &amp;&amp; echo &quot;Docker OK&quot;
+test $(df -BG ~ | tail -1 | awk &#39;{print $4}&#39; | tr -d &#39;G&#39;) -ge 15 &amp;&amp; echo &quot;Disco OK&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">Python OK
+Docker OK
+Disco OK
+</code></pre></div>
+<hr />
+<h2 id="12-openai-api-key">1.2 OpenAI API key</h2>
+<h3 id="contexto">Contexto</h3>
+<p>P1 ya creó la cuenta y la key. <strong>No crees otra</strong> — duplicarías el billing y complicarías la revocación. Tu paso es solo verificar que P1 te pasó la key y que funciona.</p>
+<h3 id="pasos-manuales">Pasos manuales</h3>
+<ol>
+<li>Pide a P1 la <code>OPENAI_API_KEY</code> por canal privado (Signal/Telegram DM, NO Discord público).</li>
+<li>Guárdala en tu <code>.env</code> local.</li>
+</ol>
+<h3 id="verificación-1">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">export OPENAI_API_KEY=&quot;sk-proj-xxxx&quot;
+curl -s https://api.openai.com/v1/models \
+  -H &quot;Authorization: Bearer ${OPENAI_API_KEY}&quot; | jq &#39;.data[0].id&#39;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">&quot;gpt-4o-mini-2024-07-18&quot;
+</code></pre></div>
+<hr />
+<h2 id="13-instalar-ollama--llama-31-8b-fallback">1.3 Instalar Ollama + Llama 3.1 8B (fallback)</h2>
+<h3 id="contexto-1">Contexto</h3>
+<p>Llama 3.1 8B corriendo local en Ollama es el <em>fallback</em> a OpenAI. Es la diferencia entre "demo cae cuando WiFi del salón bloquea OpenAI" y "demo sigue funcionando". El switch entre uno y otro es una sola env var.</p>
+<h3 id="pasos-manuales-1">Pasos manuales</h3>
+<ol>
+<li>Instalar Ollama (oneliner oficial):
+<ul>
+<li>Linux: el comando de abajo.</li>
+<li>macOS: <code>brew install --cask ollama</code> (o descarga desde <code>https://ollama.com/download</code>).</li>
+<li>Windows: descarga el instalador desde <code>https://ollama.com/download/windows</code>.</li>
+</ul></li>
+<li>Verificar servicio.</li>
+<li>Descargar el modelo (4.7 GB).</li>
+<li>Smoke test.</li>
+</ol>
+<h3 id="comandos-1">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">curl -fsSL https://ollama.com/install.sh | sh
+
+systemctl status ollama --no-pager
+ollama pull llama3.1:8b-instruct-q4_K_M
+ollama run llama3.1:8b-instruct-q4_K_M &quot;Respond with one word: ARGOS&quot;
+</code></pre></div>
+<h3 id="salida-esperada-1">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">&gt;&gt;&gt; The Ollama API is now available at 127.0.0.1:11434.
+
+● ollama.service - Ollama Service
+     Loaded: loaded (...; enabled; ...)
+     Active: active (running) since ...
+
+pulling manifest
+pulling ... 100%
+success
+
+ARGOS
+</code></pre></div>
+<h3 id="verificación-2">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">ollama list | grep llama3.1
+curl -s http://localhost:11434/api/version | jq .version
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">llama3.1:8b-instruct-q4_K_M    a8...   4.7 GB   ...
+&quot;0.1.x&quot;
+</code></pre></div>
+<h3 id="si-algo-falla">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>curl http://localhost:11434</code> da <code>Connection refused</code></td>
+<td>Servicio no arrancó</td>
+<td><code>sudo systemctl start ollama</code> o, en macOS, abrir la app de Ollama</td>
+</tr>
+<tr class="even">
+<td><code>ollama pull</code> falla a la mitad</td>
+<td>Red inestable</td>
+<td>Reintenta — <code>ollama pull</code> reanuda desde el último chunk</td>
+</tr>
+<tr class="odd">
+<td>Inferencia se cuelga &gt; 30 s</td>
+<td>RAM insuficiente</td>
+<td>Usar modelo más chico: <code>ollama pull llama3.1:8b-instruct-q4_0</code> (3 GB)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="14-clone-repo--venv--deps-ml">1.4 Clone repo + venv + deps ML</h2>
+<h3 id="comandos-2">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">mkdir -p ~/code &amp;&amp; cd ~/code
+git clone git@github.com:EnzoOrdonez/argos.git
+cd argos
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e ./argos_contracts
+pip install -r ml/requirements.txt
+pytest ml/ -q
+</code></pre></div>
+<h3 id="salida-esperada-2">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">Successfully installed argos_contracts-1.1.0 pydantic-2.x.x
+Successfully installed scikit-learn-1.4.x scipy-1.12.x numpy-1.26.x pandas-2.2.x sentence-transformers-2.x rank-bm25-0.2.x httpx-0.27.x
+........  [100%]
+8 passed in 0.18s
+</code></pre></div>
+<h3 id="verificación-3">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">python -c &quot;import sklearn, scipy, numpy, sentence_transformers; print(&#39;imports OK&#39;)&quot;
+python -c &quot;import argos_contracts; print(argos_contracts.__version__)&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">imports OK
+1.1.0
+</code></pre></div>
+<hr />
+<h2 id="-checklist-fase-1">✅ Checklist Fase 1</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Python 3.11.x · Docker · ≥ 15 GB libre</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>OpenAI key funciona</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Ollama corre y <code>llama3.1:8b-instruct-q4_K_M</code> listo</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Tests existentes ML pasan (8 passed)</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="fase-2--skeletons-funcionales">Fase 2 — Skeletons funcionales</h1>
+<h2 id="21-generar-datasets-sintéticos">2.1 Generar datasets sintéticos</h2>
+<h3 id="contexto-2">Contexto</h3>
+<p>Layer 2 necesita un baseline de comportamiento normal y ejemplos sintéticos de ransomware para validar que detecta. El lab real lo tendrás en Fase 3; aquí trabajas con datos generados.</p>
+<h3 id="mldatasynthetic_generatorpy"><code>ml/data/synthetic_generator.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Generador sintético: eventos host-level benignos + ransomware.&quot;&quot;&quot;
+
+from __future__ import annotations
+import argparse, csv, random
+from pathlib import Path
+
+random.seed(42)
+
+BENIGN = [
+    &quot;chrome.exe&quot;, &quot;code.exe&quot;, &quot;explorer.exe&quot;, &quot;svchost.exe&quot;,
+    &quot;spoolsv.exe&quot;, &quot;outlook.exe&quot;, &quot;winword.exe&quot;, &quot;powershell.exe&quot;,
+]
+RANSOM = [&quot;lockbit.exe&quot;, &quot;encryptor.exe&quot;, &quot;wmic.exe&quot;, &quot;vssadmin.exe&quot;]
+
+
+def benign_row(t: int, host: str) -&gt; dict:
+    proc = random.choice(BENIGN)
+    return dict(
+        timestamp=t, host=host, pid=random.randint(1000, 9999), process=proc,
+        syscalls_per_min=random.randint(50, 800),
+        files_touched_per_min=random.randint(0, 30),
+        entropy_of_written_bytes=round(random.uniform(2.0, 5.5), 3),
+        network_kbps=random.randint(0, 200),
+        parent_process=&quot;explorer.exe&quot; if proc != &quot;explorer.exe&quot; else &quot;userinit.exe&quot;,
+        command_line_len=random.randint(20, 120),
+    )
+
+
+def ransom_row(t: int, host: str) -&gt; dict:
+    proc = random.choice(RANSOM)
+    return dict(
+        timestamp=t, host=host, pid=random.randint(1000, 9999), process=proc,
+        syscalls_per_min=random.randint(3000, 9000),
+        files_touched_per_min=random.randint(150, 1500),
+        entropy_of_written_bytes=round(random.uniform(7.6, 7.99), 3),
+        network_kbps=random.randint(0, 50),
+        parent_process=random.choice([&quot;cmd.exe&quot;, &quot;powershell.exe&quot;]),
+        command_line_len=random.randint(80, 600),
+    )
+
+
+def generate(n_benign: int, n_attack: int, out: Path) -&gt; None:
+    rows = [(benign_row(t, &quot;WIN-VICTIM-01&quot;), 0) for t in range(n_benign)]
+    rows += [(ransom_row(n_benign + t, &quot;WIN-VICTIM-01&quot;), 1) for t in range(n_attack)]
+    random.shuffle(rows)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open(&quot;w&quot;, newline=&quot;&quot;) as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0][0].keys()) + [&quot;label&quot;])
+        w.writeheader()
+        for row, label in rows:
+            row[&quot;label&quot;] = label
+            w.writerow(row)
+
+
+if __name__ == &quot;__main__&quot;:
+    p = argparse.ArgumentParser()
+    p.add_argument(&quot;--benign&quot;, type=int, default=5000)
+    p.add_argument(&quot;--attack&quot;, type=int, default=200)
+    p.add_argument(&quot;--out&quot;, type=Path, default=Path(&quot;ml/data/synthetic.csv&quot;))
+    a = p.parse_args()
+    generate(a.benign, a.attack, a.out)
+    print(f&quot;wrote {a.out} (benign={a.benign}, attack={a.attack})&quot;)
+</code></pre></div>
+<h3 id="comandos-3">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python -m ml.data.synthetic_generator --benign 5000 --attack 200
+wc -l ml/data/synthetic.csv
+</code></pre></div>
+<h3 id="salida-esperada-3">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">wrote ml/data/synthetic.csv (benign=5000, attack=200)
+5201 ml/data/synthetic.csv
+</code></pre></div>
+<h3 id="verificación-4">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">head -1 ml/data/synthetic.csv | tr &#39;,&#39; &#39;\n&#39; | wc -l
+test $(wc -l &lt; ml/data/synthetic.csv) -eq 5201 &amp;&amp; echo &quot;row count OK&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">11
+row count OK
+</code></pre></div>
+<hr />
+<h2 id="22-layer-2--isolation-forest--one-class-svm">2.2 Layer 2 — Isolation Forest + One-Class SVM</h2>
+<h3 id="contexto-3">Contexto</h3>
+<p>Dos detectores de anomalía complementarios entrenados sobre el baseline (label=0). Cualquier punto que ambos consideren anómalo es candidato fuerte. La intersección es más específica; la unión más sensible. Reportamos ambos al SOAR.</p>
+<h3 id="mlanomalytrainerpy"><code>ml/anomaly/trainer.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Entrena IsolationForest + OneClassSVM sobre features numéricas del baseline.&quot;&quot;&quot;
+
+from __future__ import annotations
+import argparse, joblib
+from pathlib import Path
+
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import OneClassSVM
+
+FEATURES = [
+    &quot;syscalls_per_min&quot;, &quot;files_touched_per_min&quot;,
+    &quot;entropy_of_written_bytes&quot;, &quot;network_kbps&quot;, &quot;command_line_len&quot;,
+]
+MODELS_DIR = Path(&quot;ml/anomaly/models&quot;)
+
+
+def train(csv_path: Path) -&gt; None:
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    df = pd.read_csv(csv_path)
+    benign = df[df[&quot;label&quot;] == 0][FEATURES].values
+    scaler = StandardScaler().fit(benign)
+    X = scaler.transform(benign)
+    iso = IsolationForest(n_estimators=200, contamination=0.01,
+                          random_state=42, n_jobs=-1).fit(X)
+    svm = OneClassSVM(kernel=&quot;rbf&quot;, gamma=&quot;scale&quot;, nu=0.01).fit(X)
+    joblib.dump(scaler, MODELS_DIR / &quot;scaler.joblib&quot;)
+    joblib.dump(iso,    MODELS_DIR / &quot;iso_forest.joblib&quot;)
+    joblib.dump(svm,    MODELS_DIR / &quot;oc_svm.joblib&quot;)
+    print(f&quot;trained on {len(benign)} benign samples&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    p = argparse.ArgumentParser()
+    p.add_argument(&quot;--csv&quot;, type=Path, default=Path(&quot;ml/data/synthetic.csv&quot;))
+    train(p.parse_args().csv)
+</code></pre></div>
+<h3 id="mlanomalyscorerpy"><code>ml/anomaly/scorer.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Inferencia: AnomalyScore por evento.&quot;&quot;&quot;
+
+from __future__ import annotations
+from dataclasses import dataclass
+from pathlib import Path
+import joblib
+import numpy as np
+
+from ml.anomaly.trainer import FEATURES, MODELS_DIR
+
+
+@dataclass(frozen=True)
+class AnomalyScore:
+    iso_score: float
+    svm_score: float
+    is_anomaly: bool
+    confidence: float
+
+
+class AnomalyScorer:
+    def __init__(self, scaler, iso, svm):
+        self._scaler = scaler
+        self._iso = iso
+        self._svm = svm
+
+    @classmethod
+    def load(cls, models_dir: Path = MODELS_DIR) -&gt; &quot;AnomalyScorer&quot;:
+        return cls(
+            scaler=joblib.load(models_dir / &quot;scaler.joblib&quot;),
+            iso=joblib.load(models_dir / &quot;iso_forest.joblib&quot;),
+            svm=joblib.load(models_dir / &quot;oc_svm.joblib&quot;),
+        )
+
+    def score(self, features: dict) -&gt; AnomalyScore:
+        vec = np.array([[features[f] for f in FEATURES]])
+        x = self._scaler.transform(vec)
+        iso_s = float(self._iso.decision_function(x)[0])
+        svm_s = float(self._svm.decision_function(x)[0])
+        is_anom = (iso_s &lt; 0) and (svm_s &lt; 0)
+        norm = max(abs(iso_s), abs(svm_s), 0.001)
+        conf = min(1.0, norm * 1.3) if is_anom else 0.0
+        return AnomalyScore(iso_s, svm_s, is_anom, conf)
+</code></pre></div>
+<h3 id="comandos-4">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python -m ml.anomaly.trainer --csv ml/data/synthetic.csv
+ls -la ml/anomaly/models/
+</code></pre></div>
+<h3 id="salida-esperada-4">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">trained on 5000 benign samples
+
+-rw-r--r-- ... iso_forest.joblib   (~2-3 MB)
+-rw-r--r-- ... oc_svm.joblib       (~500 KB - 1 MB)
+-rw-r--r-- ... scaler.joblib       (~1 KB)
+</code></pre></div>
+<h3 id="verificación-5">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">python - &lt;&lt; &#39;PY&#39;
+import pandas as pd
+from ml.anomaly.scorer import AnomalyScorer
+from ml.anomaly.trainer import FEATURES
+
+df = pd.read_csv(&quot;ml/data/synthetic.csv&quot;)
+attacks = df[df[&quot;label&quot;] == 1]
+benign  = df[df[&quot;label&quot;] == 0].sample(200, random_state=0)
+s = AnomalyScorer.load()
+
+tp = sum(s.score(dict(zip(FEATURES, [r[f] for f in FEATURES]))).is_anomaly for r in attacks.itertuples(index=False))
+fp = sum(s.score(dict(zip(FEATURES, [r[f] for f in FEATURES]))).is_anomaly for r in benign.itertuples(index=False))
+print(f&quot;TP rate: {tp}/200 = {tp/200:.1%}&quot;)
+print(f&quot;FP rate: {fp}/200 = {fp/200:.1%}&quot;)
+assert tp/200 &gt;= 0.85, &quot;TP rate bajo&quot;
+assert fp/200 &lt;= 0.05, &quot;FP rate alto&quot;
+print(&quot;anomaly OK&quot;)
+PY
+</code></pre></div>
+<p>Esperado (aproximado, depende de seed):</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">TP rate: 185/200 = 92.5%
+FP rate: 6/200 = 3.0%
+anomaly OK
+</code></pre></div>
+<h3 id="si-algo-falla-1">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>TP &lt; 85 %</td>
+<td>Dataset poco contrastado o modelo mal calibrado</td>
+<td>Re-generar dataset con seed diferente o subir <code>n_estimators=400</code></td>
+</tr>
+<tr class="even">
+<td>FP &gt; 10 %</td>
+<td><code>contamination</code> muy alta</td>
+<td>Bajar <code>contamination=0.005</code> en el trainer</td>
+</tr>
+<tr class="odd">
+<td><code>FileNotFoundError: scaler.joblib</code></td>
+<td>Olvidaste entrenar</td>
+<td><code>python -m ml.anomaly.trainer --csv ml/data/synthetic.csv</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="23-layer-2--shannon-entropy">2.3 Layer 2 — Shannon entropy</h2>
+<h3 id="contexto-4">Contexto</h3>
+<p>Señal complementaria barata. Ransomware cifra → bytes parecen aleatorios → entropía → ~8.0. Software legítimo escribe formatos estructurados → entropía 4-6.</p>
+<h3 id="mlentropyshannonpy"><code>ml/entropy/shannon.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Shannon entropy de bloques de bytes.&quot;&quot;&quot;
+
+from __future__ import annotations
+import math
+from collections import Counter
+
+
+def shannon_entropy(data: bytes) -&gt; float:
+    &quot;&quot;&quot;Entropy in bits per byte. Max = 8.0 (uniformly random).&quot;&quot;&quot;
+    if not data:
+        return 0.0
+    counts = Counter(data)
+    n = len(data)
+    return -sum((c / n) * math.log2(c / n) for c in counts.values())
+
+
+def classify_write(entropy: float) -&gt; str:
+    if entropy &gt;= 7.5: return &quot;encrypted_or_random&quot;
+    if entropy &gt;= 6.5: return &quot;compressed&quot;
+    if entropy &gt;= 4.5: return &quot;structured_text_or_binary&quot;
+    return &quot;low_entropy&quot;
+</code></pre></div>
+<h3 id="tests-completos">Tests completos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python"># ml/entropy/tests/test_shannon.py
+import os
+import pytest
+from ml.entropy.shannon import shannon_entropy, classify_write
+
+
+def test_empty():
+    assert shannon_entropy(b&quot;&quot;) == 0.0
+
+
+def test_single_byte_value():
+    assert shannon_entropy(b&quot;\x00&quot; * 1000) == pytest.approx(0.0)
+
+
+def test_uniform_near_max():
+    data = bytes(range(256)) * 4
+    assert shannon_entropy(data) == pytest.approx(8.0, abs=0.01)
+
+
+def test_random_bytes_close_to_8():
+    assert shannon_entropy(os.urandom(8192)) &gt; 7.9
+
+
+def test_ascii_text_lower():
+    text = b&quot;the quick brown fox jumps over the lazy dog &quot; * 200
+    assert 4.0 &lt; shannon_entropy(text) &lt; 5.0
+
+
+def test_classify_buckets():
+    assert classify_write(7.9) == &quot;encrypted_or_random&quot;
+    assert classify_write(6.9) == &quot;compressed&quot;
+    assert classify_write(5.0) == &quot;structured_text_or_binary&quot;
+    assert classify_write(2.0) == &quot;low_entropy&quot;
+</code></pre></div>
+<h3 id="verificación-6">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">pytest ml/entropy/tests/ -v
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">test_shannon.py::test_empty                         PASSED
+test_shannon.py::test_single_byte_value             PASSED
+test_shannon.py::test_uniform_near_max              PASSED
+test_shannon.py::test_random_bytes_close_to_8       PASSED
+test_shannon.py::test_ascii_text_lower              PASSED
+test_shannon.py::test_classify_buckets              PASSED
+======================= 6 passed in 0.05s =======================
+</code></pre></div>
+<hr />
+<h2 id="24-layer-4--cliente-llm-dual-openai--llama">2.4 Layer 4 — Cliente LLM dual (OpenAI + Llama)</h2>
+<h3 id="contexto-5">Contexto</h3>
+<p>Interfaz <code>LLMClient</code> con dos implementaciones intercambiables vía <code>LLM_BACKEND</code>. El consumer no sabe cuál usa.</p>
+<h3 id="mlllm_triageclientpy"><code>ml/llm_triage/client.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Cliente LLM unificado: OpenAI primario, Llama local fallback.&quot;&quot;&quot;
+
+from __future__ import annotations
+import os, time, json
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Literal, Optional
+import httpx
+
+
+@dataclass(frozen=True)
+class LLMVerdict:
+    label: Literal[&quot;malicious&quot;, &quot;benign&quot;, &quot;uncertain&quot;]
+    confidence: float
+    reasoning: str
+    backend: str
+    latency_ms: int
+
+
+class LLMClient(ABC):
+    @abstractmethod
+    async def classify(self, prompt: str) -&gt; LLMVerdict: ...
+
+
+class OpenAIClient(LLMClient):
+    def __init__(self, api_key: Optional[str] = None,
+                 model: str = &quot;gpt-4o-mini&quot;, timeout: float = 10.0):
+        self._key   = api_key or os.environ[&quot;OPENAI_API_KEY&quot;]
+        self._model = model
+        self._http  = httpx.AsyncClient(timeout=timeout)
+
+    async def classify(self, prompt: str) -&gt; LLMVerdict:
+        t0 = time.monotonic()
+        r = await self._http.post(
+            &quot;https://api.openai.com/v1/chat/completions&quot;,
+            headers={&quot;Authorization&quot;: f&quot;Bearer {self._key}&quot;},
+            json={
+                &quot;model&quot;: self._model,
+                &quot;messages&quot;: [
+                    {&quot;role&quot;: &quot;system&quot;,
+                     &quot;content&quot;: &quot;You are a SOC analyst. Respond with strict JSON: &quot;
+                                &quot;{\&quot;label\&quot;:\&quot;malicious|benign|uncertain\&quot;,&quot;
+                                &quot;\&quot;confidence\&quot;:0.0..1.0,\&quot;reasoning\&quot;:\&quot;...\&quot;}&quot;},
+                    {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt},
+                ],
+                &quot;response_format&quot;: {&quot;type&quot;: &quot;json_object&quot;},
+                &quot;temperature&quot;: 0.0,
+            },
+        )
+        r.raise_for_status()
+        parsed = json.loads(r.json()[&quot;choices&quot;][0][&quot;message&quot;][&quot;content&quot;])
+        return LLMVerdict(
+            label=parsed[&quot;label&quot;], confidence=float(parsed[&quot;confidence&quot;]),
+            reasoning=parsed[&quot;reasoning&quot;], backend=&quot;openai_gpt4o_mini&quot;,
+            latency_ms=int((time.monotonic() - t0) * 1000),
+        )
+
+
+class OllamaClient(LLMClient):
+    def __init__(self, model: str = &quot;llama3.1:8b-instruct-q4_K_M&quot;,
+                 base_url: str = &quot;http://localhost:11434&quot;,
+                 timeout: float = 30.0):
+        self._model = model
+        self._url   = base_url
+        self._http  = httpx.AsyncClient(timeout=timeout)
+
+    async def classify(self, prompt: str) -&gt; LLMVerdict:
+        t0 = time.monotonic()
+        r = await self._http.post(
+            f&quot;{self._url}/api/chat&quot;,
+            json={
+                &quot;model&quot;: self._model,
+                &quot;messages&quot;: [
+                    {&quot;role&quot;: &quot;system&quot;,
+                     &quot;content&quot;: &quot;Respond JSON only: &quot;
+                                &quot;{\&quot;label\&quot;:..., \&quot;confidence\&quot;:..., \&quot;reasoning\&quot;:...}&quot;},
+                    {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt},
+                ],
+                &quot;format&quot;: &quot;json&quot;, &quot;stream&quot;: False,
+                &quot;options&quot;: {&quot;temperature&quot;: 0.0},
+            },
+        )
+        r.raise_for_status()
+        parsed = json.loads(r.json()[&quot;message&quot;][&quot;content&quot;])
+        return LLMVerdict(
+            label=parsed.get(&quot;label&quot;, &quot;uncertain&quot;),
+            confidence=float(parsed.get(&quot;confidence&quot;, 0.5)),
+            reasoning=parsed.get(&quot;reasoning&quot;, &quot;&quot;),
+            backend=&quot;llama_local&quot;,
+            latency_ms=int((time.monotonic() - t0) * 1000),
+        )
+
+
+def make_client() -&gt; LLMClient:
+    backend = os.environ.get(&quot;LLM_BACKEND&quot;, &quot;openai_gpt4o_mini&quot;)
+    if backend == &quot;openai_gpt4o_mini&quot;:
+        return OpenAIClient()
+    if backend == &quot;llama_local&quot;:
+        return OllamaClient()
+    raise ValueError(f&quot;unknown LLM_BACKEND: {backend}&quot;)
+</code></pre></div>
+<h3 id="verificación-openai">Verificación OpenAI</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">export LLM_BACKEND=openai_gpt4o_mini
+python - &lt;&lt; &#39;PY&#39;
+import asyncio
+from ml.llm_triage.client import make_client
+
+async def main():
+    c = make_client()
+    v = await c.classify(
+        &quot;A process called encryptor.exe wrote 1500 files in 30 seconds with &quot;
+        &quot;Shannon entropy 7.9. Is this malicious?&quot;
+    )
+    print(v.label, v.confidence, v.backend, f&quot;{v.latency_ms}ms&quot;)
+asyncio.run(main())
+PY
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">malicious 0.95 openai_gpt4o_mini 687ms
+</code></pre></div>
+<h3 id="verificación-llama">Verificación Llama</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">export LLM_BACKEND=llama_local
+python - &lt;&lt; &#39;PY&#39;
+import asyncio
+from ml.llm_triage.client import make_client
+
+async def main():
+    c = make_client()
+    v = await c.classify(&quot;Same prompt as above.&quot;)
+    print(v.label, v.confidence, v.backend, f&quot;{v.latency_ms}ms&quot;)
+asyncio.run(main())
+PY
+</code></pre></div>
+<p>Esperado (con GPU):</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">malicious 0.92 llama_local 1200ms
+</code></pre></div>
+<p>Sin GPU el <code>latency_ms</code> puede ser ~4500.</p>
+<h3 id="si-algo-falla-2">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>401 Unauthorized</code> (OpenAI)</td>
+<td>Key inválida</td>
+<td>Revisa <code>.env</code>, vuelve a copiar del dashboard</td>
+</tr>
+<tr class="even">
+<td><code>429 Rate limited</code></td>
+<td>Demasiadas llamadas</td>
+<td>Solo durante burst tests; para demo es improbable</td>
+</tr>
+<tr class="odd">
+<td>Llama responde no-JSON</td>
+<td>Q4 quant a veces produce prefijos</td>
+<td>Wrap con regex: <code>re.search(r"\{.*\}", content, re.DOTALL)</code></td>
+</tr>
+<tr class="even">
+<td><code>Connection refused 11434</code></td>
+<td>Ollama no corre</td>
+<td><code>sudo systemctl start ollama</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="25-layer-4--rag-bm25--bge-large--rrf">2.5 Layer 4 — RAG (BM25 + BGE-large + RRF)</h2>
+<h3 id="contexto-6">Contexto</h3>
+<p>Antes de pasar la alerta cruda al LLM, recuperar 3-5 documentos relevantes (definiciones MITRE, runbook, variantes históricas) y inyectarlos como contexto. Reduce alucinación y mejora confidence.</p>
+<p>Decisión (ADR-0001 v2): <strong>sin cross-encoder reranker</strong>. BM25 + BGE-large + RRF (Reciprocal Rank Fusion) es suficiente para el corpus pequeño que tenemos.</p>
+<h3 id="mlragindexpy"><code>ml/rag/index.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Indexa corpus markdown para BM25 + BGE.&quot;&quot;&quot;
+
+from __future__ import annotations
+import json, pickle, re
+from pathlib import Path
+from dataclasses import dataclass, asdict
+
+import numpy as np
+from rank_bm25 import BM25Okapi
+from sentence_transformers import SentenceTransformer
+
+CORPUS_ROOT = Path(&quot;ml/rag/corpus&quot;)
+INDEX_DIR   = Path(&quot;ml/rag/_index&quot;)
+EMBED_MODEL = &quot;BAAI/bge-large-en-v1.5&quot;
+
+
+@dataclass
+class Doc:
+    id: str
+    source: str
+    title: str
+    text: str
+
+
+def _tokenize(text: str) -&gt; list[str]:
+    return re.findall(r&quot;[a-zA-Z0-9]+&quot;, text.lower())
+
+
+def load_corpus() -&gt; list[Doc]:
+    docs = []
+    for md in CORPUS_ROOT.rglob(&quot;*.md&quot;):
+        text = md.read_text(encoding=&quot;utf-8&quot;)
+        title = text.splitlines()[0].lstrip(&quot;# &quot;).strip() if text else md.stem
+        docs.append(Doc(id=str(md.relative_to(CORPUS_ROOT)),
+                        source=md.parent.name, title=title, text=text))
+    return docs
+
+
+def build() -&gt; None:
+    INDEX_DIR.mkdir(parents=True, exist_ok=True)
+    docs = load_corpus()
+    if not docs:
+        raise RuntimeError(f&quot;corpus vacío en {CORPUS_ROOT}&quot;)
+    tokenized = [_tokenize(d.text) for d in docs]
+    bm25 = BM25Okapi(tokenized)
+    with (INDEX_DIR / &quot;bm25.pkl&quot;).open(&quot;wb&quot;) as f:
+        pickle.dump(bm25, f)
+    model = SentenceTransformer(EMBED_MODEL)
+    embeddings = model.encode([d.text for d in docs], normalize_embeddings=True)
+    np.save(INDEX_DIR / &quot;embeddings.npy&quot;, embeddings)
+    with (INDEX_DIR / &quot;docs.jsonl&quot;).open(&quot;w&quot;) as f:
+        for d in docs:
+            f.write(json.dumps(asdict(d)) + &quot;\n&quot;)
+    print(f&quot;indexed {len(docs)} docs (BM25 + BGE-{embeddings.shape[1]}d)&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    build()
+</code></pre></div>
+<h3 id="mlragretrieverpy"><code>ml/rag/retriever.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Retriever híbrido BM25 + denso, fusión con Reciprocal Rank Fusion.&quot;&quot;&quot;
+
+from __future__ import annotations
+import json, pickle
+from typing import Iterable
+
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
+from ml.rag.index import INDEX_DIR, EMBED_MODEL, Doc, _tokenize
+
+RRF_K = 60
+
+
+def _rrf(rankings: Iterable[list[int]], k: int = RRF_K) -&gt; list[tuple[int, float]]:
+    scores: dict[int, float] = {}
+    for rank in rankings:
+        for pos, doc_idx in enumerate(rank):
+            scores[doc_idx] = scores.get(doc_idx, 0.0) + 1.0 / (k + pos + 1)
+    return sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+
+class HybridRetriever:
+    def __init__(self):
+        with (INDEX_DIR / &quot;bm25.pkl&quot;).open(&quot;rb&quot;) as f:
+            self._bm25 = pickle.load(f)
+        self._embeds = np.load(INDEX_DIR / &quot;embeddings.npy&quot;)
+        with (INDEX_DIR / &quot;docs.jsonl&quot;).open() as f:
+            self._docs = [Doc(**json.loads(line)) for line in f]
+        self._model = SentenceTransformer(EMBED_MODEL)
+
+    def retrieve(self, query: str, k: int = 5) -&gt; list[Doc]:
+        bm25_scores = self._bm25.get_scores(_tokenize(query))
+        bm25_rank = list(np.argsort(bm25_scores)[::-1])
+        qv = self._model.encode([query], normalize_embeddings=True)[0]
+        dense_scores = self._embeds @ qv
+        dense_rank = list(np.argsort(dense_scores)[::-1])
+        fused = _rrf([bm25_rank[:30], dense_rank[:30]])
+        return [self._docs[idx] for idx, _ in fused[:k]]
+</code></pre></div>
+<h3 id="pasos-manuales--poblar-el-corpus">Pasos manuales — poblar el corpus</h3>
+<ol>
+<li>Crea estructura:</li>
+</ol>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">mkdir -p ml/rag/corpus/mitre ml/rag/corpus/runbook ml/rag/corpus/variants
+</code></pre></div>
+<ol start="2">
+<li>Para cada técnica MITRE relevante (T1486, T1490, T1083, T1190, T1498, T1499), crea un archivo <code>ml/rag/corpus/mitre/&lt;técnica&gt;.md</code> con: título, descripción tomada de attack.mitre.org, ejemplos comunes.</li>
+<li>Para runbooks, crea <code>ml/rag/corpus/runbook/&lt;nombre&gt;.md</code> con instrucciones del equipo SOC.</li>
+<li>Para variantes históricas, crea <code>ml/rag/corpus/variants/&lt;familia&gt;.md</code> (LockBit, Conti, REvil, etc.) con descripciones técnicas.</li>
+</ol>
+<h3 id="comandos-corpus-de-smoke-test">Comandos (corpus de smoke test)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">mkdir -p ml/rag/corpus/mitre ml/rag/corpus/runbook
+cat &gt; ml/rag/corpus/mitre/T1486.md &lt;&lt; &#39;EOF&#39;
+# T1486 — Data Encrypted for Impact
+
+Adversaries may encrypt data on target systems or large numbers of systems in
+a network to interrupt availability. Ransomware families commonly observed:
+LockBit, Conti, REvil, Ryuk, BlackCat.
+
+Indicators: high file-write entropy (~8.0), mass file rename to .locked extension,
+deletion of volume shadow copies via vssadmin.
+EOF
+
+cat &gt; ml/rag/corpus/runbook/ransomware_response.md &lt;&lt; &#39;EOF&#39;
+# Runbook — Ransomware response
+
+If file-write entropy &gt; 7.5 AND files_touched_per_min &gt; 100, isolate host
+immediately. Do NOT wait for confirmation; encryption is destructive and fast.
+
+Steps:
+1. Trigger Wazuh active-response to disable host network.
+2. Snapshot memory if forensics capability available.
+3. Notify SOC manager via Telegram + Discord.
+EOF
+
+python -m ml.rag.index
+</code></pre></div>
+<h3 id="salida-esperada-5">Salida esperada</h3>
+<p>(Primera vez descarga BGE-large, puede tomar 1-2 min):</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">indexed 2 docs (BM25 + BGE-1024d)
+</code></pre></div>
+<h3 id="verificación-7">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">python - &lt;&lt; &#39;PY&#39;
+from ml.rag.retriever import HybridRetriever
+r = HybridRetriever()
+for d in r.retrieve(&quot;Process encrypting files in bulk&quot;, k=2):
+    print(d.id, &quot;→&quot;, d.title)
+PY
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">mitre/T1486.md → T1486 — Data Encrypted for Impact
+runbook/ransomware_response.md → Runbook — Ransomware response
+</code></pre></div>
+<h3 id="si-algo-falla-3">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>corpus vacío</code></td>
+<td>No hay archivos <code>.md</code> en <code>corpus/</code></td>
+<td>Agrega al menos 1 archivo <code>.md</code> en <code>ml/rag/corpus/&lt;algo&gt;/</code></td>
+</tr>
+<tr class="even">
+<td>Descarga BGE muy lenta</td>
+<td>Conexión a HuggingFace bloqueada</td>
+<td><code>export HF_ENDPOINT=https://hf-mirror.com</code></td>
+</tr>
+<tr class="odd">
+<td>Memoria insuficiente con BGE-large</td>
+<td>RAM limitada</td>
+<td>Cambia a <code>BAAI/bge-base-en-v1.5</code> (~400 MB) en <code>EMBED_MODEL</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="26-layer-4--triage-end-to-end">2.6 Layer 4 — Triage end-to-end</h2>
+<h3 id="mlllm_triagetriagepy"><code>ml/llm_triage/triage.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Ensambla: evento → prompt con contexto RAG → LLM → LLMVerdict.&quot;&quot;&quot;
+
+from __future__ import annotations
+import logging
+from typing import Optional
+
+from argos_contracts.incident import NormalizedEvent
+from ml.llm_triage.client import LLMVerdict, make_client
+from ml.rag.retriever import HybridRetriever
+
+logger = logging.getLogger(__name__)
+
+_RETRIEVER: Optional[HybridRetriever] = None
+_CLIENT = None
+
+
+def _retriever() -&gt; HybridRetriever:
+    global _RETRIEVER
+    if _RETRIEVER is None:
+        _RETRIEVER = HybridRetriever()
+    return _RETRIEVER
+
+
+def _client():
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = make_client()
+    return _CLIENT
+
+
+def _build_prompt(event: NormalizedEvent, ctx_docs) -&gt; str:
+    ctx = &quot;\n\n&quot;.join(f&quot;### {d.title}\n{d.text[:600]}&quot; for d in ctx_docs)
+    return (
+        f&quot;## Event\n&quot;
+        f&quot;Host: {event.host}\n&quot;
+        f&quot;MITRE technique: {event.mitre_technique}\n&quot;
+        f&quot;Severity: {event.severity}\n&quot;
+        f&quot;Layers fired: {event.num_layers_fired}\n&quot;
+        f&quot;Confidence (stat): {event.confidence_score}\n&quot;
+        f&quot;\n## Context (top RAG docs)\n{ctx}\n&quot;
+        f&quot;\n## Task\nClassify the event.&quot;
+    )
+
+
+async def classify(event: NormalizedEvent) -&gt; LLMVerdict:
+    docs = _retriever().retrieve(f&quot;{event.mitre_technique} {event.host}&quot;, k=4)
+    prompt = _build_prompt(event, docs)
+    return await _client().classify(prompt)
+</code></pre></div>
+<h3 id="y-exporta">Y exporta:</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python"># ml/llm_triage/__init__.py
+from ml.llm_triage.triage import classify
+__all__ = [&quot;classify&quot;]
+</code></pre></div>
+<h3 id="verificación-8">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">python - &lt;&lt; &#39;PY&#39;
+import asyncio
+from argos_contracts.incident import NormalizedEvent
+from argos_contracts.enums import Severity
+from ml.llm_triage import classify
+
+evt = NormalizedEvent(
+    event_id=&quot;evt-llm-001&quot;, severity=Severity.MEDIUM,
+    mitre_technique=&quot;T1486&quot;, num_layers_fired=2, confidence_score=0.71,
+    host=&quot;WIN-VICTIM-01&quot;, layer_origin=&quot;sigma&quot;,
+)
+v = asyncio.run(classify(evt))
+print(v.label, v.confidence, v.backend, f&quot;{v.latency_ms}ms&quot;)
+PY
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">malicious 0.93 openai_gpt4o_mini 750ms
+</code></pre></div>
+<hr />
+<h2 id="-checklist-fase-2">✅ Checklist Fase 2</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Synthetic dataset (5201 filas)</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>3 modelos <code>.joblib</code> entrenados</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>TP ≥ 85 %, FP ≤ 5 %</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Shannon entropy: 6 tests passed</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>OpenAI client devuelve verdict</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Llama client devuelve verdict</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>RAG indexa corpus y recupera por similaridad</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td><code>classify(event)</code> end-to-end &lt; 2 s con OpenAI</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td><code>pytest ml/ -q</code> → ≥ 20 passed</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="fase-3--integración-real">Fase 3 — Integración real</h1>
+<h2 id="31-consumer-del-stream-eventsraw_wazuh--emite-eventsnormalized">3.1 Consumer del stream <code>events:raw_wazuh</code> → emite <code>events:normalized</code></h2>
+<h3 id="contexto-7">Contexto</h3>
+<p>Te suscribes al stream que P3 emite desde Wazuh (<code>events:raw_wazuh</code>). Para cada evento computas features, corres Layer 2, opcionalmente Layer 4, y emites <code>NormalizedEvent</code> al stream que P1 consume.</p>
+<h3 id="mlconsumerpy"><code>ml/consumer.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Pipeline ML: raw Wazuh event → features → Layer 2 + (opcional) Layer 4 → normalized.&quot;&quot;&quot;
+
+from __future__ import annotations
+import asyncio, json, logging, os, uuid
+import redis.asyncio as redis
+
+from argos_contracts.enums import Severity
+from argos_contracts.incident import NormalizedEvent
+from ml.anomaly.scorer import AnomalyScorer
+
+logger = logging.getLogger(__name__)
+
+IN_STREAM  = &quot;events:raw_wazuh&quot;
+OUT_STREAM = &quot;events:normalized&quot;
+GROUP      = &quot;ml-pipeline&quot;
+CONSUMER   = os.environ.get(&quot;ML_CONSUMER_NAME&quot;, &quot;ml-1&quot;)
+
+_scorer = AnomalyScorer.load()
+
+
+def _features_from_wazuh(evt: dict) -&gt; dict:
+    return {
+        &quot;syscalls_per_min&quot;:         evt.get(&quot;syscalls_per_min&quot;, 0),
+        &quot;files_touched_per_min&quot;:    evt.get(&quot;files_touched_per_min&quot;, 0),
+        &quot;entropy_of_written_bytes&quot;: evt.get(&quot;entropy_of_written_bytes&quot;, 0.0),
+        &quot;network_kbps&quot;:             evt.get(&quot;network_kbps&quot;, 0),
+        &quot;command_line_len&quot;:         len(evt.get(&quot;command_line&quot;, &quot;&quot;)),
+    }
+
+
+async def _process(r: redis.Redis, raw: dict) -&gt; None:
+    evt = json.loads(raw[&quot;data&quot;])
+    feats = _features_from_wazuh(evt)
+    score = _scorer.score(feats)
+    if not score.is_anomaly:
+        return
+    norm = NormalizedEvent(
+        event_id=f&quot;evt-{uuid.uuid4().hex[:12]}&quot;,
+        severity=Severity.MEDIUM if score.confidence &lt; 0.85 else Severity.HIGH,
+        mitre_technique=evt.get(&quot;mitre_technique&quot;, &quot;Unknown&quot;),
+        num_layers_fired=1,
+        confidence_score=score.confidence,
+        host=evt.get(&quot;host&quot;, &quot;unknown&quot;),
+        layer_origin=&quot;ml&quot;,
+    )
+    await r.xadd(OUT_STREAM, {&quot;data&quot;: norm.model_dump_json()})
+    logger.info(&quot;ml emit %s host=%s conf=%.2f&quot;,
+                norm.event_id, norm.host, norm.confidence_score)
+
+
+async def run() -&gt; None:
+    r = redis.from_url(os.environ[&quot;REDIS_URL&quot;], decode_responses=True)
+    try:
+        await r.xgroup_create(IN_STREAM, GROUP, id=&quot;0&quot;, mkstream=True)
+    except redis.ResponseError as e:
+        if &quot;BUSYGROUP&quot; not in str(e):
+            raise
+    while True:
+        resp = await r.xreadgroup(GROUP, CONSUMER, {IN_STREAM: &quot;&gt;&quot;}, count=10, block=5000)
+        for _, entries in resp or []:
+            for entry_id, fields in entries:
+                try:
+                    await _process(r, fields)
+                    await r.xack(IN_STREAM, GROUP, entry_id)
+                except Exception:  # noqa: BLE001
+                    logger.exception(&quot;failed to process %s&quot;, entry_id)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(run())
+</code></pre></div>
+<h3 id="comandos-5">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Terminal A
+python -m ml.consumer
+
+# Terminal B (inyectar evento Wazuh simulado)
+redis-cli XADD events:raw_wazuh &#39;*&#39; data \
+  &#39;{&quot;host&quot;:&quot;WIN-VICTIM-01&quot;,&quot;mitre_technique&quot;:&quot;T1486&quot;,&quot;syscalls_per_min&quot;:5500,&quot;files_touched_per_min&quot;:800,&quot;entropy_of_written_bytes&quot;:7.85,&quot;network_kbps&quot;:10,&quot;command_line&quot;:&quot;powershell.exe -enc xxxxxx&quot;}&#39;
+</code></pre></div>
+<h3 id="salida-esperada-terminal-a">Salida esperada (terminal A)</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">INFO:ml.consumer:ml emit evt-abc123 host=WIN-VICTIM-01 conf=0.93
+</code></pre></div>
+<h3 id="verificación-9">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">redis-cli XLEN events:normalized
+redis-cli XREVRANGE events:normalized + - COUNT 1
+</code></pre></div>
+<p>Esperado (XLEN ≥ 1, último elemento es JSON con <code>event_id</code>, <code>confidence_score</code>, <code>host</code>):</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">1
+1) 1) &quot;1234-0&quot;
+   2) 1) &quot;data&quot;
+      2) &quot;{\&quot;event_id\&quot;:\&quot;evt-abc123\&quot;,\&quot;severity\&quot;:\&quot;HIGH\&quot;,...}&quot;
+</code></pre></div>
+<h3 id="si-algo-falla-4">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Consumer no emite nada</td>
+<td>Evento no pasa <code>is_anomaly</code></td>
+<td>Inyecta evento con <code>entropy=7.9</code> y <code>files_touched=1000</code></td>
+</tr>
+<tr class="even">
+<td><code>joblib.load</code> falla</td>
+<td>Modelos no entrenados</td>
+<td><code>python -m ml.anomaly.trainer --csv ml/data/synthetic.csv</code></td>
+</tr>
+<tr class="odd">
+<td><code>BUSYGROUP</code> warning</td>
+<td>Grupo ya existe</td>
+<td>Ignorar — el código lo maneja</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="32-smoke-end-to-end-con-p1">3.2 Smoke end-to-end con P1</h2>
+<p>Coordina con P1 una corrida conjunta: él levanta su consumer SOAR, tú tu consumer ML, P3 (o tú con un comando manual) inyecta a <code>events:raw_wazuh</code>. Verifica que <code>incident:*</code> aparece en Redis y la notif llega a Telegram con <code>layer_origin=ml</code> en los logs.</p>
+<h3 id="verificación-10">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">redis-cli KEYS &#39;incident:*&#39; | head -5
+redis-cli GET $(redis-cli KEYS &#39;incident:*&#39; | tail -1) | jq &#39;.llm_verdict.label, .llm_verdict.backend&#39;
+</code></pre></div>
+<p>Esperado (para un T2):</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">incident:inc-abc123def456
+&quot;malicious&quot;
+&quot;openai_gpt4o_mini&quot;
+</code></pre></div>
+<hr />
+<h2 id="-checklist-fase-3">✅ Checklist Fase 3</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>ML consumer corre y procesa stream</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Emisión solo cuando <code>is_anomaly</code></td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Integración con P1 verificada end-to-end</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><code>llm_verdict</code> poblado para T2</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Audit log (P1) refleja <code>layer_origin=ml</code></td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="fase-4--rehearsal-y-polish">Fase 4 — Rehearsal y polish</h1>
+<h2 id="41-rehearsal-de-carga">4.1 Rehearsal de carga</h2>
+<h3 id="comandos-6">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">for i in $(seq 1 50); do
+  redis-cli XADD events:raw_wazuh &#39;*&#39; data \
+    &quot;{\&quot;host\&quot;:\&quot;WIN-VICTIM-01\&quot;,\&quot;mitre_technique\&quot;:\&quot;T1486\&quot;,\&quot;syscalls_per_min\&quot;:$((RANDOM % 5000 + 1000)),\&quot;files_touched_per_min\&quot;:$((RANDOM % 800 + 100)),\&quot;entropy_of_written_bytes\&quot;:7.8,\&quot;network_kbps\&quot;:5,\&quot;command_line\&quot;:\&quot;x\&quot;}&quot; &gt; /dev/null
+done
+sleep 5
+redis-cli XLEN events:normalized
+</code></pre></div>
+<h3 id="verificación-11">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">test $(redis-cli XLEN events:normalized) -ge 30 &amp;&amp; echo &quot;throughput OK&quot;
+ps -o rss= -p $(pgrep -f &#39;ml.consumer&#39;) | awk &#39;{print &quot;ML RSS: &quot;$1/1024&quot; MB&quot;}&#39;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">throughput OK
+ML RSS: 480 MB
+</code></pre></div>
+<p>(Memoria estable entre antes y después del burst = no leak.)</p>
+<hr />
+<h2 id="42-failover-openai--llama">4.2 Failover OpenAI → Llama</h2>
+<h3 id="pasos-manuales-2">Pasos manuales</h3>
+<ol>
+<li>Simular OpenAI caído invalidando la key:
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">export OPENAI_API_KEY=sk-invalid-test
+</code></pre></div></li>
+<li>Inyectar un evento T2 al stream. El consumer P1 debería loguear <code>llm classify failed; continuing without enrichment</code> y NO crashear.</li>
+<li>Switch a Llama:
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">export LLM_BACKEND=llama_local
+</code></pre></div></li>
+<li>Reinicia ML consumer. Los siguientes eventos enriquecen con Llama.</li>
+</ol>
+<h3 id="verificación-12">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify"># Después del switch:
+redis-cli XADD events:raw_wazuh &#39;*&#39; data &#39;{&quot;host&quot;:&quot;WIN-VICTIM-01&quot;,&quot;mitre_technique&quot;:&quot;T1486&quot;,&quot;syscalls_per_min&quot;:5000,&quot;files_touched_per_min&quot;:500,&quot;entropy_of_written_bytes&quot;:7.8,&quot;network_kbps&quot;:5,&quot;command_line&quot;:&quot;x&quot;}&#39;
+sleep 5
+redis-cli GET $(redis-cli KEYS &#39;incident:*&#39; | tail -1) | jq &#39;.llm_verdict.backend&#39;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">&quot;llama_local&quot;
+</code></pre></div>
+<hr />
+<h2 id="43-pre-cache-de-embeddings-t-1h-del-demo">4.3 Pre-cache de embeddings (T-1h del demo)</h2>
+<h3 id="comandos-7">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python - &lt;&lt; &#39;PY&#39;
+from ml.rag.retriever import HybridRetriever
+_ = HybridRetriever()
+print(&quot;RAG retriever ready&quot;)
+PY
+</code></pre></div>
+<h3 id="salida-esperada-primera-vez">Salida esperada (primera vez)</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">RAG retriever ready
+</code></pre></div>
+<p>(Tras 5-15 s.)</p>
+<p>Mantén el proceso vivo durante el demo o expone como servicio con <code>uvicorn</code>.</p>
+<hr />
+<h2 id="-checklist-fase-4">✅ Checklist Fase 4</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Burst test 50 eventos en ≤ 3 s</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Failover OpenAI → Llama probado</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>RAG pre-warmed antes del demo</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>TP/FP registrados en <code>docs/LESSONS_LEARNED.md</code></td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Rehearsal con P1 y P3 cerrado</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="apéndice-a--troubleshooting">Apéndice A — Troubleshooting</h1>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Síntoma</th>
+<th>Diagnóstico</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A.1</td>
+<td><code>sentence-transformers</code> descarga falla</td>
+<td>HuggingFace bloqueado</td>
+<td><code>export HF_ENDPOINT=https://hf-mirror.com</code></td>
+</tr>
+<tr class="even">
+<td>A.2</td>
+<td>OpenAI <code>429</code></td>
+<td>Rate limit</td>
+<td>Bajar concurrencia; para demo no aplica</td>
+</tr>
+<tr class="odd">
+<td>A.3</td>
+<td>Llama responde no-JSON</td>
+<td>Q4 prefijos</td>
+<td>Regex extractor <code>re.search(r"\{.*\}", content, re.DOTALL)</code></td>
+</tr>
+<tr class="even">
+<td>A.4</td>
+<td>IsoForest predice todo como anomalía</td>
+<td>Scaler no cargado en inferencia</td>
+<td>Carga <code>joblib.load(scaler.joblib)</code> y aplica a TODOS los features</td>
+</tr>
+<tr class="odd">
+<td>A.5</td>
+<td>BM25 scores cero</td>
+<td>Query tokenizada distinto</td>
+<td>Usa <code>_tokenize</code> del módulo <code>index</code></td>
+</tr>
+<tr class="even">
+<td>A.6</td>
+<td>Ollama "model not loaded"</td>
+<td>Modelo descargado pero no cargado</td>
+<td><code>ollama run llama3.1:8b-instruct-q4_K_M ""</code> para forzar carga</td>
+</tr>
+<tr class="odd">
+<td>A.7</td>
+<td>Memoria insuficiente con BGE-large</td>
+<td>RAM limitada</td>
+<td>Cambia a BGE-base (~400 MB) en <code>EMBED_MODEL</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="apéndice-b--comandos-de-emergencia">Apéndice B — Comandos de emergencia</h1>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Reentrenar modelos en frío (~5 min)
+python -m ml.data.synthetic_generator --benign 5000 --attack 200
+python -m ml.anomaly.trainer --csv ml/data/synthetic.csv
+
+# Reconstruir índice RAG (1-2 min)
+python -m ml.rag.index
+
+# Forzar Llama (sin tocar P1)
+export LLM_BACKEND=llama_local
+pkill -f &#39;ml.consumer&#39; &amp;&amp; nohup python -m ml.consumer &gt; /tmp/ml.log 2&gt;&amp;1 &amp;
+
+# Liberar memoria si Ollama acapara
+ollama stop llama3.1:8b-instruct-q4_K_M
+
+# Resetear consumer group ML
+redis-cli XGROUP DESTROY events:raw_wazuh ml-pipeline
+redis-cli XGROUP CREATE events:raw_wazuh ml-pipeline 0 MKSTREAM
+</code></pre></div>
+<hr />
+<h1 id="apéndice-c--referencias-cruzadas">Apéndice C — Referencias cruzadas</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Cuando estés en...</th>
+<th>Lee</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ml/anomaly/</code></td>
+<td>SAD §6.3, ADR-0001 v2</td>
+</tr>
+<tr class="even">
+<td><code>ml/llm_triage/</code></td>
+<td>SAD §6.5, ADR-0001 v2</td>
+</tr>
+<tr class="odd">
+<td><code>ml/rag/</code></td>
+<td>SAD §6.5.2, <code>docs/CONTEXT.md</code></td>
+</tr>
+<tr class="even">
+<td>Calibración Q5 (post-demo)</td>
+<td><code>docs/CONTEXT.md</code> Q3</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="change-log">Change log</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Versión</th>
+<th>Fecha</th>
+<th>Cambio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3.0</td>
+<td>2026-05-24</td>
+<td>Reestructurado: Contexto → Pasos manuales → Comandos → Salida → Verificación → Si algo falla. Bloques bash listos para copy buttons. Sin referencias temporales. Renombrado de <code>sprint-week-1-p2-sebastian.md</code>.</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+<script>
+function copyCode(btn) {
+  const block = btn.closest('.codeblock');
+  const code = block.querySelector('code');
+  const text = code.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove('copied');
+    }, 1400);
+  }).catch(err => {
+    btn.textContent = 'Error';
+    console.error(err);
+  });
+}
+</script>
+</body>
+</html>

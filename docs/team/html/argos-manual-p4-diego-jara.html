@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>ARGOS — Manual Diego Jara</title>
+<style>/* ============================================================
+   ARGOS Manual — shared style for HTML (interactive) and PDF.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --c-primary:   #0a3d62;
+  --c-primary-2: #1e6091;
+  --c-accent:    #e58e26;
+  --c-bg:        #ffffff;
+  --c-fg:        #1f2933;
+  --c-muted:     #5f6c7b;
+  --c-line:      #d8dee8;
+  --c-soft:      #f3f6fa;
+  --c-card:      #ffffff;
+  --c-code-bg:   #0d1f2d;
+  --c-code-fg:   #e7eef8;
+  --c-code-bar:  #1a3548;
+  --c-out-bg:    #f1f5f9;
+  --c-out-bar:   #cbd5e1;
+  --c-verify-bg: #f3fdf3;
+  --c-verify-bar:#16a34a;
+  --c-warn:      #b45309;
+  --c-danger:    #b91c1c;
+  --c-ok:        #15803d;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--c-fg);
+  background: var(--c-bg);
+  margin: 0;
+  padding: 0;
+}
+
+.page-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 4rem;
+}
+
+/* ---------- typography ---------- */
+h1 {
+  color: var(--c-primary);
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-top: 2.4rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px solid var(--c-primary);
+}
+h2 {
+  color: var(--c-primary-2);
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--c-line);
+}
+h3 {
+  color: var(--c-primary-2);
+  font-size: 1.18rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+h4 {
+  color: #2e5984;
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin-top: 1.2rem;
+}
+
+p { margin: 0.5rem 0 0.7rem; }
+strong { color: #0e2b44; font-weight: 600; }
+hr { border: none; border-top: 1px solid var(--c-line); margin: 1.6rem 0; }
+
+ul, ol { margin: 0.3rem 0 0.7rem 1.4rem; padding: 0; }
+li { margin: 0.25rem 0; }
+li > p { margin: 0.2rem 0; }
+
+a { color: var(--c-primary-2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- inline code ---------- */
+code {
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.88em;
+  background: #f0f3f7;
+  color: #b94a1f;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ---------- code blocks (fenced) ---------- */
+pre {
+  margin: 0.6rem 0 1rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 8px;
+  page-break-inside: avoid;
+}
+
+pre > code {
+  display: block;
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  padding: 0.9rem 1rem 1rem;
+  white-space: pre;
+  overflow-x: auto;
+  border-radius: 0 0 8px 8px;
+  background: var(--c-code-bg);
+  color: var(--c-code-fg);
+  border: none;
+}
+
+/* code block wrapper (added by post-processor) */
+.codeblock {
+  position: relative;
+  margin: 0.8rem 0 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(15, 31, 45, 0.08);
+  overflow: hidden;
+}
+
+.codeblock .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: var(--c-code-bar);
+  border-radius: 8px 8px 0 0;
+}
+.codeblock .bar .lang { color: #94c3e7; }
+.codeblock .bar .dots {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-right: 0.6rem;
+}
+.codeblock .bar .dots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #ff5f56;
+  display: inline-block;
+}
+.codeblock .bar .dots span:nth-child(2) { background: #ffbd2e; }
+.codeblock .bar .dots span:nth-child(3) { background: #27c93f; }
+
+.codeblock .copy-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e7eef8;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.codeblock .copy-btn:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+}
+.codeblock .copy-btn.copied {
+  background: var(--c-ok);
+  border-color: var(--c-ok);
+  color: white;
+}
+
+/* ---------- output blocks (language=text or output) ---------- */
+.codeblock.output .bar {
+  background: var(--c-out-bar);
+  color: #475569;
+}
+.codeblock.output .bar .lang { color: #1e293b; }
+.codeblock.output .bar .dots { display: none; }
+.codeblock.output > pre > code {
+  background: var(--c-out-bg);
+  color: #1e293b;
+  font-size: 0.78rem;
+}
+
+/* ---------- verify blocks (custom label) ---------- */
+.codeblock.verify .bar {
+  background: var(--c-verify-bar);
+  color: white;
+}
+.codeblock.verify .bar .lang { color: #ecfdf5; }
+
+/* ---------- callouts ---------- */
+.callout {
+  margin: 1rem 0 1.2rem;
+  padding: 0.8rem 1rem 0.8rem 1.1rem;
+  border-left: 4px solid var(--c-primary-2);
+  background: #eef5fb;
+  border-radius: 0 6px 6px 0;
+  page-break-inside: avoid;
+}
+.callout.warn   { border-color: var(--c-warn);   background: #fef3c7; }
+.callout.danger { border-color: var(--c-danger); background: #fee2e2; }
+.callout.ok     { border-color: var(--c-ok);     background: #dcfce7; }
+.callout strong { color: inherit; }
+
+blockquote {
+  margin: 0.9rem 0;
+  padding: 0.6rem 1rem;
+  background: #eef5fb;
+  border-left: 4px solid var(--c-primary-2);
+  border-radius: 0 6px 6px 0;
+  color: #1f2933;
+  font-style: normal;
+}
+
+/* ---------- tables ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0 1.2rem;
+  font-size: 0.92rem;
+  page-break-inside: avoid;
+}
+thead { background: var(--c-soft); }
+th {
+  text-align: left;
+  font-weight: 600;
+  color: #0e2b44;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--c-line);
+}
+td {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--c-line);
+  vertical-align: top;
+}
+tr:nth-child(even) td { background: #f9fbfd; }
+
+/* ---------- checklists ---------- */
+.checklist {
+  border: 1px solid var(--c-line);
+  border-left: 4px solid var(--c-primary);
+  border-radius: 0 6px 6px 0;
+  background: #fafcff;
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+}
+.checklist h4 { margin-top: 0; }
+
+/* ---------- cover ---------- */
+.cover {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-2) 60%, #2a7bbf 100%);
+  color: white;
+  padding: 3rem;
+}
+.cover .brand { font-size: 4rem; font-weight: 700; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.cover .tag   { font-size: 1.05rem; color: #bcdcef; font-style: italic; margin-bottom: 3rem; }
+.cover h2     { color: white; border: none; font-size: 1.7rem; margin: 1rem 0 0.4rem; }
+.cover .role  { color: #cfe2f3; font-size: 1.05rem; }
+.cover .meta  {
+  margin-top: 3rem;
+  font-size: 0.95rem;
+  color: #cfe2f3;
+  line-height: 1.7;
+}
+.cover .deadline {
+  margin-top: 2rem;
+  padding: 0.6rem 1.4rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.page-break { page-break-after: always; }
+
+/* ---------- nav (HTML only) ---------- */
+.toc {
+  background: var(--c-soft);
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  padding: 0.8rem 1.2rem;
+  margin: 1.5rem 0;
+}
+.toc-title {
+  font-weight: 600;
+  color: var(--c-primary);
+  margin-bottom: 0.4rem;
+}
+.toc ul { margin: 0.2rem 0 0.2rem 1rem; padding: 0; }
+.toc li { margin: 0.15rem 0; list-style: none; position: relative; }
+.toc li::before { content: '›'; color: var(--c-primary-2); margin-right: 0.4rem; }
+
+/* ---------- print / PDF tweaks ---------- */
+@page {
+  size: Letter;
+  margin: 2cm 1.8cm 2.4cm 1.8cm;
+  @bottom-center {
+    content: "ARGOS · Manual del integrante · página " counter(page) " de " counter(pages);
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: #5f6c7b;
+  }
+}
+@page :first { margin: 0; @bottom-center { content: none; } }
+
+@media print {
+  .copy-btn { display: none !important; }
+  .toc      { page-break-after: always; }
+  body      { font-size: 10pt; }
+  .page-wrap { max-width: 100%; padding: 0; }
+  h1 { page-break-before: auto; }
+}
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="brand">ARGOS</div>
+  <div class="tag">Adaptive Response Guard with Orchestrated Surveillance</div>
+  <h2>Manual del integrante</h2>
+  <div class="role">Diego Jara</div>
+  <div class="role" style="margin-top:0.4rem;font-size:0.9rem;opacity:0.85">Infraestructura · UI · Evaluación</div>
+  <div class="deadline">Entrega final: <strong>13 de junio de 2026</strong></div>
+  <div class="meta">Universidad de Lima · Tópicos Avanzados de Ciberseguridad · 2026-1<br/>Versión 3.0 — manual organizado por orden de implementación</div>
+</div>
+<div class="page-break"></div>
+<div class="page-wrap">
+<h1>Parte I — Introducción común al proyecto</h1>
+<h1 id="argos--introducción-al-proyecto-y-arquitectura">ARGOS — Introducción al proyecto y arquitectura</h1>
+<p><strong>Documento común a todos los manuales de integrante.</strong> Contiene el contexto que cada miembro del equipo (P1/P2/P3/P4) necesita antes de leer su manual individual.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tipo</td>
+<td>Introducción común para los 4 integrantes</td>
+</tr>
+<tr class="even">
+<td>Estado</td>
+<td>Activo</td>
+</tr>
+<tr class="odd">
+<td>Entrega final</td>
+<td>13 de junio de 2026 (sábado)</td>
+</tr>
+<tr class="even">
+<td>Pre-requisito</td>
+<td>Ninguno. Léelo de cero.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-qué-es-argos-en-una-página">1. Qué es ARGOS en una página</h2>
+<p><strong>ARGOS</strong> es la <strong>Adaptive Response Guard with Orchestrated Surveillance</strong> — una plataforma multi-vector de detección y respuesta a amenazas que replica la arquitectura de productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando exclusivamente componentes open source más una API LLM de bajo costo para la capa de triage.</p>
+<p>El proyecto es parte del curso <strong>Tópicos Avanzados de Ciberseguridad</strong> en la Universidad de Lima · 2026-1. La entrega final es el <strong>13 de junio de 2026</strong> y consta de tres deliverables obligatorios: informe técnico (~30 % del peso), demo en vivo (~40 %), y presentación (~20 %). Los seguimientos intermedios pesan el ~10 % restante.</p>
+<p><strong>El activo defendido</strong> es una base de datos <strong>PostgreSQL 15</strong> corriendo sobre una Linux VM en el lab. Tiene esquema <code>argos_demo_prod</code> con tablas que simulan datos de RRHH y finanzas (employees, payroll, customers, invoices, payments) con datos sintéticos. El host está tagged en Wazuh como <code>criticality=production-critical</code>, lo que dispara la regla de dos personas (two-person rule) para cualquier acción de containment sobre él.</p>
+<p><strong>El alcance multi-vector</strong> (post ADR-0008) cubre tres categorías de ataques distintas:</p>
+<ul>
+<li><strong>Ransomware</strong>: cifrado de archivos via técnicas T1486/T1490/T1083/T1562. Es el énfasis primario.</li>
+<li><strong>Network Denial of Service</strong>: ataques de red contra el puerto del servicio (T1498/T1499) con <code>hping3</code> o <code>slowhttptest</code>.</li>
+<li><strong>Application Abuse</strong>: SQL injection contra una app web delante de la DB (T1190) usando <code>sqlmap</code>, y false positives de actividad legítima de usuario (T1078 Valid Accounts) — un SELECT masivo a las 3 AM se parece a exfiltración pero puede ser un reporte mensual legítimo.</li>
+</ul>
+<p><strong>Por qué este alcance y no más:</strong> ARGOS no busca cobertura exhaustiva multi-vector. Busca cobertura mínima representativa que demuestre que la arquitectura de 4 capas + SOAR + HITL es genuinamente adaptativa. Cubrir 3 vectores con profundidad real es más defendible que cubrir 10 superficialmente.</p>
+<hr />
+<h2 id="2-arquitectura-de-4-capas-defensivas">2. Arquitectura de 4 capas defensivas</h2>
+<p>ARGOS sigue el patrón industrial estándar de <strong>defense-in-depth</strong>: cuatro capas independientes y paralelas, cada una con trade-offs distintos, fallan independientemente. Si una capa cae o es evadida, las otras tres mantienen cobertura. No hay un solo punto de falla en la detección.</p>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">código</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-">                    [Atacante / Simulador]
+                            │
+                            ▼
+        ┌───────────────────────────────────────┐
+        │   Lab víctima (Vagrant + VirtualBox)  │
+        │   Windows VM (Sysmon)                 │
+        │   Linux VM (auditd) + PostgreSQL      │
+        │   Canary files (FIM whodata)          │
+        └───────────────────────────────────────┘
+                            │ telemetría
+                            ▼
+        ┌───────────────────────────────────────┐
+        │   Wazuh Manager + OpenSearch + Redis  │
+        │   (ingesta + storage + alert bus)     │
+        └───────────────────────────────────────┘
+                            │ alertas
+                            ▼
+    ┌───────────────┬───────────────┬───────────────┬──────────────────┐
+    │   CAPA 1      │   CAPA 2      │   CAPA 3      │   CAPA 4         │
+    │   Sigma rules │   ML anomaly  │   Canary FIM  │   LLM Triage     │
+    │   (P3 dueño)  │   (P2 dueño)  │   (P3 dueño)  │   (P1 dueño)     │
+    │   alta prec.  │   alta recall │   zero-FP     │   enrichment-only│
+    │   bajo recall │   mayor FPR   │   ultra-temp  │   NUNCA decide   │
+    └───────┬───────┴───────┬───────┴───────┬───────┴──────────┬───────┘
+            │ score         │ score         │ canary hit       │ análisis
+            └───────────────┼───────────────┴──────────────────┘
+                            ▼
+              ┌─────────────────────────────────┐
+              │   SOAR Decision Engine          │
+              │   (Tier Classifier · P1 dueño)  │
+              │   Tier T0/T1/T2/T3              │
+              └─────────────────────────────────┘
+                            │
+            ┌───────────────┼─────────────────────────┐
+            ▼               ▼                         ▼
+        ┌─────────┐   ┌─────────────────┐   ┌─────────────────┐
+        │  T0/T1  │   │  T2 (countdown  │   │   T3            │
+        │  Auto-  │   │  3min)          │   │   Solo          │
+        │  isolate│   │  Throttle +     │   │   notificación  │
+        │ +snapshot│  │  approval       │   │                 │
+        └─────────┘   │  multi-canal    │   └─────────────────┘
+                      │  (Telegram +    │
+                      │   Discord +     │
+                      │   Twilio Voice) │
+                      └─────────────────┘
+</code></pre></div>
+<h3 id="capa-1--rule-based-detection-sigma--wazuh">Capa 1 — Rule-Based Detection (Sigma + Wazuh)</h3>
+<p><strong>Dueño: P3 (Angeles).</strong> Reglas YAML escritas en formato Sigma, convertidas a Wazuh con <code>sigma-cli</code>, mapeadas explícitamente a técnicas MITRE ATT&amp;CK. Detectan patrones conocidos.</p>
+<p><strong>Sub-categorías por dominio</strong> (post ADR-0008):</p>
+<ul>
+<li><code>detection/sigma-rules/ransomware/</code> — vssadmin, T1486 cifrado, T1083 enumeración, T1562 disable defender, T1021 lateral, T1071 C2</li>
+<li><code>detection/sigma-rules/network/</code> — rate-based rules para T1498/T1499 (DDoS, slow-rate)</li>
+<li><code>detection/sigma-rules/database/</code> — query pattern anomalies para UC-07</li>
+<li><code>detection/sigma-rules/webapp/</code> — T1190 SQL injection signatures</li>
+</ul>
+<p><strong>Trade-off honesto:</strong> alta precisión, recall limitado contra variantes nuevas. Por eso existe Capa 2.</p>
+<h3 id="capa-2--ml-anomaly-detection">Capa 2 — ML Anomaly Detection</h3>
+<p><strong>Dueño: P2 (Sebastian).</strong> Modelos no supervisados entrenados sobre baseline benigno. Detectan desviaciones que las reglas no captan.</p>
+<p><strong>Modelos especializados por dominio</strong> (post ADR-0008):</p>
+<ul>
+<li><code>ml/models/ransomware_ensemble.pkl</code> — Isolation Forest + One-Class SVM. Features ventana 60s: file_write_rate, avg_entropy (Shannon), extension_modification_ratio, crypto_api_calls, new_outbound_connections, cpu_burst_score, io_burst_score.</li>
+<li><code>ml/models/network_traffic_anomaly.pkl</code> — para UC-06 DDoS. Features: connections/sec, packet rate, source IP entropy, packet size variance.</li>
+<li><code>ml/models/query_pattern_anomaly.pkl</code> — para UC-07 SELECT masivo. Features: rows_returned, query_duration_ms, hour_of_day, user_id, query_template_hash.</li>
+</ul>
+<p><strong>Ensemble ransomware:</strong> <code>ensemble_score = 0.6 × isolation_forest_score + 0.4 × one_class_svm_score</code>. Los demás modelos retornan score único.</p>
+<p><strong>Trade-off honesto:</strong> mayor recall contra variantes nuevas, mayor false positive rate. Requiere baseline limpio.</p>
+<h3 id="capa-3--canary-deception">Capa 3 — Canary Deception</h3>
+<p><strong>Dueño: P3 (Angeles).</strong> Archivos-cebo (<code>financials_Q4_2025.xlsx</code>, <code>passwords.txt</code>, <code>db_backup.sql</code>) en ubicaciones donde un usuario legítimo nunca tocaría. FIM (File Integrity Monitoring) con Sysmon whodata (Windows) o auditd (Linux) captura QUÉ proceso accedió.</p>
+<p><strong>Lógica:</strong> primera modificación / lectura / rename de un canary = alerta crítica con confianza máxima. Por diseño, FP rate ≈ 0.</p>
+<p><strong>Esta capa es estrictamente ransomware-specific.</strong> No tiene sub-categorías por dominio. Documentado deliberadamente en ADR-0008: defender contra DDoS o SQL injection requiere otras primitivas, no canaries.</p>
+<h3 id="capa-4--llm-assisted-triage">Capa 4 — LLM-Assisted Triage</h3>
+<p><strong>Dueño: P1 (Enzo).</strong> FastAPI service que recibe el contexto completo de una alerta (process tree, network connections, file modifications) y produce análisis estructurado: técnica MITRE, severidad, runbook NIST aplicable, acción recomendada, IoCs a correlar.</p>
+<p><strong>Backend vendor-agnostic (per ADR-0001 v2):</strong></p>
+<ul>
+<li><strong>Primary:</strong> OpenAI GPT-4o-mini (US-based, soberanía de datos aceptable)</li>
+<li><strong>Fallback:</strong> Llama 3.1 8B local vía Ollama (zero-egress, funciona sin internet)</li>
+</ul>
+<p><strong>Invariante crítico R-02:</strong> el LLM <strong>NUNCA está en el path crítico de containment</strong>. El SOAR decide desde Capas 1-3 solamente. El LLM enriquece la vista del analista; si halucina, miente, o cae, el sistema sigue funcionando.</p>
+<p><strong>Pipeline RAG:</strong> BM25 (léxico) + BGE-large embeddings (denso) + RRF (Reciprocal Rank Fusion). Hybrid retrieval estándar industrial. Sin cross-encoder reranker (descartado en ADR-0001 v2 por marginal gain vs costo).</p>
+<hr />
+<h2 id="3-soar-decision-engine-y-los-4-tiers-de-confianza">3. SOAR Decision Engine y los 4 tiers de confianza</h2>
+<p>El <strong>SOAR (Security Orchestration, Automation and Response)</strong> es el cerebro que fusiona señales de las 4 capas y decide la acción. Lo dueño es <strong>P1</strong>. Implementa la lógica de tiers per ADR-0003.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Tier</th>
+<th>Disparado por</th>
+<th style="text-align: center;">Confianza</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">🟥 <strong>T0</strong></td>
+<td>Canary solo, OR las 3 capas corroboran</td>
+<td style="text-align: center;">≥ 0.95</td>
+<td>Aislamiento automático inmediato + snapshot</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🟧 <strong>T1</strong></td>
+<td>Layer 1 + Layer 2 corroboran (sin canary)</td>
+<td style="text-align: center;">0.80–0.95</td>
+<td>Aislamiento automático inmediato + snapshot</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">🟨 <strong>T2</strong></td>
+<td>Capa sola con score alto</td>
+<td style="text-align: center;">0.60–0.80</td>
+<td><strong>Throttle + snapshot ahora</strong>, aislamiento full pendiente de aprobación 3-min</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🟦 <strong>T3</strong></td>
+<td>Corroboración baja</td>
+<td style="text-align: center;">0.40–0.60</td>
+<td>Solo notificación enriquecida con LLM</td>
+</tr>
+</tbody>
+</table>
+<p>⁽*⁾ <strong>Los thresholds son preliminares</strong> pendientes de calibración empírica per <code>OPEN_QUESTIONS_RESOLUTION.md</code> §Q5.</p>
+<h3 id="tier-t2--el-más-interesante">Tier T2 — el más interesante</h3>
+<p>Ransomware moderno cifra ~25,000 archivos/min. Un countdown de 3 minutos para aprobación humana sin protección parece estúpido. Por eso T2 NO es "pendiente": es "throttle + snapshot AHORA, full isolation pendiente de aprobación". El throttle (cpulimit/ionice) reduce la tasa de cifrado a ~100-500 files/min mientras los aprobadores ven el contexto LLM y deciden. Si el timeout de 3 min expira sin respuesta, el sistema auto-ejecuta (no espera más). Si el aprobador clickea Reject, el throttle se levanta y el caso queda registrado como false positive con razón documentada — esto es UC-07.</p>
+<h3 id="split-brain-conflicto-multi-aprobador">Split-brain (conflicto multi-aprobador)</h3>
+<p>Per ADR-0006: cuando hay 4 aprobadores y dan respuestas contradictorias (2 approve, 1 reject, 1 timeout), se aplica <strong>conservative-wins policy</strong> con ventana de consolidación de 60 segundos: cualquier "approve" gana sobre rechazos, excepto para acciones irreversibles que requieren <strong>two-person rule</strong> (dos approves explícitos, un reject cancela).</p>
+<p>El <strong>two-person rule</strong> se activa cuando el host afectado tiene <code>criticality=production-critical</code> (nuestro PostgreSQL). Esto es UC-04 en el demo.</p>
+<h3 id="canales-de-notificación-per-adr-0007-v2">Canales de notificación (per ADR-0007 v2)</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Tiempo</th>
+<th>Canal</th>
+<th>Propósito</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>t=0</td>
+<td><strong>Telegram bot</strong> con botones inline JWT</td>
+<td>Primario — push agresivo a celulares de aprobadores</td>
+</tr>
+<tr class="even">
+<td>t=0</td>
+<td><strong>Discord webhook</strong> con @-mention de role</td>
+<td>Visibilidad en server del equipo, presión social</td>
+</tr>
+<tr class="odd">
+<td>t=60s</td>
+<td><strong>Twilio Voice DTMF</strong> (sin STT)</td>
+<td>Escalación si nadie respondió. "Presione 1 para aprobar, 2 para rechazar"</td>
+</tr>
+<tr class="even">
+<td>post-decisión</td>
+<td><strong>Email</strong></td>
+<td>Resumen asíncrono, NUNCA en path crítico</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-equipo-y-responsabilidades">4. Equipo y responsabilidades</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;"></th>
+<th>Integrante</th>
+<th>Rol</th>
+<th>Alcance principal</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">🟣</td>
+<td><strong>Enzo Ordoñez Flores</strong></td>
+<td>P1 · Líder · LLM/SOAR</td>
+<td><code>argos_contracts</code> (entregado), Capa 4 LLM Triage, motor SOAR + Tier Classifier, Approval API con JWT, notificaciones multi-canal, Consola de Aprobación Streamlit, simulador de ransomware, playbooks de containment, coordinación</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🔵</td>
+<td><strong>Sebastian Montenegro</strong></td>
+<td>P2 · Ingeniero ML</td>
+<td>Capa 2 completa (Isolation Forest + One-Class SVM ensemble + modelos especializados), feature extraction, calibración thresholds, métricas P/R/F1, captura forense</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">🟠</td>
+<td><strong>Angeles Castillo</strong></td>
+<td>P3 · Detección y Engaño</td>
+<td>Capa 1 (Sigma rules ransomware + network + database + webapp), Capa 3 (canary FIM + whodata), validación con Atomic Red Team y Caldera, bonus: PRs upstream a SigmaHQ</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">🟢</td>
+<td><strong>Diego Jara</strong></td>
+<td>P4 · Infraestructura</td>
+<td>Vagrantfile + Wazuh/OpenSearch/Redis deployment, PostgreSQL con datos sintéticos, simuladores (ransomware + DDoS + SQL injection), UI Streamlit base, video demo</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Regla operativa crítica:</strong> cada integrante debe poder defender su capa en exposición. P1 no escribe código de otros con Claude Code. Cada integrante puede usar Claude Code (o cualquier asistente IA) como <strong>acelerador en SU propia parte</strong>, siempre que entienda lo que produce y pueda defenderlo en viva (per CONTEXT.md §5 reinterpretado post ADR-0008).</p>
+<hr />
+<h2 id="5-los-8-use-cases-del-demo">5. Los 8 use cases del demo</h2>
+<p>El demo en vivo cubre 8 escenarios (per ADR-0008 multi-vector). Cada UC tiene narrativa específica que demuestra una propiedad distinta del sistema.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">UC</th>
+<th>Vector</th>
+<th style="text-align: center;">Tier</th>
+<th>Capas que firing</th>
+<th>Qué demuestra</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>UC-01</strong></td>
+<td>Ransomware (LockBit-like)</td>
+<td style="text-align: center;">T0</td>
+<td>1+2+3</td>
+<td>Full-stack end-to-end. Las 3 capas firing simultáneo. Auto-isolate + email post-facto.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-02</strong></td>
+<td>Canary deception</td>
+<td style="text-align: center;">T0</td>
+<td>3 sola</td>
+<td>Detección ultra-temprana. <strong>Zero archivos reales cifrados</strong>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⭐ <strong>UC-03</strong></td>
+<td>Variante novel + split-brain</td>
+<td style="text-align: center;">T2</td>
+<td>2 sola</td>
+<td><strong>Centerpiece HITL ransomware</strong>. ML atrapa lo que reglas no. 4 aprobadores. Conservative-wins live.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-04</strong></td>
+<td>PostgreSQL + two-person rule</td>
+<td style="text-align: center;">T1</td>
+<td>1+2</td>
+<td>Compliance vocabulary. Four-eyes principle. Governance.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong>UC-05</strong></td>
+<td>Stealth attack (agent-kill)</td>
+<td style="text-align: center;">T0</td>
+<td>1+3+heartbeat</td>
+<td>Resiliencia: agent disconnect = signal.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-06</strong></td>
+<td>DDoS volumetric</td>
+<td style="text-align: center;">T0</td>
+<td>1 (rate)+2 (network)</td>
+<td><strong>Cobertura multi-vector</strong>. Defiende contra ataques de red, no solo endpoint. T1498.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">⭐ <strong>UC-07</strong></td>
+<td>SELECT masivo legítimo FP</td>
+<td style="text-align: center;">T2</td>
+<td>2 sola</td>
+<td><strong>Pieza clave del HITL</strong>. Humano cancela contención por FP reconocido. T1078.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>UC-08</strong></td>
+<td>SQL injection</td>
+<td style="text-align: center;">T1</td>
+<td>1+2</td>
+<td>OWASP Top 10 #1. T1190 Exploit Public-Facing Application.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Los dos ⭐ son los UCs que más venden el HITL.</strong> UC-03 muestra split-brain con conservative-wins; UC-07 muestra cancelación de FP por humano. Ambos son lo que diferencia un EDR/XDR con HITL de un SIEM tradicional.</p>
+<hr />
+<h2 id="6-ejemplo-end-to-end-de-uc-01-paso-a-paso">6. Ejemplo end-to-end de UC-01 paso a paso</h2>
+<p>Para que tengas un modelo mental concreto de cómo fluye una alerta a través del sistema, aquí está UC-01 (ransomware clásico LockBit-like) desglosado segundo a segundo.</p>
+<h3 id="setup-pre-ataque-t-5-min">Setup pre-ataque (T-5 min)</h3>
+<ul>
+<li>Lab está corriendo: Wazuh manager + Windows VM + Linux VM con PostgreSQL.</li>
+<li>Los 4 aprobadores tienen Telegram abierto en sus celulares.</li>
+<li>La pantalla del proyector muestra: Streamlit Approval Console (vacía) + terminal de P4 listo para ejecutar el simulador.</li>
+<li>P1 narra el contexto: "Este es nuestro endpoint Windows típico de la organización. Tiene documentos en <code>C:\Users\Demo\Documents\</code>. El atacante acaba de obtener acceso inicial."</li>
+</ul>
+<h3 id="t0--atacante-ejecuta">T=0 — Atacante ejecuta</h3>
+<p>P4 corre:</p>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python attack-simulation/ransomware_simulator/lockbit_like.py --target windows-victim --speed full
+</code></pre></div>
+<p>Esto inicia el simulador. Behavior chain:</p>
+<ol>
+<li>T+1s: enumera archivos en <code>C:\Users\Demo\Documents\</code> (técnica T1083 File and Directory Discovery)</li>
+<li>T+2s: invoca <code>vssadmin delete shadows /all /quiet</code> (técnica T1490 Inhibit System Recovery)</li>
+<li>T+3s: comienza a cifrar archivos con AES-256, renombrando a <code>.locked</code> (técnica T1486 Data Encrypted for Impact)</li>
+<li>T+4s: toca el canary file <code>financials_Q4_2025.xlsx</code></li>
+<li>T+5s: deja la ransom note <code>README_RESTORE_FILES.txt</code> en el desktop</li>
+</ol>
+<h3 id="t1-a-t5-segundos--capas-detectan-en-paralelo">T+1 a T+5 segundos — Capas detectan en paralelo</h3>
+<p><strong>Capa 1 (Sigma + Wazuh)</strong> detecta:</p>
+<ul>
+<li>T+2s: regla <code>T1490_vssadmin_delete_shadows</code> dispara cuando ve el comando vssadmin.</li>
+<li>T+3s: regla <code>T1486_mass_file_encryption_extension</code> dispara al ver renames masivos a <code>.locked</code>.</li>
+<li>Wazuh manager normaliza estas alertas y las publica al stream Redis <code>wazuh:alerts</code>.</li>
+</ul>
+<p><strong>Capa 2 (ML)</strong> detecta:</p>
+<ul>
+<li>ML consumer (Python proceso corriendo en bg) lee el stream Redis.</li>
+<li>Cada 60s genera features para los procesos activos. La ventana T+1 a T+60 captura el simulator process.</li>
+<li>Features observadas: file_write_rate=347 archivos/min, avg_entropy=7.8 (alta), extension_modification_ratio=0.95, crypto_api_calls=42, cpu_burst_score=0.9.</li>
+<li>Isolation Forest score: 0.94. One-Class SVM score: 0.91. Ensemble: 0.93.</li>
+<li>Publica <code>MLScore</code> con score 0.93 al stream Redis <code>ml:scores</code>.</li>
+</ul>
+<p><strong>Capa 3 (Canary FIM)</strong> detecta:</p>
+<ul>
+<li>T+4s: el simulator toca <code>financials_Q4_2025.xlsx</code>.</li>
+<li>Sysmon whodata captura el evento con PID del simulator y command-line completo.</li>
+<li>Wazuh dispara regla custom <code>canary_file_accessed</code> con severity 12 (crítica).</li>
+<li>Score implícito: 1.0 (canary fire = certeza máxima).</li>
+</ul>
+<h3 id="t5-segundos--soar-decision-engine-fusiona">T+5 segundos — SOAR Decision Engine fusiona</h3>
+<p>El <strong>SOAR orchestrator</strong> (proceso de P1 corriendo el FastAPI Approval API en port 8003) se entera de las 3 alertas dentro del mismo incident window de 5 segundos.</p>
+<p><strong>Tier Classifier</strong> (<code>soar/decision_engine/tier_classifier.py</code>) aplica reglas:</p>
+<ul>
+<li><code>canary_fired=True</code> → tier T0 (canary alone wins to T0).</li>
+<li>Pero también L1 + L2 corroboran con high scores → tier T0 confirmed.</li>
+<li><strong>Decisión:</strong> <code>Tier.T0</code> con confidence 0.95+.</li>
+</ul>
+<p><strong>State machine</strong> (<code>soar/decision_engine/state_machine.py</code>):</p>
+<ol>
+<li>Crea Incident con <code>incident_id=INC-2026-05-26-001</code>, state <code>RECEIVED</code>.</li>
+<li>Persiste en Redis con key <code>incident:INC-2026-05-26-001</code>.</li>
+<li>Llama al LLM Triage en paralelo (Capa 4 enrichment-only, NO bloquea decisión).</li>
+<li>Transición de estado: <code>RECEIVED</code> → <code>PENDING_EXECUTION</code>.</li>
+</ol>
+<p><strong>Capa 4 LLM Triage</strong> (en paralelo, T+5 a T+8s):</p>
+<ul>
+<li>FastAPI <code>/triage</code> endpoint recibe el AlertContext con las 3 alertas.</li>
+<li>Llama a OpenAI GPT-4o-mini con prompt enriquecido.</li>
+<li>Devuelve TriageResponse: <code>tecnica_mitre=T1486</code>, <code>confianza=0.94</code>, <code>severidad=critical</code>, <code>runbook_aplicable="NIST 800-61 §3.4 Containment"</code>, <code>accion_recomendada="Isolate host immediately and capture memory snapshot before remediation"</code>.</li>
+<li>El Incident se actualiza en Redis con el <code>llm_analysis</code> campo.</li>
+</ul>
+<h3 id="t8-segundos--playbook-automático">T+8 segundos — Playbook automático</h3>
+<p>Como es T0 sin override de criticality (es una Windows VM standard, no production-critical), no requiere approval. El SOAR ejecuta el playbook directamente:</p>
+<ol>
+<li><strong>Host isolation</strong> (<code>soar/playbooks/host_isolation.py</code>): conecta vía PowerShell al Windows VM y crea regla firewall: <code>New-NetFirewallRule -DisplayName "ARGOS-Isolation" -Direction Outbound -Action Block</code>.</li>
+<li><strong>Process kill</strong>: identifica el PID del simulator desde el whodata FIM, ejecuta <code>Stop-Process -Force -Id &lt;PID&gt;</code>.</li>
+<li><strong>Disk snapshot</strong>: invoca Volume Shadow Copy <code>vssadmin create shadow /for=C:</code> para preservar evidencia forense.</li>
+<li>Transición de estado: <code>PENDING_EXECUTION</code> → <code>EXECUTED</code>.</li>
+</ol>
+<h3 id="t10-segundos--notificación-post-facto">T+10 segundos — Notificación post-facto</h3>
+<p>El SOAR envía notificación multi-canal (per ADR-0007 v2):</p>
+<ul>
+<li><strong>Telegram</strong> a los 4 chat_ids configurados: mensaje con incident_id, técnica, análisis LLM, y botón inline "Revertir" firmado con JWT.</li>
+<li><strong>Discord</strong> webhook al server del equipo con embed coloreado por tier (T0 = rojo) y <code>@argos-approvers</code> mention.</li>
+<li><strong>Email post-facto</strong> a <code>APPROVER_EMAILS</code> (los 4 emails del equipo) con resumen + link al audit log en OpenSearch.</li>
+</ul>
+<h3 id="t10-a-t30-segundos--streamlit-console-muestra">T+10 a T+30 segundos — Streamlit Console muestra</h3>
+<p>La <strong>Streamlit Approval Console</strong> (proceso de P1 corriendo en port 8501, proyectado en pantalla) refresca cada 2 segundos vía <code>streamlit-autorefresh</code>. Muestra:</p>
+<ul>
+<li><strong>Panel izquierdo (Incident Card):</strong> badge T0 en rojo, incident_id, host afectado, técnica MITRE T1486, análisis LLM compacto.</li>
+<li><strong>Panel central (Decision Matrix):</strong> vacío porque es T0 auto-execute, no requirió aprobación.</li>
+<li><strong>Panel derecho (System Logic):</strong> estado actual <code>EXECUTED</code>, decisión <code>EXECUTE_ISOLATION</code>, política aplicada <code>auto-execute</code>, justificación "T0 confirmed: canary + L1 + L2 corroborate".</li>
+<li><strong>Panel inferior (Action Timeline):</strong> línea de tiempo horizontal mostrando: alert created → tier classified → playbook executed → notifications sent.</li>
+</ul>
+<h3 id="t30-segundos--análisis-forense-visible">T+30 segundos — Análisis forense visible</h3>
+<p>P1 narra: "El sistema isló el host en menos de 10 segundos. 31 archivos cifrados de 500. El canary salvó los restantes. Los 4 aprobadores tienen el incidente en su Telegram con la opción de Revertir si fuera falso. Audit log completo en OpenSearch con cada decisión justificada."</p>
+<h3 id="métricas-que-se-muestran-en-pantalla">Métricas que se muestran en pantalla</h3>
+<ul>
+<li><strong>TTD (Time to Detect):</strong> 4.2 segundos desde T=0 hasta primera alerta válida.</li>
+<li><strong>TTI (Time to Isolate):</strong> 8.7 segundos desde T=0 hasta playbook completado.</li>
+<li><strong>Archivos cifrados antes de containment:</strong> 31 de 500 (94% preservados).</li>
+<li><strong>MITRE coverage:</strong> T1083 + T1490 + T1486 cubiertos por L1, ratificados por L2 entropy spike, confirmados por canary L3.</li>
+</ul>
+<h3 id="lo-que-no-se-ve-pero-pasó">Lo que NO se ve pero pasó</h3>
+<ul>
+<li>LLM Triage tardó ~3 segundos en responder. NUNCA bloqueó la decisión de containment.</li>
+<li>El throttle preventivo NO se aplicó porque fue T0 (auto-execute directo). En T2 sí se habría aplicado mientras corre el countdown.</li>
+<li>El audit log en OpenSearch capturó: triggering layers, scores individuales, fusion logic, LLM analysis, playbook commands executed, notification channels disparados, timestamps de cada paso.</li>
+</ul>
+<hr />
+<h2 id="7-glosario-mitre-attck">7. Glosario MITRE ATT&amp;CK</h2>
+<p>Las técnicas relevantes al alcance del proyecto, ordenadas por categoría (tactic).</p>
+<h3 id="initial-access">Initial Access</h3>
+<ul>
+<li><strong>T1078 — Valid Accounts</strong>: atacante usa credenciales legítimas. Relevante para UC-07 (escenario FP: usuario legítimo, NO atacante).</li>
+<li><strong>T1190 — Exploit Public-Facing Application</strong>: explotación de vulnerabilidad en aplicación web expuesta. T1190.001 sub-técnica = SQL Injection. Relevante para UC-08.</li>
+</ul>
+<h3 id="defense-evasion">Defense Evasion</h3>
+<ul>
+<li><strong>T1562 — Impair Defenses</strong>: atacante deshabilita herramientas de seguridad. T1562.001 sub-técnica = Disable Defender. Relevante para UC-05 (agent-kill attempt).</li>
+<li><strong>T1070 — Indicator Removal</strong>: atacante borra rastros. T1070.001 = Clear Windows Event Logs, T1070.004 = File Deletion.</li>
+</ul>
+<h3 id="discovery">Discovery</h3>
+<ul>
+<li><strong>T1083 — File and Directory Discovery</strong>: ransomware enumera archivos antes de cifrar. Relevante para UC-01.</li>
+</ul>
+<h3 id="lateral-movement">Lateral Movement</h3>
+<ul>
+<li><strong>T1021 — Remote Services</strong>: SMB/RDP/SSH usados por atacante para moverse. T1021.001 = RDP, T1021.002 = SMB, T1021.004 = SSH.</li>
+</ul>
+<h3 id="command-and-control">Command and Control</h3>
+<ul>
+<li><strong>T1071 — Application Layer Protocol</strong>: beacon a C2 server vía HTTP/HTTPS. T1071.001 sub-técnica = Web Protocols.</li>
+</ul>
+<h3 id="impact-la-más-rica-para-argos">Impact (la más rica para ARGOS)</h3>
+<ul>
+<li><strong>T1486 — Data Encrypted for Impact</strong>: ransomware cifrando archivos. Núcleo de UC-01, UC-02, UC-03.</li>
+<li><strong>T1490 — Inhibit System Recovery</strong>: borrar Volume Shadow Copies, snapshots btrfs, etc. Pre-cursor a T1486.</li>
+<li><strong>T1498 — Network Denial of Service</strong>: ataques de red contra disponibilidad. T1498.001 = Direct Network Flood (UC-06), T1498.002 = Reflection Amplification.</li>
+<li><strong>T1499 — Endpoint Denial of Service</strong>: saturación de recursos del endpoint. T1499.002 = Service Exhaustion, T1499.004 = Application Exploitation.</li>
+</ul>
+<hr />
+<h2 id="8-stack-tecnológico-completo">8. Stack tecnológico completo</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Categoría</th>
+<th>Componente</th>
+<th>Función</th>
+<th style="text-align: center;">Owner principal</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>SIEM</strong></td>
+<td>Wazuh 4.7</td>
+<td>Manager + agentes</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>SIEM</strong></td>
+<td>OpenSearch</td>
+<td>Storage de alertas y audit log</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>SIEM</strong></td>
+<td>Sigma + sigma-cli</td>
+<td>Reglas de detección</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="even">
+<td><strong>Telemetría</strong></td>
+<td>Sysmon (Windows)</td>
+<td>Eventos detallados de proceso/archivo/red</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>Telemetría</strong></td>
+<td>auditd (Linux)</td>
+<td>Eventos detallados de syscall</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Telemetría</strong></td>
+<td>pgAudit (PostgreSQL)</td>
+<td>Audit log de queries</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>Telemetría</strong></td>
+<td>Wazuh FIM whodata</td>
+<td>Captura qué proceso tocó archivo (canary)</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="even">
+<td><strong>Simulación</strong></td>
+<td>Atomic Red Team</td>
+<td>TTPs MITRE 1-a-1</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="odd">
+<td><strong>Simulación</strong></td>
+<td>Caldera</td>
+<td>Cadenas de ataque multi-step</td>
+<td style="text-align: center;">P3</td>
+</tr>
+<tr class="even">
+<td><strong>Simulación</strong></td>
+<td>Custom ransomware simulator (Python)</td>
+<td>UC-01, UC-02, UC-03 reproducibles</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Simulación</strong></td>
+<td>hping3 + slowhttptest</td>
+<td>UC-06 DDoS</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Simulación</strong></td>
+<td>sqlmap</td>
+<td>UC-08 SQL injection</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>ML</strong></td>
+<td>scikit-learn 1.4+</td>
+<td>Isolation Forest + One-Class SVM</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="even">
+<td><strong>ML</strong></td>
+<td>scipy</td>
+<td>Shannon entropy</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="odd">
+<td><strong>ML</strong></td>
+<td>pandas + numpy</td>
+<td>Data wrangling</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="even">
+<td><strong>ML</strong></td>
+<td>joblib</td>
+<td>Model serialization</td>
+<td style="text-align: center;">P2</td>
+</tr>
+<tr class="odd">
+<td><strong>Backend</strong></td>
+<td>FastAPI</td>
+<td>LLM Triage API + Approval API</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>Backend</strong></td>
+<td>Redis 7+</td>
+<td>Alert bus + incident state machine</td>
+<td style="text-align: center;">P4 (deploy) / P1 (usage)</td>
+</tr>
+<tr class="odd">
+<td><strong>Backend</strong></td>
+<td>APScheduler</td>
+<td>Timeouts + consolidation windows</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>Backend</strong></td>
+<td>PyJWT</td>
+<td>JWT signing para approval tokens</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Backend</strong></td>
+<td>Pydantic v2</td>
+<td>argos_contracts (cross-team interfaces)</td>
+<td style="text-align: center;">P1 (shipped)</td>
+</tr>
+<tr class="even">
+<td><strong>LLM</strong></td>
+<td>OpenAI GPT-4o-mini</td>
+<td>Primary backend (cloud, US-based)</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>LLM</strong></td>
+<td>Llama 3.1 8B vía Ollama</td>
+<td>Fallback (local, zero-egress)</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>LLM</strong></td>
+<td>BGE-large embeddings</td>
+<td>Retrieval en RAG</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Notifications</strong></td>
+<td>python-telegram-bot</td>
+<td>Telegram bot con inline buttons</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>Notifications</strong></td>
+<td>discord-webhook</td>
+<td>Discord notifications con role mention</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="odd">
+<td><strong>Notifications</strong></td>
+<td>twilio</td>
+<td>Voice DTMF escalación</td>
+<td style="text-align: center;">P1</td>
+</tr>
+<tr class="even">
+<td><strong>UI</strong></td>
+<td>Streamlit 1.30+</td>
+<td>Analyst Console + Approval Console</td>
+<td style="text-align: center;">P4 (base) / P1 (Approval)</td>
+</tr>
+<tr class="odd">
+<td><strong>UI</strong></td>
+<td>OpenSearch Dashboards</td>
+<td>MITRE heatmap, TTD histogram, layer perf</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Infra</strong></td>
+<td>Vagrant 2.4+</td>
+<td>Provisioning de 3 VMs</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="odd">
+<td><strong>Infra</strong></td>
+<td>VirtualBox 7.x</td>
+<td>Hypervisor para lab local</td>
+<td style="text-align: center;">P4</td>
+</tr>
+<tr class="even">
+<td><strong>Testing</strong></td>
+<td>pytest + respx + fakeredis</td>
+<td>Tests cross-module</td>
+<td style="text-align: center;">Todos</td>
+</tr>
+<tr class="odd">
+<td><strong>DB</strong></td>
+<td>PostgreSQL 15</td>
+<td><strong>Activo defendido</strong></td>
+<td style="text-align: center;">P4 (deploy + datos sintéticos)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-convenciones-del-repo">9. Convenciones del repo</h2>
+<h3 id="git-workflow">Git workflow</h3>
+<ul>
+<li><strong>Branch principal:</strong> <code>main</code>, protegida en GitHub.</li>
+<li><strong>Feature branches:</strong> <code>feature/&lt;persona&gt;/&lt;descripcion-corta&gt;</code> — ejemplo: <code>feature/p2/isolation-forest-baseline</code>.</li>
+<li><strong>Commits convencionales:</strong> <code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>test:</code>, <code>refactor:</code>, <code>chore:</code>.</li>
+<li><strong>PRs requieren:</strong> CI verde + 1 review. Pairing: P1↔︎P2, P3↔︎P4.</li>
+<li><strong>Push diario obligatorio</strong> antes de las 22:00 cada día de trabajo.</li>
+</ul>
+<h3 id="estructura-del-repo-post-adr-0008">Estructura del repo (post ADR-0008)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">código</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-">argos/
+├── README.md                  # Entry point del proyecto
+├── LICENSE                    # MIT
+├── pyproject.toml             # Metadata + extras por módulo
+├── .env.example               # Plantilla de variables (REAL .env va en .gitignore)
+│
+├── argos_contracts/           # ✅ Pydantic v2 cross-team (entregado · v1.1.0 · 69 tests)
+│   ├── _mitre_data.py         #     MITRE_WHITELIST curado
+│   ├── alert.py               #     WazuhAlert, NormalizedAlert
+│   ├── ml_score.py            #     MLScore (P2)
+│   ├── triage.py              #     AlertContext, TriageResponse (P1)
+│   ├── incident.py            #     Incident state machine (P1)
+│   ├── approval.py            #     ApprovalRequest, ApprovalResponse (P1)
+│   ├── enums.py               #     Tier, Severity, NotificationChannelType, ...
+│   └── tests/                 #     69 validation tests
+│
+├── llm_triage/                # P1 — Capa 4 LLM Triage
+│   ├── api/main.py            #     FastAPI /triage endpoint
+│   ├── llm_client/            #     OpenAI primary + Llama local fallback
+│   ├── rag/                   #     BM25 + BGE-large + RRF
+│   └── prompts/               #     Jinja2 templates
+│
+├── soar/                      # P1 — SOAR Decision Engine + Approval API
+│   ├── decision_engine/       #     tier_classifier, state_machine, orchestrator
+│   ├── approval/              #     api, jwt_signer, consolidation
+│   ├── notification/          #     telegram, discord, twilio_voice, email
+│   └── playbooks/             #     host_isolation, process_kill, snapshot, throttle
+│
+├── ml/                        # P2 — Capa 2 ML
+│   ├── features/              #     Feature extractors por dominio
+│   ├── models/                #     ransomware_ensemble, network_traffic, query_pattern
+│   └── consumer/              #     Redis stream consumer
+│
+├── detection/                 # P3 — Capa 1 Sigma rules
+│   ├── sigma-rules/
+│   │   ├── ransomware/        #     T1486, T1490, T1083, T1562
+│   │   ├── network/           #     T1498, T1499 rate-based
+│   │   ├── database/          #     query patterns
+│   │   └── webapp/            #     T1190 SQLi signatures
+│   └── wazuh-rules/           #     Convertidas con sigma-cli
+│
+├── deception/                 # P3 — Capa 3 Canary
+│   ├── canary_generator.py    #     Genera canary files
+│   └── fim-configs/           #     Wazuh FIM rules
+│
+├── ui/                        # P4 (base) + P1 (Approval Console)
+│   ├── streamlit_app/
+│   │   ├── pages/
+│   │   │   ├── 01_alert_inspection.py
+│   │   │   ├── 02_approval_console.py     # P1 - PIEZA CLAVE DEL DEMO
+│   │   │   └── 03_audit_forensics.py
+│   └── opensearch-dashboards/             # JSON dashboards exportados
+│
+├── attack-simulation/         # Simuladores multi-vector
+│   ├── ransomware_simulator/  # P1 (LockBit-like, canary, novel)
+│   ├── network_attacks/       # P4 (hping3, slowhttptest)
+│   ├── webapp_attacks/        # P4 (sqlmap)
+│   └── pg_simulator/          # P4 (SELECT masivo para UC-07)
+│
+├── lab/                       # P4 — Vagrant + Terraform
+│   ├── Vagrantfile
+│   ├── provision/             # Scripts bash/PowerShell
+│   └── inventory.yaml
+│
+├── evaluation/                # P2 + P4 — Métricas, datasets, reportes
+│
+└── docs/
+    ├── PROJECT_BRIEF.md       # 90-second overview
+    ├── CONTEXT.md             # Onboarding completo
+    ├── PROJECT_STATUS.md      # Honest snapshot
+    ├── EVALUATION_CRITERIA.md # Rúbrica del curso
+    ├── data-handling.md       # T-030 sanitization policy
+    ├── README.md              # Mapa de docs
+    ├── architecture/          # SAD, threat model, flow diagrams
+    ├── decisions/             # 8 ADRs + OPEN_QUESTIONS
+    ├── use-cases/             # 8 UCs detallados
+    └── team/                  # Manuales de integrante (este documento + 4 individuales)
+</code></pre></div>
+<h3 id="variables-de-entorno-env">Variables de entorno (.env)</h3>
+<p>El <code>.env.example</code> documenta TODAS las variables. Las críticas para tu rol están en tu manual individual. Reglas globales:</p>
+<ul>
+<li><strong>NUNCA commitear el <code>.env</code></strong> — está en <code>.gitignore</code>.</li>
+<li>Cada integrante genera su propio <code>.env</code> partir del <code>.env.example</code>.</li>
+<li>Las credenciales compartidas (Telegram bot token, Discord webhook URL, OpenAI API key) las distribuye P1 vía canal privado (no en GitHub, no en Discord público).</li>
+<li>El <code>JWT_SECRET</code> se genera localmente con <code>openssl rand -hex 32</code>.</li>
+</ul>
+<h3 id="convención-de-incident-ids">Convención de incident IDs</h3>
+<p><code>INC-YYYY-MM-DD-NNN</code> donde NNN es contador diario zero-padded a 3 dígitos. Ejemplo: <code>INC-2026-05-26-001</code>. El contador se persiste en Redis con TTL diario.</p>
+<hr />
+<h2 id="10-quick-start-del-entorno-común">10. Quick start del entorno común</h2>
+<p>Estos pasos son comunes a TODOS los integrantes antes de empezar a implementar. Tu manual individual asume que esto está hecho.</p>
+<h3 id="paso-1--clonar-repo">Paso 1 — Clonar repo</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">cd ~/projects                       # o donde guardes proyectos
+git clone https://github.com/EnzoOrdonez/argos.git
+cd argos
+</code></pre></div>
+<h3 id="paso-2--crear-virtualenv-python">Paso 2 — Crear virtualenv Python</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">python3 -m venv .venv
+source .venv/bin/activate          # Linux/macOS
+# .venv\Scripts\activate           # Windows PowerShell
+pip install -U pip setuptools wheel
+</code></pre></div>
+<h3 id="paso-3--instalar-dependencias-core--tu-rol">Paso 3 — Instalar dependencias core + tu rol</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Todos instalan estos:
+pip install -e &quot;.[dev]&quot;
+
+# Además según tu rol:
+pip install -e &quot;.[contracts]&quot;       # P1 (siempre + más abajo)
+pip install -e &quot;.[ml]&quot;              # P2
+pip install -e &quot;.[soar,llm]&quot;        # P1 (servicios)
+pip install -e &quot;.[ui]&quot;              # P4
+</code></pre></div>
+<h3 id="paso-4--verificar-contracts">Paso 4 — Verificar contracts</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">pytest argos_contracts/tests/ -v
+# Esperado: 69 passed
+</code></pre></div>
+<p>Si no pasan los 69 tests, revisa que el venv esté activado (<code>which python</code> debe apuntar a <code>.venv/bin/python</code>).</p>
+<h3 id="paso-5--copiar-plantilla-de-variables">Paso 5 — Copiar plantilla de variables</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">cp .env.example .env
+# Editar .env con tus valores reales (tu manual individual te dice cuáles)
+</code></pre></div>
+<h3 id="paso-6--configurar-git">Paso 6 — Configurar git</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">git config user.name &quot;&lt;Tu Nombre&gt;&quot;
+git config user.email &quot;&lt;tu@email.com&gt;&quot;
+# Crear tu branch:
+git checkout -b feature/&lt;tu-pX&gt;/setup-inicial
+</code></pre></div>
+<hr />
+<h2 id="11-comunicación-del-equipo-durante-la-implementación">11. Comunicación del equipo durante la implementación</h2>
+<h3 id="standup-diario">Standup diario</h3>
+<ul>
+<li><strong>Hora:</strong> 9:00 AM</li>
+<li><strong>Canal:</strong> Discord <code>#argos-standup</code>, llamada de voz</li>
+<li><strong>Duración:</strong> 20 minutos (cada integrante ~3-4 min)</li>
+<li><strong>Formato (per <code>docs/team/standup-template.md</code>):</strong>
+<ul>
+<li>Lo que cerré ayer (PRs mergeados, tests passing)</li>
+<li>Lo que cierro hoy (objetivos del día)</li>
+<li>Bloqueos (qué necesito de otro integrante)</li>
+</ul></li>
+</ul>
+<h3 id="canales-discord-del-equipo">Canales Discord del equipo</h3>
+<ul>
+<li><code>#argos-standup</code> — standup diario</li>
+<li><code>#argos-help</code> — preguntas técnicas urgentes</li>
+<li><code>#argos-prs</code> — notificación de PRs abiertos (GitHub bot)</li>
+<li><code>#argos-incidents</code> — donde el bot ARGOS enviará notificaciones del demo</li>
+</ul>
+<h3 id="reglas-operativas-post-adr-0008">Reglas operativas (post ADR-0008)</h3>
+<ol>
+<li><strong>No tocar la doc arquitectónica.</strong> Los docs están sincronizados con la realidad. Si descubres algo arquitectónico nuevo, abre un ADR-0009 en lugar de modificar SAD/threat model/README.</li>
+<li><strong>No optimizar prematuramente.</strong> El objetivo es que los 8 UCs corran end-to-end, no que sean óptimos. Performance fine-tuning queda para después del demo.</li>
+<li><strong>Mocks son OK al inicio.</strong> Si tu pieza depende de otra que aún no está lista, usa FakeRedis, mocked HTTP, o synthetic data. Integración real cuando ambas piezas estén listas.</li>
+<li><strong>Verificar en lab real al menos 2 veces al día.</strong> Cada integrante corre el flow E2E en su Vagrant antes del almuerzo y antes de pushear.</li>
+<li><strong>Pedir ayuda en menos de 30 minutos.</strong> Si llevas más de media hora atascado, pingueas en <code>#argos-help</code> o llamas a otro integrante. No debug solitario.</li>
+<li><strong>Push diario obligatorio</strong> antes de las 22:00. Si no pusheas, tu nombre aparece en el standup del día siguiente.</li>
+</ol>
+<h3 id="claude-code--asistentes-ia--política-reinterpretada-adr-0008">Claude Code / asistentes IA — política reinterpretada (ADR-0008)</h3>
+<p>Cada integrante puede usar Claude Code (o cualquier asistente IA: Cursor, GitHub Copilot, ChatGPT) como <strong>acelerador en SU propia parte</strong>. La condición no-negociable: cada integrante DEBE entender el código que produce con asistencia de IA y poder defenderlo en viva sin la asistencia presente. La asistencia es para velocidad, NO para reemplazar comprensión.</p>
+<p><strong>La regla específica que se mantiene:</strong> P1 (Enzo) no escribe código de otros integrantes con Claude Code. P1 puede asesorar y revisar, no producir el código de otros.</p>
+<hr />
+<h2 id="12-lo-que-no-se-entrega-para-el-demo">12. Lo que NO se entrega para el demo</h2>
+<p>Para que no te sorprendas cuando llegue el demo sin estas cosas:</p>
+<ul>
+<li><strong>Calibración Q5 protocol</strong> con dataset etiquetado real (~100 ransomware + ~500 benignas).</li>
+<li><strong>UC-03 split-brain con 4 aprobadores reales</strong> no scripted.</li>
+<li><strong>UC-05 stealth attack</strong> end-to-end pulido.</li>
+<li><strong>PRs Sigma upstream aceptados</strong> por SigmaHQ maintainers (depende de tiempos externos).</li>
+<li><strong>Video demo final editado</strong>.</li>
+<li><strong>Informe técnico final</strong>.</li>
+<li><strong>Cross-encoder reranker en RAG</strong> (descartado del scope v1 per ADR-0001 v2).</li>
+</ul>
+<p>Lo que SÍ se completa para el demo: 5 UCs corriendo end-to-end (UC-01, UC-02, UC-04, UC-06, UC-07), con UC-08 como nice-to-have, más dos rehearsals previos.</p>
+<hr />
+<h2 id="13-documentos-relacionados-referencia-completa">13. Documentos relacionados (referencia completa)</h2>
+<p>Si algo de este documento no quedó claro o necesitas más profundidad:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Si quieres saber...</th>
+<th>Lee</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Arquitectura completa de cada bloque</td>
+<td><a href="../architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md"><code>docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Por qué se tomó cada decisión arquitectónica</td>
+<td><a href="../decisions/"><code>docs/decisions/</code></a> (ADRs 0001-0008)</td>
+</tr>
+<tr class="odd">
+<td>Análisis de amenazas STRIDE/FMEA</td>
+<td><a href="../architecture/THREAT_MODEL.md"><code>docs/architecture/THREAT_MODEL.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Detalle de los 8 UCs</td>
+<td><a href="../use-cases/USE_CASES.md"><code>docs/use-cases/USE_CASES.md</code></a></td>
+</tr>
+<tr class="odd">
+<td>Política de manejo de datos sensibles a LLM</td>
+<td><a href="../data-handling.md"><code>docs/data-handling.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Rúbrica del curso y mapping a deliverables</td>
+<td><a href="../EVALUATION_CRITERIA.md"><code>docs/EVALUATION_CRITERIA.md</code></a></td>
+</tr>
+<tr class="odd">
+<td>Estado real vs. documentado del proyecto</td>
+<td><a href="../PROJECT_STATUS.md"><code>docs/PROJECT_STATUS.md</code></a></td>
+</tr>
+<tr class="even">
+<td>Flujo del sistema visualmente</td>
+<td><a href="../architecture/argos_flow.html"><code>docs/architecture/argos_flow.html</code></a></td>
+</tr>
+<tr class="odd">
+<td>Tu manual individual</td>
+<td><code>docs/team/manual-p&lt;X&gt;-&lt;nombre&gt;.md</code></td>
+</tr>
+<tr class="even">
+<td>Plan operacional general</td>
+<td><a href="./manual-equipo.md"><code>docs/team/manual-equipo.md</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="change-log">Change log</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Versión</th>
+<th>Fecha</th>
+<th>Cambio</th>
+<th>Autor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1.0</td>
+<td>2026-05-24</td>
+<td>Initial — sección común de introducción para los 4 manuales individuales. Cubre arquitectura, UCs, ejemplo end-to-end UC-01, glosario MITRE, stack tecnológico, convenciones del repo, política Claude Code, quick start.</td>
+<td>P1 (Enzo Ordoñez Flores)</td>
+</tr>
+</tbody>
+</table>
+
+<div class="page-break"></div><h1>Parte II — Manual de Diego Jara</h1>
+<h1 id="manual-p4--diego-jara--infraestructura--ui--evaluación">Manual P4 — Diego Jara · Infraestructura · UI · Evaluación</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Rol</td>
+<td>Owner del lab, DB defendida, observabilidad, UI de aprobación</td>
+</tr>
+<tr class="even">
+<td>Owns</td>
+<td><code>lab/</code> (Vagrant + scripts) · <code>lab/postgres/</code> (PostgreSQL + pgAudit) · OpenSearch + Wazuh manager · <code>ui/streamlit_app/</code> · <code>ui/opensearch-dashboards/</code> · <code>evaluation/</code></td>
+</tr>
+<tr class="odd">
+<td>No owns</td>
+<td>Detección/ataque (P3) · ML/LLM (P2) · SOAR Engine (P1)</td>
+</tr>
+<tr class="even">
+<td>Outputs blocking</td>
+<td>Lab funcional (TODOS dependen) · Redis disponible · Streamlit Approval Console (centerpiece UC-04)</td>
+</tr>
+<tr class="odd">
+<td>Entrega final</td>
+<td><strong>13 de junio de 2026</strong> — eres el operador del demo</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="0-tu-charter">0. Tu charter</h2>
+<blockquote>
+<p>Si tu laptop arranca el lab en menos de 5 minutos con <code>vagrant up</code>, el equipo trabaja. Si no, todos quedan bloqueados. Eres también el operador del demo: clickeas los botones en vivo mientras P1 narra. Tu UI es la pantalla que el profesor mirará 12 minutos seguidos.</p>
+</blockquote>
+<h3 id="01-cómo-leer-cada-sub-sección">0.1 Cómo leer cada sub-sección</h3>
+<p>Cada componente sigue: <strong>Contexto</strong> → <strong>Pasos manuales</strong> si aplica → <strong>Comandos</strong> → <strong>Salida esperada</strong> → <strong>Verificación</strong> → <strong>Si algo falla</strong>.</p>
+<hr />
+<h1 id="fase-1--cimientos-el-lab">Fase 1 — Cimientos: el lab</h1>
+<h2 id="11-prerequisites-en-tu-laptop">1.1 Prerequisites en tu laptop</h2>
+<h3 id="comandos">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">VBoxManage --version
+vagrant --version
+df -h ~ | tail -1
+free -h | head -2
+</code></pre></div>
+<h3 id="salida-esperada">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">7.0.x
+Vagrant 2.4.x
+/dev/sda1     500G  100G  400G  20% /home/usuario
+              total  used  free  shared  buff/cache  available
+Mem:           15Gi  6.0Gi 3.0Gi 400Mi   6.0Gi       8.0Gi
+</code></pre></div>
+<h3 id="verificación">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">VBoxManage --version | awk -F&#39;r&#39; &#39;{print $1}&#39; | awk -F&#39;.&#39; &#39;{exit !($1&gt;=7)}&#39; &amp;&amp; echo &quot;VBox 7+ OK&quot;
+test $(df -BG ~ | tail -1 | awk &#39;{print $4}&#39; | tr -d &#39;G&#39;) -ge 60 &amp;&amp; echo &quot;Disk OK&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">VBox 7+ OK
+Disk OK
+</code></pre></div>
+<h3 id="si-algo-falla">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>VBoxManage: command not found</code></td>
+<td>VirtualBox no instalado o PATH</td>
+<td>Instala desde <code>https://www.virtualbox.org/wiki/Downloads</code></td>
+</tr>
+<tr class="even">
+<td>Disco &lt; 60 GB libre</td>
+<td>VMs no caben</td>
+<td>Limpia downloads o usa SSD externo (USB-C 256 GB ≈ USD 30)</td>
+</tr>
+<tr class="odd">
+<td>RAM &lt; 16 GB</td>
+<td>Sólo puedes levantar una VM a la vez</td>
+<td>Levanta <code>lab-manager</code> + <code>linux-victim</code>, deja Windows abajo y comparte ese rato con P3</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="12-clonar-repo">1.2 Clonar repo</h2>
+<h3 id="comandos-1">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">mkdir -p ~/code &amp;&amp; cd ~/code
+git clone git@github.com:EnzoOrdonez/argos.git
+cd argos
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ./argos_contracts
+pip install -r ui/requirements.txt
+pip install -r lab/requirements.txt
+</code></pre></div>
+<h3 id="verificación-1">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">python -c &quot;import argos_contracts, streamlit, redis; print(&#39;imports OK&#39;)&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">imports OK
+</code></pre></div>
+<hr />
+<h2 id="13-vagrantfile">1.3 Vagrantfile</h2>
+<h3 id="contexto">Contexto</h3>
+<p>Tres VMs: Linux manager (Wazuh + OpenSearch + Redis), Linux víctima (Postgres + Wazuh agent + auditd), Windows víctima (Sysmon + Wazuh agent).</p>
+<h3 id="labvagrantfile"><code>lab/Vagrantfile</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">ruby</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-ruby"># Lab ARGOS: 1 Windows victim, 1 Linux victim + Postgres, 1 Linux manager.
+# Red interna 192.168.56.0/24
+
+Vagrant.configure(&quot;2&quot;) do |config|
+
+  config.vm.define &quot;lab-manager&quot; do |m|
+    m.vm.box      = &quot;bento/ubuntu-22.04&quot;
+    m.vm.hostname = &quot;lab-manager&quot;
+    m.vm.network &quot;private_network&quot;, ip: &quot;192.168.56.10&quot;
+    m.vm.synced_folder &quot;..&quot;, &quot;/vagrant&quot;
+    m.vm.provider &quot;virtualbox&quot; do |vb|
+      vb.memory = 4096
+      vb.cpus   = 2
+    end
+    m.vm.provision &quot;shell&quot;, path: &quot;provision/manager.sh&quot;
+  end
+
+  config.vm.define &quot;linux-victim&quot; do |l|
+    l.vm.box      = &quot;bento/ubuntu-22.04&quot;
+    l.vm.hostname = &quot;linux-victim&quot;
+    l.vm.network &quot;private_network&quot;, ip: &quot;192.168.56.21&quot;
+    l.vm.synced_folder &quot;..&quot;, &quot;/vagrant&quot;
+    l.vm.provider &quot;virtualbox&quot; do |vb|
+      vb.memory = 3072
+      vb.cpus   = 2
+    end
+    l.vm.provision &quot;shell&quot;, path: &quot;provision/linux_victim.sh&quot;
+  end
+
+  config.vm.define &quot;windows-victim&quot; do |w|
+    w.vm.box      = &quot;gusztavvargadr/windows-10&quot;
+    w.vm.hostname = &quot;win-victim&quot;
+    w.vm.network &quot;private_network&quot;, ip: &quot;192.168.56.20&quot;
+    w.vm.provider &quot;virtualbox&quot; do |vb|
+      vb.memory = 4096
+      vb.cpus   = 2
+    end
+    w.vm.provision &quot;shell&quot;, path: &quot;provision/windows_victim.ps1&quot;
+  end
+end
+</code></pre></div>
+<h3 id="estructura">Estructura</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">lab/
+├── Vagrantfile           ← arriba
+├── provision/
+│   ├── manager.sh        ← Wazuh + OpenSearch + Redis + Docker
+│   ├── linux_victim.sh   ← Wazuh agent + Postgres + auditd
+│   └── windows_victim.ps1 ← Sysmon + Wazuh agent (vía P3)
+└── postgres/
+    └── init.sql          ← schema audit
+</code></pre></div>
+<hr />
+<h2 id="14-vagrant-up-y-verificación">1.4 <code>vagrant up</code> y verificación</h2>
+<h3 id="pasos-manuales">Pasos manuales</h3>
+<ol>
+<li>La primera vez: <code>vagrant up --provider=virtualbox</code> tarda 10-15 min (descarga boxes + provision).</li>
+<li>Reinicios sucesivos (después de <code>vagrant halt</code>): ~3-5 min.</li>
+<li>Si algo se rompe sin causa clara: <code>vagrant destroy &lt;vm&gt; &amp;&amp; vagrant up &lt;vm&gt;</code>.</li>
+</ol>
+<h3 id="comandos-2">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">cd lab/
+vagrant up --provider=virtualbox
+
+vagrant status
+</code></pre></div>
+<h3 id="salida-esperada-1">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">==&gt; lab-manager: Importing base box &#39;bento/ubuntu-22.04&#39;...
+... (mucho output)
+==&gt; windows-victim: Machine booted and ready!
+==&gt; linux-victim: Machine booted and ready!
+==&gt; lab-manager: Machine booted and ready!
+
+Current machine states:
+lab-manager               running (virtualbox)
+linux-victim              running (virtualbox)
+windows-victim            running (virtualbox)
+</code></pre></div>
+<h3 id="verificación--smoke-tests">Verificación — smoke tests</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">curl -sk -u wazuh:wazuh https://192.168.56.10:55000/?pretty | jq .data.title
+curl -sk -u admin:admin https://192.168.56.10:9200/_cluster/health | jq .status
+redis-cli -h 192.168.56.10 ping
+psql postgresql://argos:argos@192.168.56.21:5432/argos_audit -c &quot;SELECT 1;&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">&quot;Wazuh API REST&quot;
+&quot;green&quot;
+PONG
+ ?column?
+----------
+        1
+(1 row)
+</code></pre></div>
+<h3 id="si-algo-falla-1">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Vagrant could not detect VBoxManage</code></td>
+<td>VirtualBox no en PATH</td>
+<td>Agrega <code>C:\Program Files\Oracle\VirtualBox</code> (Windows) o <code>/usr/local/bin</code> (macOS) al PATH</td>
+</tr>
+<tr class="even">
+<td>VM Windows timeout WinRM</td>
+<td>Provision Windows tarda</td>
+<td><code>vagrant reload windows-victim --provision</code>; si persiste: destroy + up</td>
+</tr>
+<tr class="odd">
+<td>OpenSearch cluster red</td>
+<td>OOM o disk full</td>
+<td><code>docker logs opensearch</code> y verifica <code>OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="-checklist-fase-1">✅ Checklist Fase 1</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>VirtualBox 7+ · Vagrant 2.4+ · 60 GB disk</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>3 VMs <code>running</code></td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Wazuh API responde con <code>"Wazuh API REST"</code></td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>OpenSearch health green/yellow</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Redis pingable desde host</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Postgres conectable desde host</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td><code>vagrant up</code> desde halted ≤ 5 min</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="fase-2--postgres-defendido--observabilidad">Fase 2 — Postgres defendido + observabilidad</h1>
+<h2 id="21-postgresql-15--pgaudit">2.1 PostgreSQL 15 + pgAudit</h2>
+<h3 id="contexto-1">Contexto</h3>
+<p>Postgres es el activo defendido. pgAudit registra todos los SELECT/INSERT/DDL para el audit log y como input a las Sigma rules de DB (UC-07, UC-08).</p>
+<h3 id="labpostgresinitsql"><code>lab/postgres/init.sql</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">sql</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-sql">-- DB de aplicación (target del ataque)
+CREATE DATABASE app_prod;
+
+-- DB de auditoría (consumida por audit sink de P1)
+CREATE DATABASE argos_audit;
+
+\c argos_audit
+
+CREATE TABLE IF NOT EXISTS audit_incidents (
+    incident_id   text PRIMARY KEY,
+    tier          text NOT NULL,
+    severity      text NOT NULL,
+    host          text NOT NULL,
+    technique     text NOT NULL,
+    created_at    timestamptz NOT NULL,
+    final_outcome text,
+    final_policy  text,
+    final_at      timestamptz,
+    payload       jsonb NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_responses (
+    id            bigserial PRIMARY KEY,
+    incident_id   text REFERENCES audit_incidents(incident_id) ON DELETE CASCADE,
+    approver_id   text NOT NULL,
+    channel       text NOT NULL,
+    decision      text NOT NULL,
+    received_at   timestamptz NOT NULL
+);
+
+CREATE INDEX idx_audit_incidents_created  ON audit_incidents(created_at DESC);
+CREATE INDEX idx_audit_responses_incident ON audit_responses(incident_id);
+
+CREATE USER argos   WITH PASSWORD &#39;argos&#39;;
+GRANT ALL PRIVILEGES ON DATABASE argos_audit TO argos;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO argos;
+
+CREATE USER analyst WITH PASSWORD &#39;analyst_pwd&#39;;
+GRANT CONNECT ON DATABASE app_prod TO analyst;
+</code></pre></div>
+<h3 id="pasos-manuales--habilitar-pgaudit">Pasos manuales — habilitar pgAudit</h3>
+<ol>
+<li>En linux-victim, instalar <code>postgresql-15-pgaudit</code>.</li>
+<li>Agregar <code>pgaudit</code> a <code>shared_preload_libraries</code> en <code>postgresql.conf</code>.</li>
+<li>Configurar <code>pgaudit.log</code> y <code>listen_addresses</code>.</li>
+<li>Permitir conexiones desde 192.168.56.0/24 en <code>pg_hba.conf</code>.</li>
+<li>Reiniciar Postgres.</li>
+<li>Crear la extensión en cada DB.</li>
+</ol>
+<h3 id="comandos-en-linux-victim-via-vagrant-ssh">Comandos (en linux-victim, via <code>vagrant ssh</code>)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">sudo apt install -y postgresql-15-pgaudit
+
+sudo tee -a /etc/postgresql/15/main/postgresql.conf &lt;&lt; &#39;EOF&#39;
+shared_preload_libraries = &#39;pgaudit&#39;
+pgaudit.log = &#39;read, write, ddl, role&#39;
+pgaudit.log_relation = on
+pgaudit.log_parameter = on
+pgaudit.log_catalog = off
+listen_addresses = &#39;*&#39;
+EOF
+
+sudo tee -a /etc/postgresql/15/main/pg_hba.conf &lt;&lt; &#39;EOF&#39;
+host    all    all    192.168.56.0/24    md5
+EOF
+
+sudo systemctl restart postgresql
+
+sudo -u postgres psql -c &quot;CREATE EXTENSION IF NOT EXISTS pgaudit;&quot; -d app_prod
+sudo -u postgres psql -c &quot;CREATE EXTENSION IF NOT EXISTS pgaudit;&quot; -d argos_audit
+</code></pre></div>
+<h3 id="verificación-2">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">sudo -u postgres psql -d app_prod -c &quot;SELECT extname, extversion FROM pg_extension WHERE extname=&#39;pgaudit&#39;;&quot;
+sudo -u postgres psql -d app_prod -c &quot;SELECT 1;&quot;
+sudo tail -3 /var/log/postgresql/postgresql-15-main.log | grep -i pgaudit
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text"> extname | extversion
+---------+------------
+ pgaudit | 1.7
+(1 row)
+
+LOG: AUDIT: SESSION,READ,SELECT,SELECT 1;
+</code></pre></div>
+<h3 id="si-algo-falla-2">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ERROR: pgaudit must be in shared_preload_libraries</code></td>
+<td>Modificaste <code>postgresql.conf</code> pero no reiniciaste</td>
+<td><code>sudo systemctl restart postgresql</code></td>
+</tr>
+<tr class="even">
+<td><code>psql: FATAL: password authentication failed</code> desde host</td>
+<td><code>pg_hba.conf</code> no permite tu rango</td>
+<td>Confirma <code>host all all 192.168.56.0/24 md5</code> y <code>systemctl reload postgresql</code></td>
+</tr>
+<tr class="odd">
+<td><code>Permission denied: postgresql.log</code></td>
+<td>Permisos</td>
+<td><code>sudo chmod 644 /var/log/postgresql/postgresql-15-main.log</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="22-opensearch--opensearch-dashboards-docker-compose">2.2 OpenSearch + OpenSearch Dashboards (Docker Compose)</h2>
+<h3 id="contexto-2">Contexto</h3>
+<p>OpenSearch indexa los alerts del Wazuh manager y aporta los 3 dashboards visuales (Alerts Timeline, MITRE Heatmap, Layer Performance).</p>
+<h3 id="pasos-manuales-en-provisionmanagersh">Pasos manuales (en <code>provision/manager.sh</code>)</h3>
+<ol>
+<li>Instalar Docker + compose plugin.</li>
+<li>Crear <code>/opt/opensearch/docker-compose.yml</code>.</li>
+<li><code>docker compose up -d</code>.</li>
+<li>Esperar 30 s a que cluster esté ready.</li>
+</ol>
+<h3 id="comandos-en-lab-manager-vía-vagrant-ssh">Comandos (en lab-manager, vía <code>vagrant ssh</code>)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">sudo apt-get install -y docker.io docker-compose-plugin
+sudo mkdir -p /opt/opensearch &amp;&amp; cd /opt/opensearch
+
+sudo tee docker-compose.yml &lt;&lt; &#39;EOF&#39;
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: opensearch
+    environment:
+      - cluster.name=argos-cluster
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports: [&quot;9200:9200&quot;, &quot;9600:9600&quot;]
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: opensearch-dashboards
+    environment:
+      - &#39;OPENSEARCH_HOSTS=[&quot;https://opensearch:9200&quot;]&#39;
+    ports: [&quot;5601:5601&quot;]
+volumes:
+  opensearch-data:
+EOF
+
+sudo docker compose up -d
+sleep 30
+</code></pre></div>
+<h3 id="verificación-3">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">curl -sk https://localhost:9200/_cluster/health | jq .status
+curl -s http://localhost:5601/api/status | jq .status.overall.state 2&gt;/dev/null || echo &quot;dashboards starting&quot;
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">&quot;green&quot;
+&quot;green&quot;
+</code></pre></div>
+<h3 id="si-algo-falla-3">Si algo falla</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Causa</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>bootstrap.memory_lock=true</code> warning</td>
+<td><code>ulimits memlock</code> no aplicado</td>
+<td>Reinicia el container: <code>sudo docker compose restart</code></td>
+</tr>
+<tr class="even">
+<td><code>cluster.status: red</code></td>
+<td>OOM</td>
+<td>Bajar heap: <code>OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m</code></td>
+</tr>
+<tr class="odd">
+<td>Dashboards no carga (404)</td>
+<td>Aún arrancando</td>
+<td>Espera 30-60 s más y reintenta</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="23-redis">2.3 Redis</h2>
+<h3 id="comandos-en-lab-manager">Comandos (en lab-manager)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">sudo apt-get install -y redis-server
+sudo sed -i &#39;s/^bind 127.0.0.1.*/bind 0.0.0.0/&#39; /etc/redis/redis.conf
+sudo sed -i &#39;s/^protected-mode yes/protected-mode no/&#39; /etc/redis/redis.conf
+sudo systemctl restart redis-server
+</code></pre></div>
+<h3 id="verificación-4">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">redis-cli -h 192.168.56.10 ping
+redis-cli -h 192.168.56.10 config get save
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">PONG
+1) &quot;save&quot;
+2) &quot;3600 1 300 100 60 10000&quot;
+</code></pre></div>
+<hr />
+<h2 id="-checklist-fase-2">✅ Checklist Fase 2</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Postgres con pgAudit funcional</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>SELECT genera entrada <code>AUDIT:</code> en log</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>OpenSearch health green</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Dashboards UI abre en <code>http://192.168.56.10:5601</code></td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Redis pingable desde host</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="fase-3--bridge-wazuhredis--streamlit-ui">Fase 3 — Bridge Wazuh→Redis + Streamlit UI</h1>
+<h2 id="31-bridge-alertsjson--eventsraw_wazuh">3.1 Bridge <code>alerts.json</code> → <code>events:raw_wazuh</code></h2>
+<h3 id="contexto-3">Contexto</h3>
+<p>P3 produce alertas en <code>/var/ossec/logs/alerts/alerts.json</code>. P2 las consume desde Redis Stream. Tu bridge cierra ese gap: tail-ea el archivo y empuja a Redis.</p>
+<h3 id="labbridgewazuh_to_redispy"><code>lab/bridge/wazuh_to_redis.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Tail alerts.json del Wazuh manager y push a Redis stream events:raw_wazuh.&quot;&quot;&quot;
+
+from __future__ import annotations
+import json, time, os
+from pathlib import Path
+import redis
+
+ALERTS_FILE = Path(&quot;/var/ossec/logs/alerts/alerts.json&quot;)
+STREAM      = &quot;events:raw_wazuh&quot;
+
+
+def tail_f(path: Path):
+    with path.open() as f:
+        f.seek(0, 2)  # ir al final
+        while True:
+            line = f.readline()
+            if not line:
+                time.sleep(0.5); continue
+            yield line
+
+
+def main():
+    r = redis.from_url(os.environ.get(&quot;REDIS_URL&quot;, &quot;redis://localhost:6379/0&quot;))
+    for line in tail_f(ALERTS_FILE):
+        try:
+            alert = json.loads(line)
+            if alert.get(&quot;rule&quot;, {}).get(&quot;level&quot;, 0) &lt; 5:
+                continue
+            payload = {
+                &quot;host&quot;:                alert.get(&quot;agent&quot;, {}).get(&quot;name&quot;, &quot;unknown&quot;),
+                &quot;mitre_technique&quot;:     (alert.get(&quot;rule&quot;, {}).get(&quot;mitre&quot;, {}).get(&quot;technique&quot;) or [&quot;Unknown&quot;])[0],
+                &quot;syscalls_per_min&quot;:    alert.get(&quot;data&quot;, {}).get(&quot;syscalls_per_min&quot;, 0),
+                &quot;files_touched_per_min&quot;: alert.get(&quot;data&quot;, {}).get(&quot;files_touched_per_min&quot;, 0),
+                &quot;entropy_of_written_bytes&quot;: alert.get(&quot;data&quot;, {}).get(&quot;entropy&quot;, 0.0),
+                &quot;network_kbps&quot;:        alert.get(&quot;data&quot;, {}).get(&quot;network_kbps&quot;, 0),
+                &quot;command_line&quot;:        alert.get(&quot;data&quot;, {}).get(&quot;win&quot;, {}).get(&quot;eventdata&quot;, {}).get(&quot;commandLine&quot;, &quot;&quot;),
+                &quot;raw&quot;:                 alert,
+            }
+            r.xadd(STREAM, {&quot;data&quot;: json.dumps(payload)})
+        except Exception as e:
+            print(f&quot;[!] {e}&quot;, flush=True)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></div>
+<h3 id="pasos-manuales--systemd-service">Pasos manuales — systemd service</h3>
+<ol>
+<li>Copiar el unit file a <code>/etc/systemd/system/argos-bridge.service</code>.</li>
+<li><code>systemctl daemon-reload</code>.</li>
+<li><code>systemctl enable --now argos-bridge</code>.</li>
+<li>Verificar <code>systemctl status</code>.</li>
+</ol>
+<h3 id="comandos-en-lab-manager-1">Comandos (en lab-manager)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">sudo tee /etc/systemd/system/argos-bridge.service &lt;&lt; &#39;EOF&#39;
+[Unit]
+Description=ARGOS Wazuh→Redis bridge
+After=wazuh-manager.service
+
+[Service]
+ExecStart=/usr/bin/python3 /vagrant/lab/bridge/wazuh_to_redis.py
+Restart=always
+Environment=REDIS_URL=redis://localhost:6379/0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now argos-bridge
+systemctl status argos-bridge --no-pager
+</code></pre></div>
+<h3 id="salida-esperada-2">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">● argos-bridge.service - ARGOS Wazuh→Redis bridge
+     Loaded: loaded (/etc/systemd/system/argos-bridge.service; enabled)
+     Active: active (running) since ...
+</code></pre></div>
+<h3 id="verificación-coordinar-con-p3-para-disparar-canary">Verificación (coordinar con P3 para disparar canary)</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">redis-cli -h 192.168.56.10 XLEN events:raw_wazuh
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">1
+</code></pre></div>
+<p>(Crece tras cada alerta de level ≥ 5.)</p>
+<hr />
+<h2 id="32-streamlit-approval-console-centerpiece">3.2 Streamlit Approval Console (CENTERPIECE)</h2>
+<h3 id="contexto-4">Contexto</h3>
+<p>Tab 2 de la UI es el centerpiece visual del demo UC-04. Muestra Incident card, Decision Matrix con estado por aprobador, Consolidation Window countdown, y banner final.</p>
+<h3 id="uistreamlit_appapppy"><code>ui/streamlit_app/app.py</code></h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">python</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-python">&quot;&quot;&quot;Streamlit Analyst UI — 3 tabs (Alert Inspection / Approval Console / Audit).&quot;&quot;&quot;
+
+import os, time, json
+
+import streamlit as st
+from streamlit_autorefresh import st_autorefresh
+import redis
+
+st.set_page_config(page_title=&quot;ARGOS Analyst&quot;, layout=&quot;wide&quot;,
+                   initial_sidebar_state=&quot;collapsed&quot;)
+st_autorefresh(interval=1500, key=&quot;poll&quot;)
+
+r = redis.from_url(os.environ.get(&quot;REDIS_URL&quot;, &quot;redis://localhost:6379/0&quot;),
+                   decode_responses=True)
+
+
+def load_active_incidents() -&gt; list[dict]:
+    keys = sorted(r.scan_iter(match=&quot;incident:inc-*&quot;), reverse=True)[:20]
+    return [json.loads(r.get(k)) for k in keys if r.get(k)]
+
+
+def tier_color(tier: str) -&gt; str:
+    return {&quot;T0&quot;: &quot;#E53935&quot;, &quot;T1&quot;: &quot;#FB8C00&quot;,
+            &quot;T2&quot;: &quot;#FDD835&quot;, &quot;T3&quot;: &quot;#1E88E5&quot;}.get(tier, &quot;#888&quot;)
+
+
+tab1, tab2, tab3 = st.tabs([&quot;🔍 Alert Inspection&quot;,
+                            &quot;✅ Approval Console&quot;,
+                            &quot;📊 Audit &amp; Forensics&quot;])
+
+
+with tab2:
+    st.title(&quot;Approval Workflow Console&quot;)
+    incidents = [i for i in load_active_incidents()
+                 if i.get(&quot;tier&quot;) == &quot;T2&quot; and i.get(&quot;final_decision&quot;) is None]
+
+    if not incidents:
+        st.info(&quot;No active T2 incidents waiting for approval.&quot;)
+    else:
+        inc = incidents[0]
+        st.markdown(
+            f&quot;&lt;div style=&#39;background:{tier_color(inc[&#39;tier&#39;])};padding:1rem;&quot;
+            f&quot;border-radius:8px;color:white;&#39;&gt;&quot;
+            f&quot;&lt;h2&gt;Incident {inc[&#39;incident_id&#39;]} — Tier {inc[&#39;tier&#39;]}&lt;/h2&gt;&quot;
+            f&quot;&lt;p&gt;Host: &lt;b&gt;{inc[&#39;host&#39;][&#39;hostname&#39;]}&lt;/b&gt; · &quot;
+            f&quot;Technique: &lt;b&gt;{inc[&#39;mitre_technique&#39;]}&lt;/b&gt; · &quot;
+            f&quot;Layers firing: &lt;b&gt;{inc[&#39;num_layers_fired&#39;]}&lt;/b&gt;&lt;/p&gt;&lt;/div&gt;&quot;,
+            unsafe_allow_html=True,
+        )
+
+        c1, c2 = st.columns([2, 3])
+        with c1:
+            st.subheader(&quot;Decision Matrix&quot;)
+            for ap in inc.get(&quot;approvers&quot;, []):
+                emoji = {&quot;APPROVED&quot;:&quot;🟢&quot;, &quot;REJECTED&quot;:&quot;🔴&quot;,
+                         &quot;TIMEOUT&quot;:&quot;⚫&quot;, &quot;PENDING&quot;:&quot;🟡&quot;}.get(ap[&quot;status&quot;], &quot;❓&quot;)
+                latency = (ap[&quot;responded_at&quot;] - ap[&quot;notified_at&quot;]
+                           if ap.get(&quot;responded_at&quot;) else None)
+                line = f&quot;{emoji} **{ap[&#39;approver_id&#39;]}** — {ap[&#39;status&#39;]} via {ap[&#39;channel&#39;]}&quot;
+                if latency: line += f&quot; ({latency:.1f}s)&quot;
+                st.write(line)
+
+        with c2:
+            st.subheader(&quot;Consolidation Window&quot;)
+            cw = inc.get(&quot;consolidation_window&quot;) or {}
+            if cw.get(&quot;closes_at&quot;):
+                remaining = max(0, cw[&quot;closes_at&quot;] - time.time())
+                st.metric(&quot;Time remaining&quot;, f&quot;{remaining:.0f}s&quot;)
+                st.progress(min(1.0, 1 - remaining / 60))
+
+            approved = sum(1 for a in inc[&quot;approvers&quot;] if a[&quot;status&quot;] == &quot;APPROVED&quot;)
+            rejected = sum(1 for a in inc[&quot;approvers&quot;] if a[&quot;status&quot;] == &quot;REJECTED&quot;)
+            if approved &gt;= 1 and rejected &gt;= 1:
+                st.warning(&quot;⚠️ CONFLICT — conservative-wins will apply.&quot;)
+
+# Tab 1 y 3: ver `ui/streamlit_app/pages/` (smoke tests pasan).
+</code></pre></div>
+<h3 id="comandos-3">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">cd ui/
+pip install -r requirements.txt
+streamlit run streamlit_app/app.py --server.address 0.0.0.0 --server.port 8501
+</code></pre></div>
+<h3 id="salida-esperada-3">Salida esperada</h3>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.x.x:8501
+</code></pre></div>
+<h3 id="verificación-5">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">curl -s http://localhost:8501/_stcore/health
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">ok
+</code></pre></div>
+<p>Abre <code>http://localhost:8501</code>, ve a tab Approval Console. Si Redis vacío, muestra <code>"No active T2 incidents waiting for approval."</code></p>
+<hr />
+<h2 id="33-opensearch-dashboards-exportados-a-ndjson">3.3 OpenSearch Dashboards exportados a NDJSON</h2>
+<h3 id="pasos-manuales--crear-los-3-dashboards-en-la-ui">Pasos manuales — crear los 3 dashboards en la UI</h3>
+<ol>
+<li>Abre <code>http://192.168.56.10:5601</code> y autentícate (admin/admin).</li>
+<li>Crear index pattern <code>wazuh-alerts-*</code>.</li>
+<li>Crear <strong>Alerts Timeline</strong> (visualización tipo histograma por <code>@timestamp</code> + <code>rule.level</code>).</li>
+<li>Crear <strong>MITRE Heatmap</strong> (heatmap <code>rule.mitre.technique</code> vs día).</li>
+<li>Crear <strong>Layer Performance</strong> (línea con conteo por <code>layer_origin</code> por minuto).</li>
+<li>Exportar los 3 a NDJSON.</li>
+</ol>
+<h3 id="comandos-export">Comandos (export)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash">for d in &quot;Alerts Timeline&quot; &quot;MITRE Heatmap&quot; &quot;Layer Performance&quot;; do
+  slug=$(echo &quot;$d&quot; | tr &#39;[:upper:]&#39; &#39;[:lower:]&#39; | tr &#39; &#39; &#39;-&#39;)
+  echo &quot;Exporting $d...&quot;
+  curl -X POST &quot;http://localhost:5601/api/saved_objects/_export&quot; \
+    -H &quot;osd-xsrf: true&quot; \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;{\&quot;type\&quot;: \&quot;dashboard\&quot;, \&quot;includeReferencesDeep\&quot;: true}&quot; \
+    &gt; &quot;ui/opensearch-dashboards/${slug}.ndjson&quot;
+done
+</code></pre></div>
+<h3 id="verificación-6">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">ls ui/opensearch-dashboards/*.ndjson | wc -l
+head -1 ui/opensearch-dashboards/alerts-timeline.ndjson | jq .type
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">3
+&quot;dashboard&quot;
+</code></pre></div>
+<hr />
+<h2 id="-checklist-fase-3">✅ Checklist Fase 3</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><code>argos-bridge</code> service active</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Streamlit Approval Console renderiza con incident demo</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>3 OpenSearch dashboards exportados a NDJSON</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="fase-4--rehearsal--operador-del-demo">Fase 4 — Rehearsal + operador del demo</h1>
+<h2 id="41-rehearsal-del-rol-de-operador">4.1 Rehearsal del rol de operador</h2>
+<h3 id="contexto-5">Contexto</h3>
+<p>El día del demo eres el operador. P1 narra, P2 y P3 aprueban en sus celulares, tú ejecutas los comandos. Ensaya esto al menos 2 veces solo y 1 vez con el equipo.</p>
+<h3 id="comandos-pre-preparados-uno-por-terminal-listas-para-enter">Comandos pre-preparados (uno por terminal, listas para Enter)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Terminal 1 (UC-01)
+vagrant ssh linux-victim -c &#39;python /vagrant/attack-simulation/ransomware_simulator/lockbit_like.py --variant uc01 --target linux-victim&#39;
+
+# Terminal 2 (UC-02)
+vagrant ssh linux-victim -c &#39;python /vagrant/attack-simulation/ransomware_simulator/lockbit_like.py --variant uc02 --target linux-victim&#39;
+
+# Terminal 3 (UC-04)
+vagrant ssh linux-victim -c &#39;python /vagrant/attack-simulation/ransomware_simulator/postgres_attack.py --target linux-victim&#39;
+
+# Terminal 4 (UC-06 opcional si hay tiempo)
+sudo timeout 5 hping3 -S --flood -p 80 192.168.56.21
+</code></pre></div>
+<h3 id="tips-del-operador">Tips del operador</h3>
+<ul>
+<li>Tener 4 terminales con los comandos <strong>pre-tipeados</strong> (no tipear en vivo).</li>
+<li>Pantalla del proyector = sólo Streamlit Tab 2. NO mostrar terminales.</li>
+<li>Si algo falla, <strong>no entres en pánico</strong>: <code>make demo-reset</code> y reanudar en el último UC.</li>
+</ul>
+<hr />
+<h2 id="42-makefile-ayudante">4.2 <code>Makefile</code> ayudante</h2>
+<h3 id="makefile-raíz-del-repo"><code>Makefile</code> (raíz del repo)</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">makefile</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-makefile">.PHONY: demo-up demo-down demo-reset soar-restart bridge-restart llm-restart
+
+demo-up:
+    cd lab &amp;&amp; vagrant up
+    @echo &quot;Lab up. Waiting 10s for services...&quot;
+    @sleep 10
+
+demo-down:
+    cd lab &amp;&amp; vagrant halt
+
+demo-reset:
+    redis-cli -h 192.168.56.10 --scan --pattern &#39;incident:*&#39; | xargs -r redis-cli -h 192.168.56.10 DEL
+    vagrant ssh lab-manager -c &quot;sudo systemctl restart argos-bridge&quot;
+    @echo &quot;Demo state reset.&quot;
+
+soar-restart:
+    pkill -f &#39;soar.decision_engine.consumer&#39; || true
+    pkill -f &#39;uvicorn soar.approval_api&#39; || true
+    sleep 1
+    nohup python -m soar.decision_engine.consumer &gt; /tmp/soar-consumer.log 2&gt;&amp;1 &amp;
+    nohup uvicorn soar.approval_api.main:app --port 8001 &gt; /tmp/soar-api.log 2&gt;&amp;1 &amp;
+
+bridge-restart:
+    vagrant ssh lab-manager -c &quot;sudo systemctl restart argos-bridge&quot;
+
+llm-restart:
+    pkill -f &#39;ml.consumer&#39; || true
+    sleep 1
+    nohup python -m ml.consumer &gt; /tmp/ml.log 2&gt;&amp;1 &amp;
+</code></pre></div>
+<h3 id="verificación-7">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">make demo-up
+sleep 5
+make demo-reset
+</code></pre></div>
+<p>Esperado:</p>
+<div class="codeblock output"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">salida esperada</span></span></div><pre><code class="language-text">... vagrant logs ...
+Lab up. Waiting 10s for services...
+Demo state reset.
+</code></pre></div>
+<hr />
+<h2 id="43-hot-spare-en-laptop-de-p1">4.3 Hot spare en laptop de P1</h2>
+<h3 id="pasos-manuales-1">Pasos manuales</h3>
+<p>P1 tiene un clon del lab. Tu trabajo es asegurar que él pueda hacer <code>cd ~/code/argos/lab &amp;&amp; vagrant up</code> y obtener un lab idéntico. Coordina una prueba conjunta:</p>
+<ol>
+<li>Tú apagas tu lab (<code>vagrant halt</code>).</li>
+<li>P1 prende el suyo.</li>
+<li>Cambia env var <code>WAZUH_HOST=p1-espejo.local</code> en los servicios SOAR/ML.</li>
+<li>Corren un mini UC-01.</li>
+<li>Documenta el tiempo de switchover en <code>docs/LESSONS_LEARNED.md</code>. Objetivo: ≤ 5 min.</li>
+</ol>
+<hr />
+<h2 id="44-video-respaldo">4.4 Video respaldo</h2>
+<h3 id="comandos-4">Comandos</h3>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Grabar pantalla completa de tu rehearsal final (OBS o vokoscreenNG)
+# Output: docs/team/argos-demo-rehearsal.mp4
+# NO commitear si &gt; 100 MB; sube a Drive y comparte link en standup.
+obs-studio   # o vokoscreenNG
+</code></pre></div>
+<h3 id="verificación-8">Verificación</h3>
+<div class="codeblock verify"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">verificación</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-verify">ls -lah docs/team/argos-demo-rehearsal.mp4 2&gt;/dev/null || echo &quot;video pendiente&quot;
+</code></pre></div>
+<hr />
+<h2 id="45-checklist-pre-demo-t-2-h">4.5 Checklist pre-demo (T-2 h)</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Check</th>
+<th>OK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><code>vagrant status</code> → 3 running</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Wazuh API health 200</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>OpenSearch health green</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Streamlit Approval Console abre y muestra "No active"</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Bridge service activo</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Postgres conectable</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>Hot spare P1 también <code>running</code></td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Video respaldo accesible offline</td>
+<td>☐</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>Cargador laptop + cable HDMI/USB-C al proyector</td>
+<td>☐</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>4 terminales preparadas con comandos UC-01..04</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="apéndice-a--troubleshooting">Apéndice A — Troubleshooting</h1>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Síntoma</th>
+<th>Diagnóstico</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A.1</td>
+<td><code>vagrant up</code> falla con <code>Vagrant could not detect VBoxManage</code></td>
+<td>PATH</td>
+<td>Agrega ruta de VirtualBox al PATH</td>
+</tr>
+<tr class="even">
+<td>A.2</td>
+<td>VM Windows no arranca (WinRM timeout)</td>
+<td>Provision pesado</td>
+<td><code>vagrant reload windows-victim --provision</code>; si persiste: destroy + up</td>
+</tr>
+<tr class="odd">
+<td>A.3</td>
+<td>OpenSearch OOM</td>
+<td>Heap insuficiente</td>
+<td>Subir <code>OPENSEARCH_JAVA_OPTS=-Xms1500m -Xmx1500m</code></td>
+</tr>
+<tr class="even">
+<td>A.4</td>
+<td>Bridge no recibe alerts</td>
+<td><code>alerts.json</code> no existe (Wazuh down)</td>
+<td><code>sudo /var/ossec/bin/wazuh-control status</code> y restart si parado</td>
+</tr>
+<tr class="odd">
+<td>A.5</td>
+<td>Streamlit no refresca</td>
+<td>Polling pausado</td>
+<td>F5 manual; los datos están en Redis</td>
+</tr>
+<tr class="even">
+<td>A.6</td>
+<td>Postgres <code>FATAL: password authentication failed</code></td>
+<td><code>pg_hba.conf</code> no permite tu rango</td>
+<td>Confirma <code>host all all 192.168.56.0/24 md5</code></td>
+</tr>
+<tr class="odd">
+<td>A.7</td>
+<td>Wazuh agent no aparece en manager</td>
+<td>Server IP mal config</td>
+<td>Editar <code>&lt;server-ip&gt;</code> en agent <code>ossec.conf</code> y restart</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="apéndice-b--comandos-de-emergencia">Apéndice B — Comandos de emergencia</h1>
+<div class="codeblock"><div class="bar"><span><span class="dots"><span></span><span></span><span></span></span><span class="lang">bash</span></span><button class="copy-btn" type="button" onclick="copyCode(this)">Copiar</button></div><pre><code class="language-bash"># Lab caído mid-demo
+make demo-reset
+
+# Reload completo del manager (último recurso, ~30s downtime)
+vagrant reload lab-manager
+
+# Switch a lab espejo de P1
+export WAZUH_HOST=p1-espejo.local
+export REDIS_URL=redis://p1-espejo.local:6379/0
+make soar-restart
+
+# Postgres lleno
+psql -U argos -d argos_audit -c &quot;DELETE FROM audit_incidents WHERE created_at &lt; NOW() - INTERVAL &#39;24 hours&#39;;&quot;
+
+# OpenSearch indexes lentos
+curl -X POST &#39;http://localhost:9200/_cache/clear?pretty&#39;
+
+# Streamlit muerto
+pkill -f streamlit
+nohup streamlit run ui/streamlit_app/app.py --server.port 8501 &gt; /tmp/streamlit.log 2&gt;&amp;1 &amp;
+</code></pre></div>
+<hr />
+<h1 id="apéndice-c--referencias-cruzadas">Apéndice C — Referencias cruzadas</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Cuando estés en...</th>
+<th>Lee</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>lab/Vagrantfile</code></td>
+<td>SAD §13, <code>docs/team/manual-equipo.md</code> §1</td>
+</tr>
+<tr class="even">
+<td><code>lab/postgres/</code></td>
+<td>Manual P1 §3.2</td>
+</tr>
+<tr class="odd">
+<td><code>ui/streamlit_app/</code></td>
+<td>SAD §9.2, ADR-0006</td>
+</tr>
+<tr class="even">
+<td><code>evaluation/</code></td>
+<td>EVALUATION_CRITERIA §1.3</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="change-log">Change log</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Versión</th>
+<th>Fecha</th>
+<th>Cambio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3.0</td>
+<td>2026-05-24</td>
+<td>Reestructurado: Contexto → Pasos manuales → Comandos → Salida → Verificación → Si algo falla. Vagrantfile, pgAudit, bridge, Streamlit completos. Bloques bash/sql/yaml listos para copy buttons. Sin referencias temporales. Renombrado de <code>sprint-week-1-p4-diego.md</code>.</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+<script>
+function copyCode(btn) {
+  const block = btn.closest('.codeblock');
+  const code = block.querySelector('code');
+  const text = code.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove('copied');
+    }, 1400);
+  }).catch(err => {
+    btn.textContent = 'Error';
+    console.error(err);
+  });
+}
+</script>
+</body>
+</html>

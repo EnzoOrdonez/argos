@@ -1,0 +1,329 @@
+/* ============================================================
+   ARGOS Manual — shared style for HTML (interactive) and PDF.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --c-primary:   #0a3d62;
+  --c-primary-2: #1e6091;
+  --c-accent:    #e58e26;
+  --c-bg:        #ffffff;
+  --c-fg:        #1f2933;
+  --c-muted:     #5f6c7b;
+  --c-line:      #d8dee8;
+  --c-soft:      #f3f6fa;
+  --c-card:      #ffffff;
+  --c-code-bg:   #0d1f2d;
+  --c-code-fg:   #e7eef8;
+  --c-code-bar:  #1a3548;
+  --c-out-bg:    #f1f5f9;
+  --c-out-bar:   #cbd5e1;
+  --c-verify-bg: #f3fdf3;
+  --c-verify-bar:#16a34a;
+  --c-warn:      #b45309;
+  --c-danger:    #b91c1c;
+  --c-ok:        #15803d;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--c-fg);
+  background: var(--c-bg);
+  margin: 0;
+  padding: 0;
+}
+
+.page-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 4rem;
+}
+
+/* ---------- typography ---------- */
+h1 {
+  color: var(--c-primary);
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-top: 2.4rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px solid var(--c-primary);
+}
+h2 {
+  color: var(--c-primary-2);
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--c-line);
+}
+h3 {
+  color: var(--c-primary-2);
+  font-size: 1.18rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+h4 {
+  color: #2e5984;
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin-top: 1.2rem;
+}
+
+p { margin: 0.5rem 0 0.7rem; }
+strong { color: #0e2b44; font-weight: 600; }
+hr { border: none; border-top: 1px solid var(--c-line); margin: 1.6rem 0; }
+
+ul, ol { margin: 0.3rem 0 0.7rem 1.4rem; padding: 0; }
+li { margin: 0.25rem 0; }
+li > p { margin: 0.2rem 0; }
+
+a { color: var(--c-primary-2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- inline code ---------- */
+code {
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.88em;
+  background: #f0f3f7;
+  color: #b94a1f;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ---------- code blocks (fenced) ---------- */
+pre {
+  margin: 0.6rem 0 1rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 8px;
+  page-break-inside: avoid;
+}
+
+pre > code {
+  display: block;
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  padding: 0.9rem 1rem 1rem;
+  white-space: pre;
+  overflow-x: auto;
+  border-radius: 0 0 8px 8px;
+  background: var(--c-code-bg);
+  color: var(--c-code-fg);
+  border: none;
+}
+
+/* code block wrapper (added by post-processor) */
+.codeblock {
+  position: relative;
+  margin: 0.8rem 0 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(15, 31, 45, 0.08);
+  overflow: hidden;
+}
+
+.codeblock .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: var(--c-code-bar);
+  border-radius: 8px 8px 0 0;
+}
+.codeblock .bar .lang { color: #94c3e7; }
+.codeblock .bar .dots {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-right: 0.6rem;
+}
+.codeblock .bar .dots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #ff5f56;
+  display: inline-block;
+}
+.codeblock .bar .dots span:nth-child(2) { background: #ffbd2e; }
+.codeblock .bar .dots span:nth-child(3) { background: #27c93f; }
+
+.codeblock .copy-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e7eef8;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.codeblock .copy-btn:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+}
+.codeblock .copy-btn.copied {
+  background: var(--c-ok);
+  border-color: var(--c-ok);
+  color: white;
+}
+
+/* ---------- output blocks (language=text or output) ---------- */
+.codeblock.output .bar {
+  background: var(--c-out-bar);
+  color: #475569;
+}
+.codeblock.output .bar .lang { color: #1e293b; }
+.codeblock.output .bar .dots { display: none; }
+.codeblock.output > pre > code {
+  background: var(--c-out-bg);
+  color: #1e293b;
+  font-size: 0.78rem;
+}
+
+/* ---------- verify blocks (custom label) ---------- */
+.codeblock.verify .bar {
+  background: var(--c-verify-bar);
+  color: white;
+}
+.codeblock.verify .bar .lang { color: #ecfdf5; }
+
+/* ---------- callouts ---------- */
+.callout {
+  margin: 1rem 0 1.2rem;
+  padding: 0.8rem 1rem 0.8rem 1.1rem;
+  border-left: 4px solid var(--c-primary-2);
+  background: #eef5fb;
+  border-radius: 0 6px 6px 0;
+  page-break-inside: avoid;
+}
+.callout.warn   { border-color: var(--c-warn);   background: #fef3c7; }
+.callout.danger { border-color: var(--c-danger); background: #fee2e2; }
+.callout.ok     { border-color: var(--c-ok);     background: #dcfce7; }
+.callout strong { color: inherit; }
+
+blockquote {
+  margin: 0.9rem 0;
+  padding: 0.6rem 1rem;
+  background: #eef5fb;
+  border-left: 4px solid var(--c-primary-2);
+  border-radius: 0 6px 6px 0;
+  color: #1f2933;
+  font-style: normal;
+}
+
+/* ---------- tables ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0 1.2rem;
+  font-size: 0.92rem;
+  page-break-inside: avoid;
+}
+thead { background: var(--c-soft); }
+th {
+  text-align: left;
+  font-weight: 600;
+  color: #0e2b44;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--c-line);
+}
+td {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--c-line);
+  vertical-align: top;
+}
+tr:nth-child(even) td { background: #f9fbfd; }
+
+/* ---------- checklists ---------- */
+.checklist {
+  border: 1px solid var(--c-line);
+  border-left: 4px solid var(--c-primary);
+  border-radius: 0 6px 6px 0;
+  background: #fafcff;
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+}
+.checklist h4 { margin-top: 0; }
+
+/* ---------- cover ---------- */
+.cover {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-2) 60%, #2a7bbf 100%);
+  color: white;
+  padding: 3rem;
+}
+.cover .brand { font-size: 4rem; font-weight: 700; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.cover .tag   { font-size: 1.05rem; color: #bcdcef; font-style: italic; margin-bottom: 3rem; }
+.cover h2     { color: white; border: none; font-size: 1.7rem; margin: 1rem 0 0.4rem; }
+.cover .role  { color: #cfe2f3; font-size: 1.05rem; }
+.cover .meta  {
+  margin-top: 3rem;
+  font-size: 0.95rem;
+  color: #cfe2f3;
+  line-height: 1.7;
+}
+.cover .deadline {
+  margin-top: 2rem;
+  padding: 0.6rem 1.4rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.page-break { page-break-after: always; }
+
+/* ---------- nav (HTML only) ---------- */
+.toc {
+  background: var(--c-soft);
+  border: 1px solid var(--c-line);
+  border-radius: 6px;
+  padding: 0.8rem 1.2rem;
+  margin: 1.5rem 0;
+}
+.toc-title {
+  font-weight: 600;
+  color: var(--c-primary);
+  margin-bottom: 0.4rem;
+}
+.toc ul { margin: 0.2rem 0 0.2rem 1rem; padding: 0; }
+.toc li { margin: 0.15rem 0; list-style: none; position: relative; }
+.toc li::before { content: '›'; color: var(--c-primary-2); margin-right: 0.4rem; }
+
+/* ---------- print / PDF tweaks ---------- */
+@page {
+  size: Letter;
+  margin: 2cm 1.8cm 2.4cm 1.8cm;
+  @bottom-center {
+    content: "ARGOS · Manual del integrante · página " counter(page) " de " counter(pages);
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: #5f6c7b;
+  }
+}
+@page :first { margin: 0; @bottom-center { content: none; } }
+
+@media print {
+  .copy-btn { display: none !important; }
+  .toc      { page-break-after: always; }
+  body      { font-size: 10pt; }
+  .page-wrap { max-width: 100%; padding: 0; }
+  h1 { page-break-before: auto; }
+}
