@@ -5,7 +5,7 @@
 > **Nota de rebrand:** este documento de kickoff originalmente nombraba el proyecto "SOC-in-a-Box". En la Semana 2 el sistema se renombró a **ARGOS** (acrónimo en `PROJECT_BRIEF.md`). Las referencias internas, paths de repo y diagramas se actualizaron a la nueva nomenclatura. El contenido técnico y la división de trabajo se mantienen idénticos al acuerdo de kickoff.
 
 > Proyecto del curso **Tópicos Avanzados de Ciberseguridad** — Universidad de Lima — Semestre 2026-1
-> Integrantes: Enzo Cáceres + 3 compañeros
+> Integrantes: Enzo Ordoñez Flores + 3 compañeros
 
 ---
 
@@ -87,7 +87,7 @@ Cuando cualquier capa 1-3 dispara, un servicio FastAPI recibe el contexto comple
 - SANS IR playbooks públicos
 - Post-mortems propios de ataques simulados en el lab
 
-**Pipeline:** BM25 + BGE-large embeddings + RRF + cross-encoder. Reutilizado del proyecto CloudRAG (~70% del código), corpus 100% nuevo.
+**Pipeline:** BM25 + BGE-large embeddings + RRF (hybrid retrieval estándar industrial; cross-encoder descartado del scope v1 por relación marginal de costo/beneficio — ver `llm_triage/rag/README.md`). Implementación in-house; corpus 100% nuevo.
 
 **LLM backend (vendor-agnostic):**
 - **Primary:** DeepSeek-V3 (vía API OpenAI-compatible)
@@ -111,7 +111,7 @@ Lógica de fusión de scores con reglas explícitas:
 - Host isolation vía iptables (Linux) / PowerShell firewall rules (Windows)
 - Process kill por PID
 - Disk snapshot (VSS en Windows, `dd` en Linux)
-- Notificación email + Slack webhook
+- Notificación multi-canal: Telegram + Discord + Twilio Voice (escalación) + email post-facto (ver ADR-0007 v2)
 - Captura forense: process tree, network connections, hashes de archivos modificados
 
 ---
@@ -157,7 +157,7 @@ Sysmon es freeware Microsoft, no OSS estricto. Lo usamos porque es el estándar 
 | **P1 — Enzo (Lead)** | LLM / SOAR / Coordinación | Capa 4 (FastAPI + RAG + LLMClient), Decision Engine, integración entre capas, coordinación general |
 | **P2 — Sebastian Montenegro** | ML Engineer | Capa 2 completa: feature extraction, entrenamiento Isolation Forest + OC-SVM, ensemble, evaluación, integración con Wazuh vía Redis |
 | **P3 — Angeles Castillo** | Detection Engineer | Capa 1 (reglas Sigma + mapping MITRE) + Capa 3 (canary files + FIM rules), PRs upstream a SigmaHQ |
-| **P4 — Loli Jara** | Infra / Attack Sim / UI | Lab provisioning (Vagrant/Terraform), Wazuh + OpenSearch deployment, simulador de ransomware, Streamlit dashboard, dashboards Kibana/OpenSearch, métricas |
+| **P4 — Diego Jara** | Infra / Attack Sim / UI | Lab provisioning (Vagrant/Terraform), Wazuh + OpenSearch deployment, simulador de ransomware, Streamlit dashboard, dashboards Kibana/OpenSearch, métricas |
 
 **Regla operativa crítica:** cada integrante debe poder defender SU módulo en exposición. No se permite que P1 haga el trabajo de otros con Claude Code — P1 puede ayudar con dudas, no escribir código por ellos.
 
@@ -341,7 +341,7 @@ argos/
 │   ├── playbooks/             # Acciones de respuesta
 │   └── README.md
 │
-├── llm-triage/
+├── llm_triage/
 │   ├── api/                   # FastAPI service
 │   ├── rag/                   # Mini-RAG: ingesta, retrieval, eval
 │   ├── llm-client/            # LLMClient interface + DeepSeek + Qwen

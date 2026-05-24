@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for the llm-triage test suite.
+"""Shared pytest fixtures for the llm_triage test suite.
 
 Coverage targets for this module (per OPEN_QUESTIONS_RESOLUTION.md §Q3):
     - LLMClient implementations and the FastAPI `/triage` endpoint count
@@ -7,14 +7,16 @@ Coverage targets for this module (per OPEN_QUESTIONS_RESOLUTION.md §Q3):
       LLMClient backend.
 
 References:
-    - ADR-0001 §Métricas de éxito ("ambos backends pasan el mismo test
+    - ADR-0001 v2 §Métricas de éxito ("ambos backends pasan el mismo test
       suite de structured output validation").
-    - SAD §13.5 (Testing strategy; `respx` is the chosen tool for mocking
-      LLM HTTP calls).
+    - SAD §13.5 (Testing strategy; `respx` para mocking de OpenAI HTTP,
+      `httpx` directo o un fake Ollama para LlamaLocalClient).
     - OPEN_QUESTIONS_RESOLUTION.md §Q3 (tiered coverage targets).
 
 TODO:
-    - `respx_mock` fixture preconfigured with DeepSeek and Qwen base URLs.
+    - `respx_mock` fixture preconfigured con OpenAI base URL.
+    - `mock_ollama` fixture levantando un fake server local para
+      LlamaLocalClient (puerto 11434).
     - `sample_alert_context` fixture: representative AlertContext payload
       drawn from UC-01 (classic ransomware) for happy-path tests.
     - `sample_alert_context_novel` fixture: UC-03 payload (ML-only T2)

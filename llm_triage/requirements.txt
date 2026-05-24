@@ -1,0 +1,2 @@
+# Layer 4 — LLM Triage Service
+# Mirror of the [llm] + [dev] extras in pyproject.toml. Kept a

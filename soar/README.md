@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Owner | **P1 · Enzo Cáceres** (Lead · LLM/SOAR · Coordinator) |
+| Owner | **P1 · Enzo Ordoñez Flores** (Lead · LLM/SOAR · Coordinator) |
 | Status | 📅 Planned · Weeks 4-9 (Gate 2 decision engine v1 · Gate 3 full HITL) |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §6, ADRs [0003](../docs/decisions/0003-confidence-tiered-automation.md) · [0005](../docs/decisions/0005-notification-channel-abstraction.md) · [0006](../docs/decisions/0006-split-brain-resolution.md) · [0007](../docs/decisions/0007-notification-multichannel-escalation.md) |
 
@@ -28,7 +28,7 @@ This layer also owns the **state machine** for the human-in-the-loop approval fl
 | APScheduler | Timeouts, consolidation windows, escalation triggers |
 | PyJWT | JWT signing for approval tokens (HS256 v1) |
 | Jinja2 | Notification message templates per channel |
-| python-telegram-bot, twilio, slack-sdk | Notification channels (per ADR-0007) |
+| python-telegram-bot, twilio, discord-webhook | Notification channels (per ADR-0007 v2) |
 | pytest + respx + fakeredis | Testing |
 
 ---
@@ -51,11 +51,10 @@ soar/
 │   └── timeout.py                  # 3-min T2 timeout (ADR-0003 Q9)
 ├── notification/
 │   ├── base.py                     # NotificationChannel ABC (ADR-0005)
-│   ├── email_channel.py            # Post-facto summary (ADR-0007 §"role degradation")
-│   ├── telegram_channel.py         # Primary (ADR-0007)
-│   ├── ntfy_channel.py             # Backup push (ADR-0007)
-│   ├── slack_channel.py            # SOC visibility (ADR-0007)
-│   ├── twilio_voice_channel.py     # Escalation t=60s (ADR-0007)
+│   ├── email_channel.py            # Post-facto summary (ADR-0007 v2)
+│   ├── telegram_channel.py         # Primary, t=0 (ADR-0007 v2)
+│   ├── discord_channel.py          # Team visibility, t=0 (ADR-0007 v2)
+│   ├── twilio_voice_channel.py     # Escalation t=60s, DTMF (ADR-0007 v2)
 │   └── orchestrator.py             # EscalationOrchestrator (which channel when)
 ├── playbooks/
 │   ├── host_isolation.py           # iptables / NetFirewallRule
@@ -85,7 +84,7 @@ This layer is the **central hub** — everything flows through it.
 |-----------|:-----:|-----------|
 | **Consumes** | `WazuhAlert` | Wazuh manager (raw) |
 | **Consumes** | `MLScore` | `ml/` via Redis stream |
-| **Consumes** | `TriageResponse` | `llm-triage/` via HTTP |
+| **Consumes** | `TriageResponse` | `llm_triage/` via HTTP |
 | **Produces** | `NormalizedAlert` | Internal, persisted to OpenSearch for audit |
 | **Produces** | `Incident` | Persisted to Redis (`incident:{id}`) and OpenSearch (`argos-incidents-{YYYY-MM}`) per `OPEN_QUESTIONS_RESOLUTION.md` §Q4 |
 | **Produces** | `ProposedAction` | Embedded in `Incident.proposed_actions` |
@@ -150,7 +149,7 @@ pytest tests/integration/ -v --redis-host=localhost
 |------|:----:|-------------|
 | **Gate 1** | 5 | n/a — focus on Layer 1 |
 | **Gate 2** | 7 | Decision Engine v1: tier classifier + state machine + email channel (legacy) wired end-to-end; UC-01 + UC-02 work |
-| **Gate 3** | 9 | Full HITL: Telegram + ntfy + Slack + Twilio per ADR-0007; UC-03 split-brain rehearsable; UC-04 two-person rule; audit log in OpenSearch |
+| **Gate 3** | 9 | Full HITL: Telegram + Discord + Twilio per ADR-0007 v2; UC-03 split-brain rehearsable; UC-04 two-person rule; audit log in OpenSearch |
 | **Week 10-11** | — | Hardening + edge cases (F-050, F-051); throttle effectiveness metric (EV-03) |
 
 ---

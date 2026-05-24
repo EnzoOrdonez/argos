@@ -1,4 +1,4 @@
-# llm-triage
+# llm_triage
 
 ARGOS Layer 4 — LLM-based alert triage and enrichment service.
 
@@ -11,17 +11,18 @@ FastAPI microservice that enriches Wazuh alerts with structured analysis (MITRE 
 ## References
 
 - Architecture: `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md` §7 (Block 06 — LLM Triage / Layer 4).
-- LLM vendor abstraction: `docs/decisions/0001-llm-vendor-agnostic.md`.
+- LLM vendor abstraction: `docs/decisions/0001-llm-vendor-agnostic.md` (v2).
+- Data handling y sanitization: `docs/data-handling.md`.
 - Incident schema (full contract): `docs/decisions/OPEN_QUESTIONS_RESOLUTION.md` §Q4.2.
 - Use case exercising this layer the most: `docs/use-cases/USE_CASES.md` UC-03 (novel variant + split-brain approval).
 
 ## Module layout
 
 ```
-llm-triage/
+llm_triage/
 ├── api/           FastAPI app + /triage endpoint
-├── llm_client/    Vendor-agnostic LLM abstraction (DeepSeek primary, Qwen fallback)
-├── rag/           Mini-RAG retrieval pipeline (week 3)
+├── llm_client/    Vendor-agnostic LLM abstraction (OpenAI primary, Llama 3.1 local fallback per ADR-0001 v2)
+├── rag/           Mini-RAG retrieval pipeline (BM25 + BGE-large + RRF)
 ├── prompts/       Jinja2 templates for triage prompts
 └── tests/         pytest suite
 ```
@@ -32,4 +33,4 @@ Scaffolding only. No implementation logic yet.
 
 ## Owner
 
-P1 (Enzo).
+P1 (Enzo Ordoñez Flores).
