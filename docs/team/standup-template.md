@@ -70,7 +70,7 @@
 
 ---
 
-### P4 — Loli Jara (Infra/Attack/UI/Eval)
+### P4 — Diego Jara (Infra/Attack/UI/Eval)
 
 **Hecho la semana pasada:**
 -
