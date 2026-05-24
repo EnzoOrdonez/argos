@@ -7,7 +7,7 @@
 | Status | Approved |
 | Owner | P1 (Enzo) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `THREAT_MODEL.md`, ADRs 0001-0007, `OPEN_QUESTIONS_RESOLUTION.md` |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `THREAT_MODEL.md`, ADRs 0001-0008, `OPEN_QUESTIONS_RESOLUTION.md` |
 
 ---
 

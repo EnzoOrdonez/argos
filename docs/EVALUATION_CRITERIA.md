@@ -42,7 +42,7 @@ Formal written report. Required sections (verbatim from the course brief):
 | Portada + Resumen ejecutivo | `docs/PROJECT_BRIEF.md` (90-second overview) |
 | Objetivos | `README.md` §"What is ARGOS?" + `docs/PROJECT_BRIEF.md` |
 | Entorno + herramientas | `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md` §2-11 + `README.md` §"Tech stack" |
-| Metodología | `docs/CONTEXT.md` §6 (plan 14 semanas) + ADRs 0001-0007 |
+| Metodología | `docs/CONTEXT.md` §6 (plan 14 semanas) + ADRs 0001-0008 |
 | Resultados / evidencias técnicas | `evaluation/` (when produced) + `docs/use-cases/USE_CASES.md` + screenshots from `ui/` |
 | Análisis de riesgos | `docs/architecture/THREAT_MODEL.md` (full STRIDE + FMEA + Risk Register) |
 | Recomendaciones | `docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md` §14 (Future work) |
@@ -141,7 +141,6 @@ To resolve in next office hours (every team member should review this list befor
 
 ## 6. Change log
 
-| Version | Date | Change | Author |
 | Version | Date | Change | Author |
 |---------|------|--------|--------|
 | 1.0 | Week 7 | Initial document — rubric transcribed from course brief; implicit weights documented; cross-mapped each deliverable to the repo artifacts that serve it. | P1 |

@@ -11,7 +11,7 @@
 | Course | Tópicos Avanzados de Ciberseguridad · 2026-1 |
 | Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `argos_flow.html` (flujo + ownership), ADRs 0001-0007 |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `argos_flow.html` (flujo + ownership), ADRs 0001-0008 |
 
 ---
 
@@ -133,6 +133,24 @@ The introduction of email-based approval flow (ADR-0003) and multi-recipient not
 | T-067 | SIM-swap del aprobador | Atacante toma control del número telefónico del aprobador (vía social engineering al carrier o port-out) y aprueba/rechaza vía Telegram (re-login con SMS), Twilio voice, o re-establece sesión en cualquier canal vinculado al teléfono | L | H | Medium | Conservative-wins (ADR-0006) protege contra rechazos malintencionados; detectar nueva sesión Telegram con notificación cruzada por ntfy y Slack al aprobador legítimo; idealmente, exigir al aprobador habilitar 2FA app-based en sus canales (no SMS) | Medium — fuera del control técnico del sistema; mitigación principal es educación + multi-canal |
 | T-068 | Caller-ID spoofing al webhook Twilio | Atacante llama al endpoint Twilio simulando ser el aprobador (ANI spoofing) y emite DTMF para aprobar/rechazar contención falsa | L | H | Medium | Aceptar callbacks DTMF únicamente cuando estén correlacionados con una llamada *saliente activa* iniciada por ARGOS (correlation_id en la sesión Twilio); nunca aceptar inbound calls como votos válidos; rate-limit por número origen | Low |
 | T-069 | Compromise del bot Telegram (token leakage) | Atacante con el bot token puede leer mensajes del bot y aprobar en nombre del bot, o suplantar al bot en chats nuevos | L | H | Medium | Bot token en secreto rotable (`.env` con permisos 0600 en v1, Vault en producción); el bot únicamente *envía* mensajes, las respuestas se validan contra `chat_id` esperado del aprobador (no contra el remitente del callback); rotación inmediata si se sospecha leak | Low |
+
+---
+
+
+
+### 3.8 Multi-vector threats (post ADR-0008)
+
+La expansión de scope a multi-vector (Network DoS, Application Abuse, Valid Accounts FP) introduce nuevos vectores que requieren análisis STRIDE específico. Threats numerados T-080+.
+
+| ID | Component | Threat | L | I | Risk | Mitigation | Residual |
+|----|-----------|--------|---|---|------|------------|----------|
+| T-080 | PostgreSQL TCP/5432 | Atacante satura el servicio con SYN flood o slow-rate HTTP requests (T1498/T1499) hasta provocar Denial of Service | M | H | **High** | Rule Sigma rate-based en Wazuh sobre `iptables` logs / nginx access logs; rate-limit automático vía iptables --limit cuando se supera umbral; modelo ML especializado `network_traffic_anomaly.pkl` corrobora | Low — capacidad de respuesta al tráfico legítimo preservada con rate-limit selectivo por IP atacante |
+| T-081 | Webapp delante de PostgreSQL | Atacante explota SQL injection via parámetros HTTP (T1190.001) para extraer/modificar datos en la DB | M | H | **High** | Rule Sigma sobre patrones SQLi en logs HTTP (`' OR`, `UNION SELECT`, time-based blind); block automático del IP atacante; alertar revisión forense para verificar datos exfiltrados antes del block | Medium — si la app comparte credenciales DB, rotar credenciales tras incidente |
+| T-082 | False positive ML | Usuario legítimo (ej. Sebastian generando reporte mensual con SELECT masivo a las 3 AM) dispara modelo ML query pattern, sistema entra en T2, throttle preventivo aplicado | H | L | Medium — riesgo de fricción operacional, NO de seguridad | HITL approval con 3 min countdown; aprobador puede cancelar contención; throttle es no-destructivo; caso queda registrado como FP en OpenSearch con `false_positive=true` + razón documentada para retroalimentar calibración Q5 | Low — el costo del FP cancelado es ventana de espera de minutos, no daño |
+| T-083 | Webapp dummy expuesta | App Flask trivial (UC-08) puede tener vulnerabilidades no relacionadas con SQLi (XSS, deserialización) que el atacante use como vector alternativo | L | M | Low | App es deliberadamente trivial y sandboxed en Linux VM aislada; ningún dato sensible real; documento explícitamente: la app es target, no defensa | Negligible — la app NO es target de defensa, solo entry point para el ataque |
+| T-084 | Modelo ML `query_pattern_anomaly` | Atacante con credenciales legítimas (T1078 Valid Accounts) puede ejercitar el modelo con queries borderline durante semanas para encontrar el threshold y operar justo bajo el límite (model evasion via threshold mapping) | L | M | Medium | Threshold no expuesto públicamente; ensemble con segundo modelo (Sigma rules para query patterns sospechosos); retrain periódico cambia el threshold | Medium — vector teórico, requiere acceso legítimo prolongado y conocimiento del modelo |
+| T-085 | DDoS contra el propio Wazuh Manager | Atacante satura el manager con eventos falsos para que el SOAR se quede sin capacidad de procesar alertas reales (defensive DoS amplification) | L | H | Medium | Rate-limit por agent_id en el manager; alert priority queue prioriza Layer 3 (canary, zero-FP) sobre Layer 1/2 cuando hay sobrecarga | Low — degradación parcial, no ceguera total |
+
 
 ---
 
@@ -314,7 +332,7 @@ Future expansions (out of scope for v1.0):
 |---------|------|--------|--------|
 | 1.0 | Week 1 | Initial baseline. STRIDE for 4 categories, FMEA for 6 components, Risk Register with 9 project risks, 10 resilience properties documented. | P1 |
 | 1.1 | Week 1 | Added Section 3.7 (approval system threats) covering 7 new threats T-060 through T-066 introduced by ADRs 0003/0005/0006. Updated residual risks list. | P1 |
-| 1.2 | Week 9 (post Gate 2) | Section 3.7 expanded to cover ADR-0007 (multi-channel notification chain): added T-067 (SIM-swap del aprobador), T-068 (caller-ID spoofing al webhook Twilio), T-069 (compromise del bot Telegram via token leakage). Trust boundary note added implicitly via §3.7 preamble. Metadata: version bump, `Related` extended to ADRs 0001-0007, status note. | P1 |
+| 1.2 | Week 9 (post Gate 2) | Section 3.7 expanded to cover ADR-0007 (multi-channel notification chain): added T-067 (SIM-swap del aprobador), T-068 (caller-ID spoofing al webhook Twilio), T-069 (compromise del bot Telegram via token leakage). Trust boundary note added implicitly via §3.7 preamble. Metadata: version bump, `Related` extended to ADRs 0001-0008, status note. | P1 |
 | 1.3 | Week 7 calendar | T-062 reframed from "compromised approver **email** account" to channel-agnostic ("any notification channel") with explicit note that email is now post-facto-only per ADR-0007. Cross-references T-067/T-069 as primary-channel threats. | P1 |
 | 1.4 | Week 7 calendar | P-002 mitigation updated to reflect reality: removed "Friday demo" (practice not adopted), kept Monday standup + cross-layer code review + per-module READMEs. Risk score unchanged at High because removed mitigation was aspirational. | P1 |
 | 1.5 | 2026-05-24 | Cleanup pass: T-030 actualizado (riesgo H→M tras cambio a OpenAI US-based + Llama local fallback per ADR-0001 v2); F-001 sincronizado al failover OpenAI→Llama local. T-070 añadido (Discord webhook leak) per ADR-0007 v2. Owner actualizado a Enzo Ordoñez Flores. | P1 |

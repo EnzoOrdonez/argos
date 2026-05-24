@@ -2,7 +2,7 @@
 
 **Adaptive Response Guard with Orchestrated Surveillance**
 
-Sistema de detección y respuesta a ransomware con defensa en profundidad: detección por reglas (Sigma + Wazuh), detección de anomalías ML, engaño (canary files) y triage asistido por LLM con SOAR human-in-the-loop.
+Plataforma multi-vector de detección y respuesta (XDR-style) per ADR-0008. Cuatro capas defensivas: reglas Sigma + Wazuh (rules), Isolation Forest + One-Class SVM (ML anomaly), canary files con FIM whodata (deception), y triage asistido por LLM con SOAR human-in-the-loop. Énfasis primario en ransomware; extendida a Network DoS (T1498/T1499) y Application Abuse (T1190 SQL injection).
 
 > Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
 > **Entrega final: 13 de junio de 2026**
@@ -78,7 +78,7 @@ Snapshot detallado en [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
 | Componente | Estado |
 |------------|--------|
-| Diseño arquitectónico (SAD, threat model, 7 ADRs, contracts spec, use cases) | Completado |
+| Diseño arquitectónico (SAD, threat model, 8 ADRs, contracts spec, use cases) | Completado |
 | `argos_contracts` (Pydantic v2 cross-team, 69 tests) | Entregado · v1.1.0 |
 | Capa 1 (Sigma + Wazuh) | Pendiente |
 | Capa 2 (ML anomalía) | Pendiente |
@@ -100,7 +100,7 @@ Snapshot detallado en [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 - **Activo defendido:** PostgreSQL Production DB sobre Linux VM (criticality = production-critical).
 - **Documentación:** completa para fase de diseño antes de cualquier código escrito.
 - **Amenazas analizadas:** ~50 vía STRIDE + FMEA.
-- **Decisiones arquitectónicas:** 7 ADRs (6 aceptados, 1 rechazado) + 9 resoluciones de cierre.
+- **Decisiones arquitectónicas:** 8 ADRs (6 aceptados, 1 rechazado) + 9 resoluciones de cierre.
 
 ---
 

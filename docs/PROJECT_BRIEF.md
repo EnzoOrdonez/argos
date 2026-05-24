@@ -11,7 +11,7 @@ Las empresas medianas y grandes no pueden costear EDRs comerciales (CrowdStrike,
 
 ## Solución
 
-Sistema de detección y respuesta a ransomware con **defense-in-depth de 4 capas paralelas + SOAR + LLM triage**, todo OSS (excepto LLM API de bajo costo), desplegado en lab virtualizado y con demostración de ataque end-to-end con contención automatizada.
+Plataforma multi-vector de detección y respuesta (XDR-style per ADR-0008) con **defense-in-depth de 4 capas paralelas + SOAR + LLM triage**. Énfasis primario en ransomware; extendida a Network DoS y Application Abuse. Todo OSS (excepto LLM API de bajo costo), desplegado en lab virtualizado y con demostración end-to-end de 3 vectores de ataque con contención automatizada y false positive cancellation por humano.
 
 ## Arquitectura — 4 capas de detección
 
@@ -52,7 +52,7 @@ Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera �
 
 ## Resiliencia y manejo de fallos
 
-El sistema está diseñado contra fallos del propio defensor. **El LLM nunca está en el path crítico de contención** — si alucina o falla, el SOAR sigue actuando desde Capas 1-3. Si el primario OpenAI cae, fallback automático a Llama 3.1 local (zero-egress) — el sistema sigue funcionando sin internet. **Si el atacante mata el agente Wazuh**, la desconexión es ella misma alerta crítica. **Conservative-wins policy** protege contra cuentas comprometidas que rechacen contenciones legítimas. Tres capas de detección independientes garantizan degradación gradual, no ceguera total. Threat model completo (STRIDE + FMEA + Risk Register, ~50 amenazas analizadas) en `THREAT_MODEL.md`. Decisiones arquitectónicas individuales en ADRs 0001 a 0007.
+El sistema está diseñado contra fallos del propio defensor. **El LLM nunca está en el path crítico de contención** — si alucina o falla, el SOAR sigue actuando desde Capas 1-3. Si el primario OpenAI cae, fallback automático a Llama 3.1 local (zero-egress) — el sistema sigue funcionando sin internet. **Si el atacante mata el agente Wazuh**, la desconexión es ella misma alerta crítica. **Conservative-wins policy** protege contra cuentas comprometidas que rechacen contenciones legítimas. Tres capas de detección independientes garantizan degradación gradual, no ceguera total. Threat model completo (STRIDE + FMEA + Risk Register, ~50 amenazas analizadas) en `THREAT_MODEL.md`. Decisiones arquitectónicas individuales en ADRs 0001 a 0008.
 
 ## Por qué importa
 

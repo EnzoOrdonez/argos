@@ -5,7 +5,7 @@
 **Status:** Approved
 **Owner:** P1
 **Reviewers:** P2, P3, P4
-**Related:** `OPEN_QUESTIONS_RESOLUTION.md` Q4.2, `SOLUTION_ARCHITECTURE_DOCUMENT.md` §6, ADRs 0001-0007
+**Related:** `OPEN_QUESTIONS_RESOLUTION.md` Q4.2, `SOLUTION_ARCHITECTURE_DOCUMENT.md` §6, ADRs 0001-0008
 
 ---
 

@@ -11,7 +11,7 @@
 | Term | 2026-1 |
 | Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
-| Related documents | `PROJECT_BRIEF.md`, `CONTEXT.md`, `argos_flow.html` / `argos_flow.drawio`, `THREAT_MODEL.md`, ADRs 0001-0007 |
+| Related documents | `PROJECT_BRIEF.md`, `CONTEXT.md`, `argos_flow.html` / `argos_flow.drawio`, `THREAT_MODEL.md`, ADRs 0001-0008 |
 
 ---
 
@@ -167,6 +167,42 @@ Honeypot files placed where legitimate users would never touch but indiscriminat
 **Trade-off:** by design, false-positive rate ≈ 0. Limitation: a sophisticated attacker who knows the canaries can avoid them. This is why Layer 3 complements but does not replace Layers 1 and 2.
 
 **Owner:** P3.
+
+---
+
+
+
+### 5.4 Sub-categorización por dominio (post ADR-0008)
+
+Tras la expansión multi-vector documentada en ADR-0008, las Capas 1 y 2 contienen sub-módulos especializados por categoría de ataque. Esto NO añade nuevas capas — sigue siendo la misma arquitectura de 4 capas paralelas. Solo organiza el código por dominio para mantenibilidad.
+
+**Capa 1 (Sigma rules) — sub-directorios:**
+
+```
+detection/sigma-rules/
+├── ransomware/      # T1486, T1490, T1083, T1562.001 (kill chain original)
+├── network/         # T1498, T1499 (DDoS volumetric, slow-rate)
+├── database/        # query pattern anomalies (UC-07 context)
+└── webapp/          # T1190 SQL injection signatures (UC-08)
+```
+
+Cada subdirectorio se mantiene independientemente. Las reglas se convierten a Wazuh con `sigma-cli` y se despliegan a `/var/ossec/etc/rules/` con prefijo de categoría.
+
+**Capa 2 (ML) — modelos especializados:**
+
+```
+ml/models/
+├── ransomware_ensemble.pkl       # Isolation Forest + One-Class SVM (features ransomware: entropy, write rate)
+├── network_traffic_anomaly.pkl   # Modelo ML para UC-06 (features: packets/sec, source IP entropy)
+└── query_pattern_anomaly.pkl     # Modelo ML para UC-07 (features: rows_returned, duration, hour, user_id)
+```
+
+Cada modelo se entrena sobre baseline benigno de SU dominio. Las features son distintas por modelo — no comparten pipeline de extracción. El `MLScore` contract es el mismo (un score float + features dict) pero el campo `model_version` identifica qué modelo produjo el score, y el Decision Engine lo usa para fusion logic.
+
+**Capa 3 (canary) — sin sub-categorización.** Es deliberadamente ransomware-específica. Documentado en ADR-0008 §"Capa 3 permanece estrictamente ransomware-specific".
+
+**Capa 4 (LLM Triage) — sin sub-categorización.** El cliente vendor-agnostic y el prompt template son agnósticos al tipo de alerta. El LLM recibe el `AlertContext` y devuelve `TriageResponse` independientemente de si la alerta vino de ransomware kill chain, DDoS, o SQL injection.
+
 
 ---
 

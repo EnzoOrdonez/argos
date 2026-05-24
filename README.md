@@ -4,7 +4,7 @@
 
 ### Adaptive Response Guard with Orchestrated Surveillance
 
-*Sistema de detección y respuesta a ransomware con defensa en profundidad, SOAR y aprobación humana asistida por LLM.*
+*Plataforma multi-vector de detección y respuesta (XDR-style) con defensa en profundidad, SOAR y aprobación humana asistida por LLM. Énfasis primario en ransomware; extendida a Network DoS y Application Abuse per ADR-0008.*
 
 [![Status](https://img.shields.io/badge/status-active%20development-orange)](docs/PROJECT_STATUS.md)
 [![Contracts](https://img.shields.io/badge/argos__contracts-v1.1.0-blue)](argos_contracts/)
@@ -117,9 +117,12 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 - Wazuh 4.7 · OpenSearch · Sigma
 - Sysmon · auditd
 
-**🎯 Simulación de ataque**
+**🎯 Simulación de ataque multi-vector**
 - Atomic Red Team · Caldera
 - Custom ransomware simulator (Python)
+- DDoS: hping3 · slowhttptest (per UC-06)
+- SQL injection: sqlmap (per UC-08)
+- pgAudit para query patterns (per UC-07)
 
 **🤖 Machine Learning**
 - scikit-learn (Isolation Forest, One-Class SVM)
@@ -165,7 +168,7 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 
 | Componente | Estado | Notas |
 |---|:---:|---|
-| 📐 Arquitectura & diseño (SAD, threat model, 7 ADRs, contracts spec, use cases) | ✅ | Completo |
+| 📐 Arquitectura & diseño (SAD, threat model, 8 ADRs, contracts spec, use cases) | ✅ | Completo |
 | 📦 [`argos_contracts/`](./argos_contracts/) — Pydantic v2 cross-team | ✅ | **v1.1.0** · 25 modelos · 9 enums · **69 tests** · TD-01 y TD-02 cerrados |
 | 🎨 [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html) — flujo + ownership | ✅ | Entregado al equipo |
 | 🛡 PostgreSQL como activo defendido (UC-04) | ✅ | Documentado en `OPEN_QUESTIONS §Q2` |
@@ -263,7 +266,7 @@ Cinco escenarios end-to-end de ataque diseñados para la exposición en vivo (~1
 | 🔒 | LLM data handling + sanitization | [`docs/data-handling.md`](./docs/data-handling.md) |
 | 📋 | Rúbrica del curso + deliverables | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
 | 📊 | Status honesto (shipped vs documentado) | [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) |
-| 🧠 | Architecture decisions (7 ADRs) | [`docs/decisions/`](./docs/decisions/) |
+| 🧠 | Architecture decisions (8 ADRs) | [`docs/decisions/`](./docs/decisions/) |
 | 🎬 | Use cases & escenarios demo | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
 
 ---
@@ -301,7 +304,7 @@ argos/
 │   │   ├── argos_flow.html    #     Flujo + ownership (navegador)
 │   │   ├── argos_flow.drawio  #     Mismo flujo editable en draw.io
 │   │   └── ...
-│   └── decisions/             #     7 ADRs + OPEN_QUESTIONS_RESOLUTION
+│   └── decisions/             #     8 ADRs + OPEN_QUESTIONS_RESOLUTION
 │
 ├── lab/                       # Vagrant + Terraform IaC + PostgreSQL provisioning
 ├── detection/                 # Sigma rules + Wazuh decoders
