@@ -11,15 +11,15 @@
 
 ## 0. Purpose
 
-The Threat Model identifies T-030 ("Sensitive logs sent to third-party API — DeepSeek/Qwen, both China-based") as a **High** residual risk for an academic project, and mandates a sanitization layer + this document. The document was referenced as a mitigation deliverable but did not exist until Week 7. This file closes that gap.
+The Threat Model identifies T-030 ("Sensitive logs sent to third-party API") as a **High** residual risk and mandates a sanitization layer + this document. Tras la reasignación de proveedor en `ADR-0001 v2` (primario GPT-4o-mini en US-based, fallback Llama 3.1 8B local zero-egress), el riesgo se atenúa significativamente: el backend local elimina la frontera de confianza por completo, y el primario US-based reduce el riesgo de soberanía de datos comparado con la v1 (DeepSeek/Qwen en China). Aun así, la política de sanitización se mantiene como defense-in-depth para cualquier payload que sale del lab.
 
-The principle is simple: **the LLM API is treated as an untrusted external service** (per Trust Boundary 4 in `THREAT_MODEL.md` §2). Everything that crosses that boundary is sanitized; everything coming back is validated.
+El principio es simple: **el backend cloud (OpenAI) se trata como servicio externo no confiable** (per Trust Boundary 4 en `THREAT_MODEL.md` §2). Todo lo que cruza esa frontera se sanitiza; todo lo que vuelve se valida. El backend local (Llama vía Ollama) opera dentro del lab y no requiere sanitización por egress, aunque puede aplicarla por uniformidad de pipeline.
 
 ---
 
 ## 1. What goes to the LLM API
 
-The only ARGOS component that calls the external LLM API is **Layer 4 LLM Triage** (`llm-triage/api/main.py`), through the abstract `LLMClient` interface (`llm-triage/llm_client/base.py` — DeepSeek or Qwen backend).
+The only ARGOS component that calls the external LLM API is **Layer 4 LLM Triage** (`llm_triage/api/main.py`), through the abstract `LLMClient` interface (`llm_triage/llm_client/base.py` — OpenAI GPT-4o-mini primary o Llama 3.1 8B local fallback, per ADR-0001 v2).
 
 For each `/triage` request, the payload sent is an `AlertContext` Pydantic model (`argos_contracts/triage.py`). The fields that cross the network are:
 
@@ -47,7 +47,7 @@ What is **never** sent under any circumstance:
 
 ## 2. Sanitization rules (concrete regex patterns)
 
-Implemented in `llm-triage/sanitizer.py` (to be added in Gate 2 implementation per `soar/README.md` milestones). Applied to every string field before it crosses the boundary to DeepSeek/Qwen.
+Implemented in `llm_triage/sanitizer.py`. Aplicado a cada string field antes de cruzar la frontera al backend cloud (OpenAI). Para el backend local (Llama via Ollama) la sanitización es opcional pero recomendada por consistencia de pipeline.
 
 ### 2.1 Credentials and secrets
 
@@ -124,7 +124,7 @@ Every LLM call writes a structured log entry to OpenSearch index `argos-llm-call
 - `incident_id` (links back to the `Incident` that triggered the triage)
 - `request_hash` (SHA-256 of the sanitized `AlertContext` JSON — for deduplication and replay analysis)
 - `response_hash` (SHA-256 of the raw response)
-- `backend_used` (`deepseek` or `qwen`)
+- `backend_used` (`openai` o `llama_local`)
 - `latency_ms`
 - `cost_estimated_usd` (per ADR-0001 budget tracking)
 - `sanitization_redactions_count` (how many patterns matched — high count = noisy data, investigate)
@@ -139,7 +139,7 @@ For forensic replay, the raw sanitized request can be reconstructed from the sou
 
 For production deployment:
 
-1. **Local LLM (Llama 3.1 / Mistral via Ollama).** Eliminates the trust boundary entirely. Foundation laid by ADR-0001 `LLMClient` abstraction. Documented as future work in SAD §14 item 4.
+1. **Local LLM como default** (no como fallback). Ya hay foundation con Llama 3.1 8B en ADR-0001 v2. La promoción a default implica aceptar la calidad menor de Llama vs GPT-4o-mini para tener zero-egress garantizado siempre.
 2. **Field-level encryption at rest** for `AlertContext` payloads in OpenSearch.
 3. **DLP scanner** as a final gate before any outbound HTTPS connection, independent of the sanitization rules in §2 (defense-in-depth).
 4. **Annual penetration test** specifically targeting the sanitizer (try to leak data through obscure patterns).
@@ -149,8 +149,8 @@ For production deployment:
 ## 6. Acceptance criteria for v1 academic project
 
 - ✅ Document exists (this file).
-- 📅 `llm-triage/sanitizer.py` implements all patterns in §2 (Gate 2 deliverable, owner P1).
-- 📅 Unit tests in `llm-triage/tests/test_sanitizer.py` cover each pattern with positive + negative cases (Gate 2).
+- 📅 `llm_triage/sanitizer.py` implements all patterns in §2 (deliverable de P1).
+- 📅 Unit tests in `llm_triage/tests/test_sanitizer.py` cover each pattern with positive + negative cases.
 - 📅 EV-05 (adversarial probes against LLM) validates that no prompt injection bypasses the sanitizer (Week 10, owner P1+P2).
 - 📅 Cost tracking in audit log validates against the `<$20 USD total` claim (Week 12).
 
@@ -161,3 +161,4 @@ For production deployment:
 | Version | Date | Change | Author |
 |---------|------|--------|--------|
 | 1.0 | Week 7 | Initial document — closes T-030 mitigation gap by formalizing what crosses the trust boundary to the external LLM API, the concrete sanitization patterns, response validation, and audit trail. | P1 |
+| 1.1 | 2026-05-23 | Sync con ADR-0001 v2: primary cambió a OpenAI GPT-4o-mini (US-based) y fallback a Llama 3.1 8B local (zero-egress). T-030 mitigado significativamente — el riesgo residual se concentra en el backend cloud. `backend_used` en audit log refleja los nuevos identificadores. Paths actualizados a `llm_triage/` (sin guión). | P1 |
