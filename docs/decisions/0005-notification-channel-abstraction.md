@@ -9,7 +9,7 @@
 
 ## Contexto
 
-> **Nota (Semana 9):** Este ADR define la **abstracción `NotificationChannel`** y sigue siendo la interfaz canónica. Las **implementaciones concretas** y la cadena de escalación temporal entre canales se definen en `ADR-0007` (Telegram + ntfy.sh + Slack + Twilio Voice). Email queda degradado al rol de notificación post-facto. Ver §"Actualizaciones posteriores" al pie.
+> **Nota (Semana 9):** Este ADR define la **abstracción `NotificationChannel`** y sigue siendo la interfaz canónica. Las **implementaciones concretas** y la cadena de escalación temporal entre canales se definen en `ADR-0007 v2` (Telegram + Discord + Twilio Voice; ntfy.sh y Slack descartados porque ningún integrante los usa). Email queda degradado al rol de notificación post-facto. Ver §"Actualizaciones posteriores" al pie.
 
 ADR-0003 introduce email + botón de aprobación como canal de comunicación con el equipo de TI. En el futuro se quieren soportar canales adicionales: Slack, Microsoft Teams, Telegram, SMS, llamada vía PagerDuty.
 

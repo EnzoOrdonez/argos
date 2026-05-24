@@ -1817,8 +1817,8 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">01</span></div>
         <div class="col-info">
           <h3 class="uc-title">Ransomware Clásico — Estilo LockBit · Flujo Completo</h3>
-          <p class="uc-focus">Enfoque de demo: cobertura de extremo a extremo · correo post-facto con botón de reversión</p>
-          <p class="uc-desc">Simulación del ransomware más prolífico de la última década. Las Capas 1, 2 y 3 se activan simultáneamente: Sigma detecta patrones de acceso masivo, el ensamble ML eleva el score de anomalía por encima de 0.9, y los canary files confirman el cifrado. El SOAR clasifica el incidente en T0 (confianza ≥0.95), ejecuta aislamiento automático y toma un snapshot forense. El analista recibe un correo post-facto con botón de reversión — sin alertas bloqueantes durante el incidente.</p>
+          <p class="uc-focus">Enfoque de demo: cobertura de extremo a extremo · notificación multicanal (Telegram + Discord) con email post-facto y botón de reversión</p>
+          <p class="uc-desc">Simulación del ransomware más prolífico de la última década. Las Capas 1, 2 y 3 se activan simultáneamente: Sigma detecta patrones de acceso masivo, el ensamble ML eleva el score de anomalía por encima de 0.9, y los canary files confirman el cifrado. El SOAR clasifica el incidente en T0 (confianza ≥0.95), ejecuta aislamiento automático y toma un snapshot forense. El analista recibe notificación post-facto vía Telegram + Discord + email con botón de reversión — sin alertas bloqueantes durante el incidente.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1486 · CIFRADO DE DATOS</span>
             <span class="mitre-chip">T1490 · INHIBICIÓN DE RECUPERACIÓN</span>
@@ -1840,7 +1840,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
           <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier tier-T0">🟢 T0 AUTOMÁTICO</div></div>
           <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">≥ 0.95</p><div class="conf-wrap"><div class="conf-fill" style="width:0%" data-w="95%"></div></div></div>
           <div><p class="meta-lbl">CAPAS ACTIVAS</p><div class="layers"><span class="lp on">C1</span><span class="lp on">C2</span><span class="lp on">C3</span><span class="lp">C4</span></div></div>
-          <div class="outcome">Aislamiento en &lt;10s · snapshot forense · correo post-facto · reversión disponible</div>
+          <div class="outcome">Aislamiento en &lt;10s · snapshot forense · Telegram + Discord + email post-facto · reversión disponible</div>
           <button class="replay-btn" data-cu="01">REPRODUCIR ATAQUE</button>
         </div>
       </div>
@@ -1979,7 +1979,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
             <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Ensamble ML detecta anomalía conductual (score &gt;0.72) · solo Capa 2</span></div>
             <div class="flow-item"><span class="ft">t+5s</span><span class="fx">SOAR: clasifica T2 → limitación de velocidad + snapshot preventivo</span></div>
             <div class="flow-item"><span class="ft">t+8s</span><span class="fx">LLM triage (Capa 4) enriquece alerta con contexto histórico vía RAG</span></div>
-            <div class="flow-item"><span class="ft">t+8s</span><span class="fx">4 aprobadores reciben solicitud por email con botón JWT firmado</span></div>
+            <div class="flow-item"><span class="ft">t+8s</span><span class="fx">4 aprobadores reciben solicitud por Telegram + Discord en paralelo con botón JWT firmado</span></div>
             <div class="flow-item"><span class="ft">t+18-52s</span><span class="fx">Respuestas: 1 rechaza · 2 aprueban · ventana de consolidación de 60s abierta tras la primera respuesta</span></div>
             <div class="flow-item"><span class="ft">t+78s</span><span class="fx">P4 sin responder → marcado como timeout al cierre de ventana</span></div>
             <div class="flow-item critical"><span class="ft">t+78s</span><span class="fx">ADR-0006 conservative-wins aplicado: 2 aprueban · 1 rechaza · 1 timeout → ejecutar aislamiento<span class="critical-tag">★ DECISIÓN</span></span></div>
@@ -2057,9 +2057,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="live-dot">LIVE</div>
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">04</span></div>
         <div class="col-info">
-          <h3 class="uc-title">Base de Datos de Producción — Regla de Dos Personas</h3>
+          <h3 class="uc-title">PostgreSQL en Producción — Regla de Dos Personas</h3>
           <p class="uc-focus">Enfoque de demo: vocabulario de cumplimiento normativo · principio de cuatro ojos · gobernanza corporativa</p>
-          <p class="uc-desc">El activo más crítico de la organización requiere el nivel más alto de control humano. Las Capas 1 y 2 corroboran el ataque con confianza T1. Por política (ADR-0006), las acciones irreversibles sobre bases de datos de producción activan la regla de dos personas: se necesitan al menos dos aprobadores explícitos antes de ejecutar el aislamiento. Un único aprobador comprometido no puede ni vetar ni aprobar solo. Genera un log de auditoría inmutable alineado con SOC 2 §CC6 e ISO 27001 §A.9.4.</p>
+          <p class="uc-desc">El activo más crítico de la organización requiere el nivel más alto de control humano. Las Capas 1 y 2 corroboran el ataque con confianza T1. Por política (ADR-0006), las acciones irreversibles sobre la base PostgreSQL de producción activan la regla de dos personas: se necesitan al menos dos aprobadores explícitos antes de ejecutar el aislamiento. Un único aprobador comprometido no puede ni vetar ni aprobar solo. Genera un log de auditoría inmutable alineado con SOC 2 §CC6 e ISO 27001 §A.9.4.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1490 · INHIBICIÓN DE RECUPERACIÓN</span>
             <span class="mitre-chip">T1021 · SERVICIOS REMOTOS</span>
@@ -2068,7 +2068,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-flow">
           <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
           <div class="flow-list">
-            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ransomware ataca la base de datos de producción</span></div>
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ransomware ataca la base PostgreSQL de producción (esquema argos_demo_prod sobre Linux VM)</span></div>
             <div class="flow-item"><span class="ft">t+3s</span><span class="fx">Sigma detecta consultas de cifrado y acceso anómalo · Capa 1 alerta</span></div>
             <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Ensamble ML corrobora comportamiento anómalo · confianza T1 (0.85)</span></div>
             <div class="flow-item"><span class="ft">t+5s</span><span class="fx">SOAR identifica activo crítico → activa Regla de Dos Personas (ADR-0006)</span></div>

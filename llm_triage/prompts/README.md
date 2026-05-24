@@ -1,6 +1,6 @@
 # prompts/ — Jinja2 templates for the triage LLM
 
-Versioned, reviewable prompt templates rendered with Jinja2 and fed to the active `LLMClient`. Keeping prompts as files (not inline strings) makes them diffable in PRs, swappable per backend (DeepSeek vs Qwen may need slight phrasing tweaks per ADR-0001 §Negativas), and easy to A/B test against the labelled dataset built in Q5.
+Versioned, reviewable prompt templates rendered with Jinja2 and fed to the active `LLMClient`. Keeping prompts as files (not inline strings) makes them diffable in PRs, swappable per backend (OpenAI GPT-4o-mini follows strict JSON-mode; Llama 3.1 local may need more explicit format prompts per ADR-0001 v2), and easy to A/B test against the labelled dataset built in Q5.
 
 ## Planned templates
 

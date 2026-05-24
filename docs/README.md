@@ -79,7 +79,7 @@ Snapshot detallado en [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 | Componente | Estado |
 |------------|--------|
 | Diseño arquitectónico (SAD, threat model, 7 ADRs, contracts spec, use cases) | Completado |
-| `argos_contracts` (Pydantic v2 cross-team, 64 tests) | Entregado · v1.1.0 |
+| `argos_contracts` (Pydantic v2 cross-team, 69 tests) | Entregado · v1.1.0 |
 | Capa 1 (Sigma + Wazuh) | Pendiente |
 | Capa 2 (ML anomalía) | Pendiente |
 | Capa 3 (Canary FIM) | Pendiente |
