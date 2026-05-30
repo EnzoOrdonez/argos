@@ -1029,6 +1029,259 @@ body { background: var(--bg); color: var(--text); font-family: var(--body); over
 .cu05-action.fired::before { content: '🔒 '; }
 @media (max-width: 760px) { .cu05-board { grid-template-columns: 1fr; } }
 
+
+/* ============ STAGE CU-04: TWO-PERSON RULE · 4 APPROVERS ============ */
+.cu04-board {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px;
+  padding: 16px; background: rgba(255,184,0,.03); border: 1px solid rgba(255,184,0,.15); border-radius: 4px;
+}
+.cu04-approver {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 12px 10px;
+  display: flex; flex-direction: column; gap: 6px; transition: all .35s ease;
+  position: relative; overflow: hidden;
+}
+.cu04-approver .av { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--text-brt); }
+.cu04-approver .nm { font-family: var(--title); font-size: 11px; font-weight: 500; color: var(--text); letter-spacing: 1px; }
+.cu04-approver .rl { font-family: var(--mono); font-size: 8px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
+.cu04-approver .vt {
+  font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 0; text-align: center;
+  border-top: 1px dashed var(--border); margin-top: 4px; letter-spacing: 1px;
+  color: var(--amber); transition: all .3s ease;
+}
+.cu04-approver.approve { border-color: rgba(0,255,179,.5); background: rgba(0,255,179,.05); }
+.cu04-approver.approve .vt { color: var(--green); text-shadow: 0 0 8px var(--green); }
+.cu04-approver.approve .vt::before { content: '✓ APPROVE'; }
+.cu04-approver.reject { border-color: rgba(255,77,106,.5); background: rgba(255,77,106,.05); }
+.cu04-approver.reject .vt { color: var(--red); text-shadow: 0 0 8px var(--red); }
+.cu04-approver.reject .vt::before { content: '✗ REJECT'; }
+.cu04-approver.timeout { border-color: rgba(150,150,150,.4); background: rgba(60,60,60,.18); opacity: .65; }
+.cu04-approver.timeout .vt { color: var(--text-dim); }
+.cu04-approver.timeout .vt::before { content: '⏱ TIMEOUT'; }
+.cu04-approver.pending .vt::before { content: '⋯ PENDING'; }
+.cu04-approver.responded::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: inset 0 0 22px currentColor; opacity: .15; pointer-events: none;
+  animation: cu04-pulse .8s ease-out;
+}
+@keyframes cu04-pulse { 0% { opacity: .6; } 100% { opacity: .15; } }
+
+.cu04-timer-bar {
+  margin-top: 14px; padding: 12px 16px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px;
+  font-family: var(--mono); font-size: 10px;
+}
+.cu04-timer-item {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.cu04-timer-item .lbl { color: var(--text-dim); font-size: 8px; letter-spacing: 2px; text-transform: uppercase; }
+.cu04-timer-item .val { color: var(--text-brt); font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 500; }
+.cu04-timer-item.active .val { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+.cu04-timer-item.done .val { color: var(--green); }
+
+.cu04-throttle {
+  margin-top: 10px; padding: 10px 14px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px;
+  display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 10px;
+}
+.cu04-throttle .lbl { color: var(--text-dim); letter-spacing: 1.5px; min-width: 110px; }
+.cu04-throttle-bar { flex: 1; height: 10px; background: var(--bg3); border-radius: 4px; overflow: hidden; position: relative; }
+.cu04-throttle-fill {
+  height: 100%; width: 100%; background: linear-gradient(90deg, var(--red), var(--amber));
+  transition: width .8s ease;
+}
+.cu04-throttle.locked .cu04-throttle-fill { background: var(--red); }
+.cu04-throttle.released .cu04-throttle-fill { background: var(--green); }
+
+.cu04-banner {
+  margin-top: 12px; padding: 14px; background: var(--bg2);
+  border-left: 3px solid var(--border2); border-radius: 4px;
+  font-family: var(--mono); font-size: 12px; color: var(--text);
+  opacity: 0; transform: translateY(8px); transition: all .4s ease;
+}
+.cu04-banner.show { opacity: 1; transform: translateY(0); }
+.cu04-banner.execute { border-color: var(--green); color: var(--green); box-shadow: 0 0 16px rgba(0,255,179,.2); }
+.cu04-banner.block { border-color: var(--red); color: var(--red); box-shadow: 0 0 16px rgba(255,77,106,.2); }
+.cu04-banner b { font-weight: 600; letter-spacing: 1px; }
+
+/* ============ STAGE CU-06: DDoS · PACKETS + SHIELD ============ */
+.cu06-board {
+  position: relative; height: 220px; padding: 14px;
+  background: linear-gradient(180deg, rgba(0,212,255,.03), transparent);
+  border: 1px solid rgba(0,212,255,.15); border-radius: 4px; overflow: hidden;
+}
+.cu06-attacker, .cu06-server {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 90px; padding: 10px 6px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px; text-align: center;
+  font-family: var(--mono); font-size: 9px;
+}
+.cu06-attacker { left: 12px; border-color: var(--red); color: var(--red); }
+.cu06-attacker .ic { font-size: 22px; display: block; margin-bottom: 4px; }
+.cu06-attacker .lbl { display: block; font-size: 8px; letter-spacing: 1px; }
+.cu06-attacker .ip { display: block; font-size: 7px; color: var(--text-dim); margin-top: 4px; }
+.cu06-server { right: 12px; border-color: var(--cyan); color: var(--cyan); }
+.cu06-server.degraded { border-color: var(--amber); color: var(--amber); }
+.cu06-server.healthy { border-color: var(--green); color: var(--green); }
+.cu06-server .ic { font-size: 22px; display: block; margin-bottom: 4px; }
+.cu06-server .lbl { display: block; font-size: 8px; letter-spacing: 1px; }
+.cu06-server .st { display: block; font-size: 7px; margin-top: 4px; font-weight: 600; }
+
+.cu06-shield {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0);
+  width: 110px; height: 110px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,255,.15), transparent 70%);
+  border: 2px solid var(--cyan); opacity: 0; transition: all .5s ease; z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 10px; color: var(--cyan); font-weight: 600;
+  letter-spacing: 1px;
+}
+.cu06-shield.up { opacity: 1; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 30px rgba(0,212,255,.4); }
+.cu06-shield::before { content: '🛡 iptables\A DROP'; white-space: pre; text-align: center; }
+.cu06-shield-pulse { animation: cu06-pulse 1.4s infinite; }
+@keyframes cu06-pulse {
+  0%, 100% { box-shadow: 0 0 25px rgba(0,212,255,.4); }
+  50% { box-shadow: 0 0 45px rgba(0,212,255,.7); }
+}
+
+.cu06-packet {
+  position: absolute; width: 6px; height: 6px; background: var(--red);
+  border-radius: 50%; box-shadow: 0 0 6px var(--red);
+  animation: cu06-fly 1.4s linear forwards;
+}
+.cu06-packet.blocked { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+@keyframes cu06-fly {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(var(--travel, 700px)); opacity: 0; }
+}
+
+.cu06-stats {
+  margin-top: 10px; padding: 8px 14px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  font-family: var(--mono); font-size: 10px;
+}
+.cu06-stat { display: flex; flex-direction: column; gap: 3px; }
+.cu06-stat .lbl { color: var(--text-dim); font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; }
+.cu06-stat .val { color: var(--text-brt); font-size: 13px; font-variant-numeric: tabular-nums; }
+.cu06-stat.dropped .val { color: var(--cyan); }
+.cu06-stat.alert .val { color: var(--red); }
+
+/* ============ STAGE CU-07: SELECT FP · LLM VERDICT + APPROVERS ============ */
+.cu07-board {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  padding: 14px; background: rgba(0,255,179,.02);
+  border: 1px solid rgba(0,255,179,.15); border-radius: 4px;
+}
+.cu07-side { display: flex; flex-direction: column; gap: 10px; }
+.cu07-query {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 12px; font-family: var(--mono); font-size: 9px; color: var(--text-dim);
+}
+.cu07-query .ts { color: var(--green); font-weight: 600; }
+.cu07-query .sql { color: var(--text-brt); margin-top: 6px; line-height: 1.6; }
+.cu07-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  padding: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  font-family: var(--mono); font-size: 9px;
+}
+.cu07-stats .it { display: flex; flex-direction: column; gap: 2px; }
+.cu07-stats .it .lbl { color: var(--text-dim); font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; }
+.cu07-stats .it .val { color: var(--text-brt); font-size: 13px; font-variant-numeric: tabular-nums; }
+.cu07-throttle { display: flex; flex-direction: column; gap: 4px; font-family: var(--mono); font-size: 9px; }
+.cu07-throttle-bar { height: 8px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.cu07-throttle-fill { height: 100%; background: var(--amber); transition: all .8s ease; }
+.cu07-throttle.released .cu07-throttle-fill { background: var(--green); }
+.cu07-throttle-lbl { color: var(--text-dim); letter-spacing: 1px; }
+.cu07-llm {
+  background: var(--bg2); border: 1px solid rgba(0,255,179,.3); border-radius: 4px;
+  padding: 12px; font-family: var(--mono); font-size: 9px;
+  display: flex; flex-direction: column; gap: 6px; min-height: 240px;
+}
+.cu07-llm .hdr { color: var(--green); font-weight: 600; font-size: 9px; letter-spacing: 1px; }
+.cu07-llm .key { color: var(--cyan); }
+.cu07-llm .val { color: var(--text-brt); }
+.cu07-llm .reason { color: var(--green); font-style: italic; line-height: 1.5; }
+.cu07-llm .typing::after { content: '▌'; animation: cu07-cursor 1s steps(1) infinite; color: var(--green); }
+@keyframes cu07-cursor { 50% { opacity: 0; } }
+.cu07-approvers {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-top: 10px;
+}
+.cu07-approver {
+  padding: 8px 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  font-family: var(--mono); font-size: 9px; color: var(--text-dim);
+  display: flex; justify-content: space-between; align-items: center;
+  transition: all .3s ease;
+}
+.cu07-approver.reject { border-color: rgba(0,255,179,.5); background: rgba(0,255,179,.05); color: var(--green); }
+.cu07-approver.reject .vt::before { content: '✗ REJECT'; }
+.cu07-approver.approve { border-color: rgba(255,77,106,.5); background: rgba(255,77,106,.05); color: var(--red); }
+.cu07-approver.approve .vt::before { content: '✓ APPROVE TO BLOCK'; }
+.cu07-banner {
+  margin-top: 10px; padding: 12px; background: var(--bg2);
+  border-left: 3px solid var(--green); border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; color: var(--green);
+  opacity: 0; transform: translateY(8px); transition: all .4s ease;
+}
+.cu07-banner.show { opacity: 1; transform: translateY(0); box-shadow: 0 0 16px rgba(0,255,179,.2); }
+
+/* ============ STAGE CU-08: SQLMAP TERMINAL + PGAUDIT ============ */
+.cu08-board {
+  display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px;
+  padding: 14px; background: rgba(255,77,106,.02);
+  border: 1px solid rgba(255,77,106,.15); border-radius: 4px;
+}
+.cu08-terminal, .cu08-pgaudit {
+  background: #0a0e14; border: 1px solid var(--border); border-radius: 4px;
+  padding: 10px; font-family: var(--mono); font-size: 9px; line-height: 1.5;
+  height: 240px; overflow: hidden; position: relative;
+}
+.cu08-terminal .hdr, .cu08-pgaudit .hdr {
+  color: var(--text-dim); font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px dashed var(--border);
+}
+.cu08-line {
+  opacity: 0; transform: translateX(-4px); transition: all .25s ease;
+  margin-bottom: 2px; color: var(--text);
+}
+.cu08-line.show { opacity: 1; transform: translateX(0); }
+.cu08-line .pfx { color: var(--cyan); font-weight: 600; }
+.cu08-line .warn { color: var(--amber); }
+.cu08-line .crit { color: var(--red); font-weight: 600; }
+.cu08-line .ok { color: var(--green); }
+.cu08-pgaudit .cu08-line { font-size: 8px; }
+.cu08-sigma {
+  margin-top: 8px; padding: 8px 12px; background: var(--bg2);
+  border: 1px solid var(--red); border-radius: 4px;
+  font-family: var(--mono); font-size: 10px; color: var(--red);
+  opacity: 0; transform: scale(.96); transition: all .35s ease;
+  text-align: center; letter-spacing: 1px;
+}
+.cu08-sigma.show { opacity: 1; transform: scale(1); box-shadow: 0 0 14px rgba(255,77,106,.3); }
+
+.cu08-mini-approvers {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  margin-top: 10px;
+}
+.cu08-mini-app {
+  padding: 6px 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 3px;
+  font-family: var(--mono); font-size: 8px; text-align: center;
+  color: var(--text-dim); transition: all .3s ease;
+}
+.cu08-mini-app .nm { font-weight: 600; color: var(--text); }
+.cu08-mini-app.approve { border-color: rgba(255,77,106,.5); background: rgba(255,77,106,.06); color: var(--red); }
+.cu08-mini-app.approve::after { content: ' ✓'; }
+.cu08-mini-app.pending::after { content: ' ⋯'; }
+
+.cu08-banner {
+  margin-top: 10px; padding: 12px; background: var(--bg2);
+  border-left: 3px solid var(--red); border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; color: var(--red);
+  opacity: 0; transform: translateY(8px); transition: all .4s ease;
+}
+.cu08-banner.show { opacity: 1; transform: translateY(0); box-shadow: 0 0 16px rgba(255,77,106,.2); }
+
 /* ============ MITRE ATT&CK HEATMAP ============ */
 .mitre-section { position: relative; z-index: 1; padding: 40px 40px 60px; max-width: 1400px; margin: 0 auto; }
 .mitre-grid {
@@ -2006,6 +2259,49 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <span class="us-pill">SOAR T1 router</span>
         <span class="us-pill">Active-response reversible</span>
       </div>
+      <div class="uc-stage" data-cu="06">
+        <div class="stage-header">
+          <span class="sh-l">IntiBank · INCIDENT T1 · DDoS · intibank-app.local</span>
+          <span class="sh-r">T+<b class="cu06-time">0.0</b>s · <b class="cu06-status">TRÁFICO HOSTIL</b></span>
+        </div>
+        <div class="stage-meta">
+          <span class="sm-chip demo">DEMO: <b>~6s</b></span>
+          <span class="sm-chip real">INCIDENTE REAL: <b>~25s</b></span>
+          <span class="sm-chip">RATIO: <b>4×</b> acelerado</span>
+        </div>
+        <div class="cu06-board" id="cu06Board">
+          <div class="cu06-attacker">
+            <span class="ic">⚡</span>
+            <span class="lbl">ATTACKER</span>
+            <span class="ip">198.51.100.7</span>
+          </div>
+          <div class="cu06-shield" id="cu06Shield"></div>
+          <div class="cu06-server" id="cu06Server">
+            <span class="ic">🖥</span>
+            <span class="lbl">nginx :80</span>
+            <span class="st" id="cu06ServerSt">HEALTHY</span>
+          </div>
+        </div>
+        <div class="cu06-stats">
+          <div class="cu06-stat alert">
+            <span class="lbl">PACKETS/S IN</span>
+            <span class="val" id="cu06Pps">0</span>
+          </div>
+          <div class="cu06-stat dropped">
+            <span class="lbl">DROPPED/S</span>
+            <span class="val" id="cu06Drop">0</span>
+          </div>
+          <div class="cu06-stat">
+            <span class="lbl">SIGMA</span>
+            <span class="val" id="cu06Sigma">STANDBY</span>
+          </div>
+          <div class="cu06-stat">
+            <span class="lbl">SERVICE LATENCY</span>
+            <span class="val" id="cu06Lat">~10ms</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- CU-04 ESTRELLA -->
@@ -2065,6 +2361,64 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <span class="us-pill">Twilio voice DTMF</span>
         <span class="us-pill">SOC 2 / ISO 27001</span>
       </div>
+      <div class="uc-stage" data-cu="04">
+        <div class="stage-header">
+          <span class="sh-l">IntiBank · INCIDENT T2 · TWO-PERSON RULE · prod-db-cluster</span>
+          <span class="sh-r">T+<b class="cu04-time">0.0</b>s · <b class="cu04-status">ESPERANDO QUORUM</b></span>
+        </div>
+        <div class="stage-meta">
+          <span class="sm-chip demo">DEMO: <b>~9s</b></span>
+          <span class="sm-chip real">INCIDENTE REAL: <b>~22s</b></span>
+          <span class="sm-chip">RATIO: <b>2.4×</b> acelerado</span>
+        </div>
+        <div class="cu04-board">
+          <div class="cu04-approver pending" id="cu04A1">
+            <span class="av">P1</span>
+            <span class="nm">Enzo Ordoñez</span>
+            <span class="rl">SOC LEAD</span>
+            <span class="vt"></span>
+          </div>
+          <div class="cu04-approver pending" id="cu04A2">
+            <span class="av">P2</span>
+            <span class="nm">Sebastian M.</span>
+            <span class="rl">DATABASE ADMIN</span>
+            <span class="vt"></span>
+          </div>
+          <div class="cu04-approver pending" id="cu04A3">
+            <span class="av">P3</span>
+            <span class="nm">Angeles C.</span>
+            <span class="rl">INFRA LEAD</span>
+            <span class="vt"></span>
+          </div>
+          <div class="cu04-approver pending" id="cu04A4">
+            <span class="av">P4</span>
+            <span class="nm">Diego J.</span>
+            <span class="rl">COMPLIANCE</span>
+            <span class="vt"></span>
+          </div>
+        </div>
+        <div class="cu04-timer-bar">
+          <div class="cu04-timer-item" id="cu04Consol">
+            <span class="lbl">VENTANA CONSOLIDACIÓN</span>
+            <span class="val"><b>—</b> / 60s</span>
+          </div>
+          <div class="cu04-timer-item" id="cu04Hard">
+            <span class="lbl">HARD TIMEOUT (ADR-0003)</span>
+            <span class="val"><b>0</b> / 180s</span>
+          </div>
+          <div class="cu04-timer-item" id="cu04Quorum">
+            <span class="lbl">QUORUM (2 NECESARIO)</span>
+            <span class="val"><b>0</b> / 2</span>
+          </div>
+        </div>
+        <div class="cu04-throttle" id="cu04Throttle">
+          <span class="lbl">THROTTLE PG</span>
+          <div class="cu04-throttle-bar"><div class="cu04-throttle-fill"></div></div>
+          <span class="cu04-throttle-st">100 q/s</span>
+        </div>
+        <div class="cu04-banner" id="cu04Banner"></div>
+      </div>
+
     </div>
 
     <!-- CU-07 -->
@@ -2119,6 +2473,50 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <span class="us-pill">Throttle reversible</span>
         <span class="us-pill">Feedback loop ML</span>
       </div>
+      <div class="uc-stage" data-cu="07">
+        <div class="stage-header">
+          <span class="sh-l">IntiBank · INCIDENT T2 · inti_analyst @ 03:14 LIMA · SELECT MASIVO</span>
+          <span class="sh-r">T+<b class="cu07-time">0.0</b>s · <b class="cu07-status">EVALUANDO</b></span>
+        </div>
+        <div class="stage-meta">
+          <span class="sm-chip demo">DEMO: <b>~7s</b></span>
+          <span class="sm-chip real">INCIDENTE REAL: <b>~27s</b></span>
+          <span class="sm-chip">RATIO: <b>3.8×</b> acelerado</span>
+        </div>
+        <div class="cu07-board">
+          <div class="cu07-side">
+            <div class="cu07-query">
+              <span class="ts">2026-06-01 03:14:08 · inti_analyst @ 10.10.20.42</span>
+              <div class="sql">SELECT * FROM intibank.transactions<br>&nbsp;&nbsp;WHERE created_at &gt;= '2026-05-01'<br>&nbsp;&nbsp;LIMIT 200000;</div>
+            </div>
+            <div class="cu07-stats">
+              <div class="it"><span class="lbl">ROWS</span><span class="val" id="cu07Rows">0</span></div>
+              <div class="it"><span class="lbl">DURATION</span><span class="val" id="cu07Dur">0.0s</span></div>
+              <div class="it"><span class="lbl">% TABLA</span><span class="val" id="cu07Pct">0%</span></div>
+            </div>
+            <div class="cu07-throttle" id="cu07Throttle">
+              <span class="cu07-throttle-lbl">THROTTLE · <b id="cu07ThrSt">ACTIVE</b> (5 q/s)</span>
+              <div class="cu07-throttle-bar"><div class="cu07-throttle-fill" style="width:80%"></div></div>
+            </div>
+          </div>
+          <div class="cu07-side">
+            <div class="cu07-llm" id="cu07Llm">
+              <span class="hdr">// LLM TRIAGE · gpt-4o-mini · RAG</span>
+              <div id="cu07LlmContent"></div>
+            </div>
+            <div class="cu07-approvers">
+              <div class="cu07-approver" id="cu07Ap1">
+                <span>P1 SOC</span><span class="vt"></span>
+              </div>
+              <div class="cu07-approver" id="cu07Ap2">
+                <span>P2 DBA</span><span class="vt"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cu07-banner" id="cu07Banner"></div>
+      </div>
+
     </div>
 
 
@@ -2170,6 +2568,36 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <span class="us-pill">Two-Person Rule</span>
         <span class="us-pill">nginx endpoint block</span>
       </div>
+      <div class="uc-stage" data-cu="08">
+        <div class="stage-header">
+          <span class="sh-l">IntiBank · INCIDENT T2 · SQL INJECTION · 198.51.100.42</span>
+          <span class="sh-r">T+<b class="cu08-time">0.0</b>s · <b class="cu08-status">ANALIZANDO</b></span>
+        </div>
+        <div class="stage-meta">
+          <span class="sm-chip demo">DEMO: <b>~7s</b></span>
+          <span class="sm-chip real">INCIDENTE REAL: <b>~35s</b></span>
+          <span class="sm-chip">RATIO: <b>5×</b> acelerado</span>
+        </div>
+        <div class="cu08-board">
+          <div class="cu08-terminal" id="cu08Terminal">
+            <div class="hdr">// sqlmap @ 198.51.100.42 → intibank-app.local/login.php</div>
+            <div id="cu08TermContent"></div>
+          </div>
+          <div class="cu08-pgaudit" id="cu08PgAudit">
+            <div class="hdr">// pgAudit · intibank.app_prod</div>
+            <div id="cu08PgContent"></div>
+          </div>
+        </div>
+        <div class="cu08-sigma" id="cu08Sigma">⚡ SIGMA FIRING · pg_sqli_pattern · T1190</div>
+        <div class="cu08-mini-approvers">
+          <div class="cu08-mini-app pending" id="cu08M1"><span class="nm">P1 SOC</span></div>
+          <div class="cu08-mini-app pending" id="cu08M2"><span class="nm">P2 DBA</span></div>
+          <div class="cu08-mini-app pending" id="cu08M3"><span class="nm">P3 INFRA</span></div>
+          <div class="cu08-mini-app pending" id="cu08M4"><span class="nm">P4 COMPL.</span></div>
+        </div>
+        <div class="cu08-banner" id="cu08Banner"></div>
+      </div>
+
     </div>
 
   </div>
@@ -2910,9 +3338,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
 
 /* =================== STAGE PLAYER · CONTROLADOR GLOBAL =================== */
 const STAGE = {
-  timers: { '01': [], '02': [], '03': [], '04': [], '05': [] },
-  played: { '01': false, '02': false, '03': false, '04': false, '05': false },
-  clearTimers(cu){ this.timers[cu].forEach(t => clearTimeout(t)); this.timers[cu] = []; },
+  timers: { '01': [], '02': [], '03': [], '04': [], '05': [], '06': [], '07': [], '08': [] },
+  played: { '01': false, '02': false, '03': false, '04': false, '05': false, '06': false, '07': false, '08': false },
+  clearTimers(cu){ this.timers[cu].forEach(t => { if (typeof t === 'object' && t.clear) t.clear(); else clearTimeout(t); }); this.timers[cu] = []; },
   set(cu, fn, ms){ this.timers[cu].push(setTimeout(fn, ms)); }
 };
 
@@ -3287,6 +3715,440 @@ const STAGE = {
       setTimeout(window.playCU05, 400);
     }
   }, { threshold: .25 });
+  io.observe(stage);
+})();
+
+
+/* ----------- CU-04 · TWO-PERSON RULE · 4 APPROVERS ----------- */
+(function(){
+  const stage = document.querySelector('.uc-stage[data-cu="04"]');
+  if (!stage) return;
+  const time = stage.querySelector('.cu04-time');
+  const status = stage.querySelector('.cu04-status');
+  const a1 = document.getElementById('cu04A1');
+  const a2 = document.getElementById('cu04A2');
+  const a3 = document.getElementById('cu04A3');
+  const a4 = document.getElementById('cu04A4');
+  const consolEl = document.getElementById('cu04Consol');
+  const hardEl = document.getElementById('cu04Hard');
+  const quorumEl = document.getElementById('cu04Quorum');
+  const throttle = document.getElementById('cu04Throttle');
+  const throttleSt = throttle.querySelector('.cu04-throttle-st');
+  const throttleFill = throttle.querySelector('.cu04-throttle-fill');
+  const banner = document.getElementById('cu04Banner');
+
+  function reset() {
+    [a1, a2, a3, a4].forEach(el => {
+      el.classList.remove('approve', 'reject', 'timeout', 'responded');
+      el.classList.add('pending');
+    });
+    consolEl.classList.remove('active', 'done');
+    hardEl.classList.remove('active', 'done');
+    consolEl.querySelector('b').textContent = '—';
+    hardEl.querySelector('b').textContent = '0';
+    quorumEl.querySelector('b').textContent = '0';
+    throttle.classList.remove('locked', 'released');
+    throttle.classList.add('locked');
+    throttleSt.textContent = '5 q/s (throttled)';
+    throttleFill.style.width = '15%';
+    banner.classList.remove('show', 'execute', 'block');
+    banner.innerHTML = '';
+    time.textContent = '0.0';
+    status.textContent = 'ESPERANDO QUORUM';
+    status.style.color = '';
+  }
+
+  function markResponse(el, decision) {
+    el.classList.remove('pending');
+    el.classList.add(decision, 'responded');
+  }
+
+  window.playCU04 = function(){
+    STAGE.clearTimers('04');
+    reset();
+    // Throttle activates at t=0
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed += 0.1;
+      time.textContent = elapsed.toFixed(1);
+      hardEl.querySelector('b').textContent = Math.round(elapsed * 20); // accelerated 20x to reach 180
+    }, 100);
+    STAGE.timers['04'].push({ clear: () => clearInterval(interval) });
+    // P1 approves at t=2s (consolidation window starts)
+    STAGE.set('04', () => {
+      markResponse(a1, 'approve');
+      quorumEl.querySelector('b').textContent = '1';
+      consolEl.classList.add('active');
+      consolEl.querySelector('b').textContent = '0';
+      status.textContent = 'CONSOLIDATING';
+    }, 2000);
+    // Consolidation counter
+    let consolSec = 0;
+    STAGE.set('04', () => {
+      const consolInt = setInterval(() => {
+        consolSec += 1;
+        if (consolSec <= 60) consolEl.querySelector('b').textContent = consolSec;
+      }, 100);
+      STAGE.timers['04'].push({ clear: () => clearInterval(consolInt) });
+    }, 2050);
+    // P2 approves at t=4s — quorum
+    STAGE.set('04', () => {
+      markResponse(a2, 'approve');
+      quorumEl.querySelector('b').textContent = '2';
+      quorumEl.classList.add('active');
+    }, 4000);
+    // Decision at t=5s — EXECUTE
+    STAGE.set('04', () => {
+      consolEl.classList.remove('active');
+      consolEl.classList.add('done');
+      banner.classList.add('show', 'execute');
+      banner.innerHTML = '<b>✓ DECISIÓN: EXECUTE</b> · 2 approves · policy=two_person_approve · isolate host';
+      status.textContent = 'EXECUTING';
+      status.style.color = 'var(--green)';
+      throttle.classList.remove('locked');
+      throttle.classList.add('released');
+      throttleSt.textContent = 'HOST ISOLATED · 0 q/s';
+      throttleFill.style.width = '100%';
+    }, 5200);
+    // P3 timeout marked retrospectively at t=7s
+    STAGE.set('04', () => {
+      markResponse(a3, 'timeout');
+      markResponse(a4, 'timeout');
+    }, 7000);
+    // Stop counter at t=8.5s
+    STAGE.set('04', () => {
+      clearInterval(interval);
+      time.textContent = elapsed.toFixed(1);
+    }, 8500);
+  };
+
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting && !STAGE.played['04']) {
+      STAGE.played['04'] = true;
+      setTimeout(window.playCU04, 400);
+    }
+  }), { threshold: .35 });
+  io.observe(stage);
+})();
+
+/* ----------- CU-06 · DDoS · PACKETS + SHIELD ----------- */
+(function(){
+  const stage = document.querySelector('.uc-stage[data-cu="06"]');
+  if (!stage) return;
+  const board = document.getElementById('cu06Board');
+  const time = stage.querySelector('.cu06-time');
+  const status = stage.querySelector('.cu06-status');
+  const server = document.getElementById('cu06Server');
+  const serverSt = document.getElementById('cu06ServerSt');
+  const shield = document.getElementById('cu06Shield');
+  const pps = document.getElementById('cu06Pps');
+  const drop = document.getElementById('cu06Drop');
+  const sigma = document.getElementById('cu06Sigma');
+  const lat = document.getElementById('cu06Lat');
+  let packetInterval = null;
+  let timeInterval = null;
+
+  function spawnPacket(blocked) {
+    const p = document.createElement('div');
+    p.className = 'cu06-packet' + (blocked ? ' blocked' : '');
+    p.style.top = (20 + Math.random() * 160) + 'px';
+    p.style.left = '110px';
+    p.style.setProperty('--travel', blocked ? '210px' : '540px');
+    board.appendChild(p);
+    setTimeout(() => p.remove(), 1400);
+  }
+
+  function reset() {
+    board.querySelectorAll('.cu06-packet').forEach(p => p.remove());
+    shield.classList.remove('up', 'cu06-shield-pulse');
+    server.classList.remove('degraded', 'healthy');
+    serverSt.textContent = 'HEALTHY';
+    serverSt.style.color = '';
+    pps.textContent = '0';
+    drop.textContent = '0';
+    sigma.textContent = 'STANDBY';
+    sigma.style.color = '';
+    lat.textContent = '~10ms';
+    time.textContent = '0.0';
+    status.textContent = 'TRÁFICO HOSTIL';
+    if (packetInterval) clearInterval(packetInterval);
+    if (timeInterval) clearInterval(timeInterval);
+  }
+
+  window.playCU06 = function(){
+    STAGE.clearTimers('06');
+    reset();
+    let elapsed = 0;
+    timeInterval = setInterval(() => {
+      elapsed += 0.1;
+      time.textContent = elapsed.toFixed(1);
+    }, 100);
+    STAGE.timers['06'].push({ clear: () => clearInterval(timeInterval) });
+    // Phase 1: attack starts, packets flood (0 - 3s)
+    packetInterval = setInterval(() => { spawnPacket(false); spawnPacket(false); }, 80);
+    STAGE.timers['06'].push({ clear: () => clearInterval(packetInterval) });
+    let ppsVal = 0;
+    const ppsRamp = setInterval(() => {
+      ppsVal += 8000;
+      if (ppsVal > 250000) ppsVal = 250000;
+      pps.textContent = ppsVal.toLocaleString();
+    }, 100);
+    STAGE.timers['06'].push({ clear: () => clearInterval(ppsRamp) });
+    // Phase 2: service degrades at t=1.5s
+    STAGE.set('06', () => {
+      server.classList.add('degraded');
+      serverSt.textContent = 'DEGRADED';
+      lat.textContent = '> 5000ms';
+      lat.style.color = 'var(--amber)';
+    }, 1500);
+    // Phase 3: Sigma fires at t=2.8s
+    STAGE.set('06', () => {
+      sigma.textContent = 'FIRING T1498';
+      sigma.style.color = 'var(--red)';
+      status.textContent = 'SOAR RESPONDING';
+    }, 2800);
+    // Phase 4: shield deploys at t=3.5s
+    STAGE.set('06', () => {
+      shield.classList.add('up', 'cu06-shield-pulse');
+      clearInterval(packetInterval);
+      packetInterval = setInterval(() => { spawnPacket(true); spawnPacket(true); }, 100);
+      STAGE.timers['06'].push({ clear: () => clearInterval(packetInterval) });
+      let dropVal = 0;
+      const dropRamp = setInterval(() => {
+        dropVal += 8000;
+        if (dropVal > 245000) dropVal = 245000;
+        drop.textContent = dropVal.toLocaleString();
+        pps.textContent = (250000 - dropVal).toLocaleString();
+      }, 100);
+      STAGE.timers['06'].push({ clear: () => clearInterval(dropRamp) });
+    }, 3500);
+    // Phase 5: service recovers at t=5s
+    STAGE.set('06', () => {
+      server.classList.remove('degraded');
+      server.classList.add('healthy');
+      serverSt.textContent = 'HEALTHY';
+      serverSt.style.color = 'var(--green)';
+      lat.textContent = '~12ms';
+      lat.style.color = 'var(--green)';
+      status.textContent = 'IP BLOCKED · MITIGATED';
+    }, 5000);
+    // Stop at t=6.5s
+    STAGE.set('06', () => {
+      clearInterval(packetInterval);
+      clearInterval(timeInterval);
+    }, 6500);
+  };
+
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting && !STAGE.played['06']) {
+      STAGE.played['06'] = true;
+      setTimeout(window.playCU06, 400);
+    }
+  }), { threshold: .35 });
+  io.observe(stage);
+})();
+
+/* ----------- CU-07 · SELECT FP · LLM VERDICT + APPROVERS ----------- */
+(function(){
+  const stage = document.querySelector('.uc-stage[data-cu="07"]');
+  if (!stage) return;
+  const time = stage.querySelector('.cu07-time');
+  const status = stage.querySelector('.cu07-status');
+  const rowsEl = document.getElementById('cu07Rows');
+  const durEl = document.getElementById('cu07Dur');
+  const pctEl = document.getElementById('cu07Pct');
+  const llmContent = document.getElementById('cu07LlmContent');
+  const ap1 = document.getElementById('cu07Ap1');
+  const ap2 = document.getElementById('cu07Ap2');
+  const banner = document.getElementById('cu07Banner');
+  const throttle = document.getElementById('cu07Throttle');
+  const throttleSt = document.getElementById('cu07ThrSt');
+
+  function reset() {
+    rowsEl.textContent = '0';
+    durEl.textContent = '0.0s';
+    pctEl.textContent = '0%';
+    llmContent.innerHTML = '';
+    ap1.classList.remove('approve', 'reject');
+    ap2.classList.remove('approve', 'reject');
+    ap1.querySelector('.vt').className = 'vt';
+    ap2.querySelector('.vt').className = 'vt';
+    banner.classList.remove('show');
+    banner.innerHTML = '';
+    throttle.classList.remove('released');
+    throttleSt.textContent = 'ACTIVE';
+    time.textContent = '0.0';
+    status.textContent = 'EVALUANDO';
+  }
+
+  window.playCU07 = function(){
+    STAGE.clearTimers('07');
+    reset();
+    let elapsed = 0;
+    const ti = setInterval(() => { elapsed += 0.1; time.textContent = elapsed.toFixed(1); }, 100);
+    STAGE.timers['07'].push({ clear: () => clearInterval(ti) });
+    // Rows ramp 0 → 200k over 2s
+    let rows = 0;
+    const rr = setInterval(() => {
+      rows += 8000;
+      if (rows > 200000) { rows = 200000; clearInterval(rr); }
+      rowsEl.textContent = rows.toLocaleString();
+      durEl.textContent = (rows / 200000 * 5.4).toFixed(1) + 's';
+      pctEl.textContent = (rows / 200000 * 10).toFixed(1) + '%';
+    }, 80);
+    STAGE.timers['07'].push({ clear: () => clearInterval(rr) });
+    // LLM verdict appears typed at t=2.5s
+    STAGE.set('07', () => {
+      const lines = [
+        '<span class="key">{</span>',
+        '<span class="key">  "label":</span> <span class="val">"benign"</span>,',
+        '<span class="key">  "confidence":</span> <span class="val">0.81</span>,',
+        '<span class="key">  "reasoning":</span>',
+        '<span class="reason">    "Pattern matches monthly payroll',
+        '    report. inti_analyst user has consistent',
+        '    access. No data exfil signals."</span>',
+        '<span class="key">}</span>'
+      ];
+      let i = 0;
+      const typer = setInterval(() => {
+        if (i >= lines.length) { clearInterval(typer); return; }
+        const div = document.createElement('div');
+        div.innerHTML = lines[i];
+        llmContent.appendChild(div);
+        i++;
+      }, 220);
+      STAGE.timers['07'].push({ clear: () => clearInterval(typer) });
+    }, 2500);
+    // Approver responses at t=4.5s and 5s
+    STAGE.set('07', () => {
+      ap1.classList.add('reject');
+      status.textContent = 'APROBADORES DECIDIENDO';
+    }, 4500);
+    STAGE.set('07', () => {
+      ap2.classList.add('reject');
+    }, 5000);
+    // Banner at t=5.5s
+    STAGE.set('07', () => {
+      banner.classList.add('show');
+      banner.innerHTML = '<b>✓ FALSE POSITIVE</b> · throttle ROLLBACK · usuario continúa query · audit_log: false_positive=true · feedback al ML';
+      status.textContent = 'FP RESUELTO';
+      status.style.color = 'var(--green)';
+      throttle.classList.add('released');
+      throttleSt.textContent = 'ROLLBACK';
+    }, 5500);
+    STAGE.set('07', () => clearInterval(ti), 7000);
+  };
+
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting && !STAGE.played['07']) {
+      STAGE.played['07'] = true;
+      setTimeout(window.playCU07, 400);
+    }
+  }), { threshold: .35 });
+  io.observe(stage);
+})();
+
+/* ----------- CU-08 · SQLMAP · TERMINAL + PGAUDIT ----------- */
+(function(){
+  const stage = document.querySelector('.uc-stage[data-cu="08"]');
+  if (!stage) return;
+  const time = stage.querySelector('.cu08-time');
+  const status = stage.querySelector('.cu08-status');
+  const termC = document.getElementById('cu08TermContent');
+  const pgC = document.getElementById('cu08PgContent');
+  const sigma = document.getElementById('cu08Sigma');
+  const m1 = document.getElementById('cu08M1');
+  const m2 = document.getElementById('cu08M2');
+  const m3 = document.getElementById('cu08M3');
+  const m4 = document.getElementById('cu08M4');
+  const banner = document.getElementById('cu08Banner');
+
+  const TERM_LINES = [
+    '<span class="pfx">$</span> sqlmap -u "intibank-app.local/login?u=admin" --batch --level=2 --dbs',
+    '<span class="warn">[INFO]</span> testing connection to the target URL',
+    '<span class="warn">[INFO]</span> testing for SQL injection on parameter \'u\'',
+    '<span class="warn">[INFO]</span> heuristics: positive injection point',
+    '<span class="warn">[INFO]</span> back-end DBMS: <b>PostgreSQL 15.x</b>',
+    '<span class="warn">[INFO]</span> fetching database names',
+    '<span class="ok">available databases [3]:</span>',
+    '<span class="ok">[*] intibank</span>',
+    '<span class="ok">[*] argos_audit</span>',
+    '<span class="ok">[*] postgres</span>',
+    '<span class="crit">[ABORT]</span> connection terminated by server',
+  ];
+  const PG_LINES = [
+    'SESSION,READ,SELECT,SELECT 1=1',
+    'SESSION,READ,SELECT,SELECT version()',
+    'SESSION,READ,SELECT,SELECT current_database()',
+    'SESSION,READ,SELECT,SELECT NULL,NULL,NULL FROM dual',
+    'SESSION,READ,SELECT,UNION SELECT pg_database.datname',
+    'SESSION,READ,SELECT,SELECT table_name FROM information_schema',
+    'SESSION,READ,SELECT,UNION SELECT version()',
+    'SESSION,READ,SELECT,SELECT pg_sleep(0.1)',
+    'SESSION,READ,SELECT,SELECT count(*) FROM internal_users',
+  ];
+
+  function reset() {
+    termC.innerHTML = '';
+    pgC.innerHTML = '';
+    sigma.classList.remove('show');
+    [m1, m2, m3, m4].forEach(m => m.classList.remove('approve'));
+    banner.classList.remove('show');
+    banner.innerHTML = '';
+    time.textContent = '0.0';
+    status.textContent = 'ANALIZANDO';
+    status.style.color = '';
+  }
+
+  window.playCU08 = function(){
+    STAGE.clearTimers('08');
+    reset();
+    let elapsed = 0;
+    const ti = setInterval(() => { elapsed += 0.1; time.textContent = elapsed.toFixed(1); }, 100);
+    STAGE.timers['08'].push({ clear: () => clearInterval(ti) });
+    // Type terminal lines
+    TERM_LINES.forEach((line, i) => {
+      STAGE.set('08', () => {
+        const d = document.createElement('div');
+        d.className = 'cu08-line';
+        d.innerHTML = line;
+        termC.appendChild(d);
+        setTimeout(() => d.classList.add('show'), 30);
+      }, 200 + i * 280);
+    });
+    // pgAudit lines (faster, more noisy)
+    PG_LINES.forEach((line, i) => {
+      STAGE.set('08', () => {
+        const d = document.createElement('div');
+        d.className = 'cu08-line';
+        d.innerHTML = '<span class="warn">AUDIT:</span> ' + line;
+        pgC.appendChild(d);
+        setTimeout(() => d.classList.add('show'), 30);
+      }, 300 + i * 250);
+    });
+    // Sigma fires at t=3.2s
+    STAGE.set('08', () => {
+      sigma.classList.add('show');
+      status.textContent = 'SIGMA FIRING';
+    }, 3200);
+    // Approvers respond fast: pattern is obvious
+    STAGE.set('08', () => { m1.classList.remove('pending'); m1.classList.add('approve'); }, 4000);
+    STAGE.set('08', () => { m2.classList.remove('pending'); m2.classList.add('approve'); }, 4600);
+    STAGE.set('08', () => {
+      banner.classList.add('show');
+      banner.innerHTML = '<b>✓ EXECUTE</b> · IP 198.51.100.42 BLOCKED · nginx endpoint blacklist · audit registrado';
+      status.textContent = 'IP BLOQUEADA';
+      status.style.color = 'var(--red)';
+    }, 5200);
+    STAGE.set('08', () => clearInterval(ti), 7000);
+  };
+
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting && !STAGE.played['08']) {
+      STAGE.played['08'] = true;
+      setTimeout(window.playCU08, 400);
+    }
+  }), { threshold: .35 });
   io.observe(stage);
 })();
 
