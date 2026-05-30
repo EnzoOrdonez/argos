@@ -1,0 +1,474 @@
+<mxfile host="app.diagrams.net" modified="2026-05-30T00:00:00.000Z" agent="ARGOS Doc Pipeline" version="22.0.0" type="device">
+<diagram id="uc-01" name="UC-01 Ransomware T0">
+<mxGraphModel dx="1700" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+<mxCell id="title" value="UC-01 — Ransomware multi-capa (T0 auto-isolate)" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#0a3d62;" vertex="1" parent="1">
+  <mxGeometry x="380" y="15" width="940" height="32" as="geometry" />
+</mxCell>
+<mxCell id="subtitle" value="lockbit_like.py uc01 · 3 capas firing · técnica AUTO_T0 · acción inmediata sin HITL · SLA &lt; 15 s" style="text;html=1;align=center;fontSize=11;fontColor=#5f6c7b;fontStyle=2;" vertex="1" parent="1">
+  <mxGeometry x="380" y="50" width="940" height="22" as="geometry" />
+</mxCell>
+<mxCell id="u1-1" value="🎯  &lt;b&gt;Atacante / Operador&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;python lockbit_like.py --variant uc01 --target linux-victim&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="100" width="460" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u1-2" value="🖥️  &lt;b&gt;linux-victim (192.168.56.21)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;cifra ~200 archivos en /opt/argos/sandbox/ con Fernet&lt;br/&gt;ejecuta vssadmin delete shadows (Sysmon logging)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="200" width="460" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u1-3" value="🛡️  &lt;b&gt;Wazuh Manager → Sigma Layer 1 dispara 3 reglas&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;✓ T1486 (Data Encrypted for Impact)&lt;br/&gt;✓ T1490 (Inhibit System Recovery)&lt;br/&gt;✓ T1083 (File Discovery)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="320" width="460" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u1-4" value="🧠  &lt;b&gt;Layer 2 ML scoring (en paralelo)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Shannon entropy = 7.9 · files_touched_per_min = 1500&lt;br/&gt;IsoForest + OC-SVM: is_anomaly=True · confidence = 0.94&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="450" width="460" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u1-5" value="⚙️  &lt;b&gt;SOAR Decision Engine → Tier T0&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;regla 1: T1486 ∈ AUTO_T0_TECHNIQUES → T0&lt;br/&gt;regla 2: num_layers_fired = 3 ≥ MIN_LAYERS (3) → boost a T0&lt;br/&gt;regla 3: confidence ≥ 0.85 → high band&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="570" width="460" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u1-6a" value="⚡  &lt;b&gt;ACCIÓN AUTOMÁTICA&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Wazuh API :55000&lt;br/&gt;active-response&lt;br/&gt;isolate host&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="75" y="700" width="220" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u1-6b" value="🔔  &lt;b&gt;Notif&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram&lt;br/&gt;Discord&lt;br/&gt;(informativo)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="305" y="700" width="130" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u1-6c" value="📊  &lt;b&gt;Audit log&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;PostgreSQL&lt;br/&gt;argos_audit&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="445" y="700" width="135" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u1-7" value="✅  &lt;b&gt;OUTCOME: Host aislado · contención completa · tiempo total &lt; 15 s&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontSize=13;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="810" width="460" height="50" as="geometry" />
+</mxCell>
+<mxCell id="u1-e1" value="ataque local" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=3;fontSize=10;" edge="1" parent="1" source="u1-1" target="u1-2">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e2" value="Wazuh agent :1514" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u1-2" target="u1-3">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e3" value="evento → Redis stream" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u1-3" target="u1-4">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e4" value="normalized event" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u1-4" target="u1-5">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e5" value="Tier T0" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=3;fontSize=10;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1-5" target="u1-6a">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e6" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1-5" target="u1-6b">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e7" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1-5" target="u1-6c">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e8" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#15803d;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1-6a" target="u1-7">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e9" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1-6b" target="u1-7">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-e10" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u1-6c" target="u1-7">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u1-legend" value="📖  Leyenda · Reglas · Timers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="720" y="100" width="920" height="770" as="geometry" />
+</mxCell>
+<mxCell id="u1-leg-1" value="&lt;b&gt;MITRE ATT&amp;CK&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;T1486&lt;/b&gt; Data Encrypted for Impact — encriptación masiva de archivos&lt;br/&gt;• &lt;b&gt;T1490&lt;/b&gt; Inhibit System Recovery — vssadmin delete shadows&lt;br/&gt;• &lt;b&gt;T1083&lt;/b&gt; File and Directory Discovery — enumeración previa" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="140" width="880" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u1-leg-2" value="&lt;b&gt;Severity &amp; Tier asignados&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;Severity:&lt;/b&gt; CRITICAL&lt;br/&gt;• &lt;b&gt;Tier:&lt;/b&gt; T0 (acción automática inmediata, sin HITL)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="250" width="880" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u1-leg-3" value="&lt;b&gt;¿Por qué T0 sin pasar por aprobadores?&lt;/b&gt;&lt;br/&gt;El tier_router aplica T0 inmediatamente si se cumple cualquiera de:&lt;br/&gt;&amp;nbsp;&amp;nbsp;a) La técnica está en &lt;tt&gt;AUTO_T0_TECHNIQUES&lt;/tt&gt; (T1486 sí lo está)&lt;br/&gt;&amp;nbsp;&amp;nbsp;b) num_layers_fired ≥ 3 (aquí Sigma + ML = 3 reglas)&lt;br/&gt;&amp;nbsp;&amp;nbsp;c) severity = CRITICAL desde la regla Sigma&lt;br/&gt;Tres condiciones se cumplen simultáneamente → confianza máxima." style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="335" width="880" height="140" as="geometry" />
+</mxCell>
+<mxCell id="u1-leg-4" value="&lt;b&gt;Timers / Reglas que NO aplican en este UC&lt;/b&gt;&lt;br/&gt;• Ventana 60s consolidación: &lt;b&gt;no aplica&lt;/b&gt; (no hay HITL)&lt;br/&gt;• Timeout 180s (3 min): &lt;b&gt;no aplica&lt;/b&gt; (acción es inmediata)&lt;br/&gt;• Escalación Twilio voz: &lt;b&gt;no aplica&lt;/b&gt; (no se espera respuesta humana)&lt;br/&gt;• Two-person rule: &lt;b&gt;no aplica&lt;/b&gt; (host víctima no es production-critical para este path)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="480" width="880" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u1-leg-5" value="&lt;b&gt;Notificación informativa enviada&lt;/b&gt;&lt;br/&gt;• Telegram al canal SOC + 4 integrantes (mensaje sin botones)&lt;br/&gt;• Discord embed rojo (color por tier T0)&lt;br/&gt;• OpenSearch Dashboard refleja el evento en Alerts Timeline&lt;br/&gt;Nadie tiene que aprobar — la notif es para registro y awareness." style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="595" width="880" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u1-leg-6" value="&lt;b&gt;SLA esperado&lt;/b&gt;&lt;br/&gt;• Latencia ataque → detection: ≤ 5 s&lt;br/&gt;• Latencia detection → tier asignado: ≤ 3 s&lt;br/&gt;• Latencia tier → host aislado vía Wazuh API: ≤ 7 s&lt;br/&gt;• &lt;b&gt;Total p95: &lt; 15 segundos&lt;/b&gt;  ·  archivos cifrados antes del aislamiento: ≤ 200" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="710" width="880" height="110" as="geometry" />
+</mxCell>
+  </root>
+</mxGraphModel>
+</diagram>
+<diagram id="uc-02" name="UC-02 Canary T0">
+<mxGraphModel dx="1700" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+<mxCell id="title" value="UC-02 — Canary path (T0 con una sola capa)" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#0a3d62;" vertex="1" parent="1">
+  <mxGeometry x="380" y="15" width="940" height="32" as="geometry" />
+</mxCell>
+<mxCell id="subtitle" value="lockbit_like.py uc02 · solo Layer 3 firing (FIM whodata) · alta fidelidad → T0 directo · sin daño real al sistema" style="text;html=1;align=center;fontSize=11;fontColor=#5f6c7b;fontStyle=2;" vertex="1" parent="1">
+  <mxGeometry x="380" y="50" width="940" height="22" as="geometry" />
+</mxCell>
+<mxCell id="u2-1" value="🎯  &lt;b&gt;Atacante / Operador&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;python lockbit_like.py --variant uc02 --target linux-victim&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="100" width="460" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u2-2" value="🐦  &lt;b&gt;Toca canary file&lt;/b&gt; — /opt/argos/canary/passwords_backup.txt&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;NO toca /opt/argos/sandbox/ — cero archivos legítimos afectados&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="200" width="460" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u2-3" value="🔍  &lt;b&gt;Layer 3 — Canary FIM whodata captura escritura&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;syscheck event con audit.user_name, audit.process_name&lt;br/&gt;Sigma rule lin_canary_write_unexpected_user → severity = CRITICAL&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="320" width="460" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u2-4-grey" value="&lt;span style=&#39;color:#aaa&#39;&gt;🧠 Layer 2 ML&lt;br/&gt;NO firing (no hay file-write masivo)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=center;strokeWidth=2;" vertex="1" parent="1">
+  <mxGeometry x="120" y="440" width="220" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u2-4-active" value="🛡️  Layer 1 Sigma&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;regla canary firing&lt;br/&gt;1 capa total&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="360" y="440" width="220" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u2-5" value="⚙️  &lt;b&gt;SOAR Decision Engine → Tier T0&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Sigma rule emite severity = CRITICAL desde el evento (canary touch = compromiso confirmado)&lt;br/&gt;SEVERITY_TO_BASE_TIER[CRITICAL] = T0&lt;br/&gt;Aunque num_layers_fired = 1, severity domina&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="540" width="460" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u2-6a" value="⚡  &lt;b&gt;ACCIÓN AUTOMÁTICA&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Wazuh API&lt;br/&gt;active-response&lt;br/&gt;isolate host&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="75" y="670" width="220" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u2-6b" value="🔔  &lt;b&gt;Notif&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram&lt;br/&gt;Discord&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="305" y="670" width="130" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u2-6c" value="📊  &lt;b&gt;Audit log&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;PostgreSQL&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="445" y="670" width="135" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u2-7" value="✅  &lt;b&gt;OUTCOME: Host aislado sin que un solo archivo legítimo se cifre · tiempo &lt; 10 s&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontSize=13;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="780" width="460" height="50" as="geometry" />
+</mxCell>
+<mxCell id="u2-e1" value="ataque" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=3;fontSize=10;" edge="1" parent="1" source="u2-1" target="u2-2">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e2" value="whodata" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u2-2" target="u2-3">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e3" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-3" target="u2-4-active">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e4" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-4-active" target="u2-5">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e5" value="Tier T0" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=3;fontSize=10;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-5" target="u2-6a">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e6" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-5" target="u2-6b">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e7" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-5" target="u2-6c">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e8" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#15803d;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-6a" target="u2-7">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e9" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-6b" target="u2-7">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-e10" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u2-6c" target="u2-7">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u2-legend" value="📖  Leyenda · Reglas · Timers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="720" y="100" width="920" height="770" as="geometry" />
+</mxCell>
+<mxCell id="u2-leg-1" value="&lt;b&gt;MITRE ATT&amp;CK&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;T1083&lt;/b&gt; File and Directory Discovery (acceso a archivo señuelo)&lt;br/&gt;• &lt;b&gt;T1486&lt;/b&gt; Data Encrypted for Impact (en variante UC-01; aquí solo se &lt;i&gt;intenta&lt;/i&gt;)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="140" width="880" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u2-leg-2" value="&lt;b&gt;Severity &amp; Tier asignados&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;Severity:&lt;/b&gt; CRITICAL (canary = compromiso confirmado)&lt;br/&gt;• &lt;b&gt;Tier:&lt;/b&gt; T0 (acción automática, sin HITL)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="225" width="880" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u2-leg-3" value="&lt;b&gt;¿Por qué T0 con una sola capa firing?&lt;/b&gt;&lt;br/&gt;El tier_router normalmente requiere ≥3 capas para boost a T0, PERO:&lt;br/&gt;&amp;nbsp;&amp;nbsp;• La Sigma rule del canary emite &lt;b&gt;severity=CRITICAL&lt;/b&gt; explícitamente&lt;br/&gt;&amp;nbsp;&amp;nbsp;• &lt;tt&gt;SEVERITY_TO_BASE_TIER[CRITICAL] = T0&lt;/tt&gt; — el mapeo base lo lleva a T0&lt;br/&gt;&amp;nbsp;&amp;nbsp;• Argumento de diseño: un canary touch es señal de muy alta fidelidad&lt;br/&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;(prácticamente cero falsos positivos — nadie modifica esos archivos por accidente)&lt;br/&gt;El bajo num_layers_fired NO down-tiera porque la confianza viene de OTRA dimensión." style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="310" width="880" height="150" as="geometry" />
+</mxCell>
+<mxCell id="u2-leg-4" value="&lt;b&gt;Timers / Reglas que NO aplican&lt;/b&gt;&lt;br/&gt;• Ventana 60s consolidación: &lt;b&gt;no aplica&lt;/b&gt;&lt;br/&gt;• Timeout 180s: &lt;b&gt;no aplica&lt;/b&gt;&lt;br/&gt;• Twilio voz: &lt;b&gt;no aplica&lt;/b&gt;&lt;br/&gt;• Two-person rule: &lt;b&gt;no aplica&lt;/b&gt; (el path no toca el activo defendido Postgres)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="465" width="880" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u2-leg-5" value="&lt;b&gt;Valor demo de este UC&lt;/b&gt;&lt;br/&gt;Demuestra que ARGOS aísla &lt;b&gt;antes&lt;/b&gt; de que se cifre un solo archivo real.&lt;br/&gt;Es el caso más limpio para el profesor: nada que recuperar, nada que rollback.&lt;br/&gt;El canary actúa como mina antipersona — pisa, suena, aísla, fin." style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="580" width="880" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u2-leg-6" value="&lt;b&gt;SLA esperado&lt;/b&gt;&lt;br/&gt;• Latencia toque canary → alerta Wazuh: ≤ 3 s&lt;br/&gt;• Latencia alerta → tier asignado: ≤ 2 s&lt;br/&gt;• Latencia tier → host aislado: ≤ 5 s&lt;br/&gt;• &lt;b&gt;Total p95: ≤ 10 segundos&lt;/b&gt;  ·  archivos legítimos afectados: 0" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="695" width="880" height="110" as="geometry" />
+</mxCell>
+  </root>
+</mxGraphModel>
+</diagram>
+<diagram id="uc-04" name="UC-04 Two-Person T2">
+<mxGraphModel dx="1700" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="980" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+<mxCell id="title" value="UC-04 — Postgres attack con Two-Person Rule (T2 HITL)" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#0a3d62;" vertex="1" parent="1">
+  <mxGeometry x="380" y="15" width="940" height="32" as="geometry" />
+</mxCell>
+<mxCell id="subtitle" value="postgres_attack.py · production-critical → two-person rule · 4 aprobadores · 60s consolidation · 180s hard timeout · 3 outcomes posibles" style="text;html=1;align=center;fontSize=11;fontColor=#5f6c7b;fontStyle=2;" vertex="1" parent="1">
+  <mxGeometry x="380" y="50" width="940" height="22" as="geometry" />
+</mxCell>
+<mxCell id="u4-1" value="🎯  &lt;b&gt;Atacante&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;postgres_attack.py&lt;br/&gt;target linux-victim&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="95" width="280" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u4-2" value="⭐  &lt;b&gt;PostgreSQL :5432&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;ACTIVO DEFENDIDO&lt;br/&gt;criticality=production-critical&lt;br/&gt;pgAudit registra cada query&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="195" width="280" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u4-3" value="🛡️🧠  &lt;b&gt;Detection (Layer 1 + 2)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Sigma: T1190 (web SQLi pattern) + T1078 (anomalous user)&lt;br/&gt;ML: query rate spike · row count outlier&lt;br/&gt;num_layers_fired = 2 · confidence = 0.74&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="315" width="280" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u4-4" value="⚙️  &lt;b&gt;SOAR → Tier T2 (two-person)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;severity=MEDIUM, T2 base&lt;br/&gt;target.tags incluye production-critical&lt;br/&gt;→ Two-Person Rule activa&lt;br/&gt;⚡ Throttle preventivo aplicado (reversible)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="445" width="280" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u4-5a" value="🔔  Telegram + Discord a 4 aprobadores ([Approve][Reject])" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="590" width="280" height="50" as="geometry" />
+</mxCell>
+<mxCell id="u4-5b" value="📞  Twilio voz se dispara a t=60s si nadie respondió aún (no es 'fin' — es escalación)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#b58e1a;fontSize=10;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="650" width="280" height="50" as="geometry" />
+</mxCell>
+<mxCell id="u4-tl" value="⏱  Línea de tiempo  ·  t=0 (incident creado) ────► t=60s (Twilio) ────► t=180s (hard timeout)" style="text;html=1;align=center;fontSize=12;fontColor=#b58e1a;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="410" y="100" width="1230" height="22" as="geometry" />
+</mxCell>
+<mxCell id="u4-approvers" value="👥  Aprobadores HITL (4 integrantes · multi-canal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d6b656;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="410" y="130" width="1230" height="260" as="geometry" />
+</mxCell>
+<mxCell id="u4-p1" value="📱  &lt;b&gt;P1 Enzo&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram + Twilio fallback&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="440" y="175" width="270" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u4-p2" value="📱  &lt;b&gt;P2 Sebastian&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram + Twilio fallback&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="740" y="175" width="270" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u4-p3" value="📱  &lt;b&gt;P3 Angeles&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram + Twilio fallback&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="440" y="280" width="270" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u4-p4" value="📱  &lt;b&gt;P4 Diego&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram + Twilio fallback&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="740" y="280" width="270" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u4-quorum" value="&lt;b&gt;Reglas de quorum&lt;/b&gt;&lt;br/&gt;• Quorum mínimo = &lt;b&gt;2 respuestas concordantes&lt;/b&gt;&lt;br/&gt;• Primera respuesta abre ventana de consolidación de &lt;b&gt;60 s&lt;/b&gt;&lt;br/&gt;• Hard timeout absoluto: &lt;b&gt;180 s&lt;/b&gt; desde creación del incident&lt;br/&gt;• Política split-brain: &lt;b&gt;conservative-wins&lt;/b&gt;&lt;br/&gt;&amp;nbsp;&amp;nbsp;si 1 approve + 1 reject → block (reject prevalece)&lt;br/&gt;• Two-Person Rule (production-critical):&lt;br/&gt;&amp;nbsp;&amp;nbsp;&lt;b&gt;NO hay auto-execute&lt;/b&gt; en timeout — la inacción cae a block&lt;br/&gt;&amp;nbsp;&amp;nbsp;(diferencia clave vs T2 estándar)" style="text;html=1;align=left;fontSize=11;fontColor=#5f6c7b;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="1030" y="175" width="590" height="200" as="geometry" />
+</mxCell>
+<mxCell id="u4-outcomes" value="🎯  Tres outcomes posibles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="410" y="400" width="1230" height="200" as="geometry" />
+</mxCell>
+<mxCell id="u4-out-exec" value="✅  &lt;b&gt;EXECUTE&lt;/b&gt; (2 approves)&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;policy = two_person_approve&lt;br/&gt;Wazuh isolate host&lt;br/&gt;Throttle preventivo → upgrade a isolation completa&lt;br/&gt;Postgres: queries del atacante cortadas&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#16a34a;fontSize=12;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="430" y="450" width="380" height="130" as="geometry" />
+</mxCell>
+<mxCell id="u4-out-conflict" value="⚠️  &lt;b&gt;BLOCK / conservative-wins&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;policy = conservative_wins&lt;br/&gt;1+ approve y 1+ reject → reject prevalece&lt;br/&gt;Throttle rollback&lt;br/&gt;Notificación al equipo: discrepancia&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fadbd8;strokeColor=#cf272d;fontSize=12;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="830" y="450" width="380" height="130" as="geometry" />
+</mxCell>
+<mxCell id="u4-out-timeout" value="⏱  &lt;b&gt;BLOCK / no_quorum_timeout&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;policy = no_quorum_timeout&lt;br/&gt;Nadie respondió en 180 s&lt;br/&gt;Throttle rollback (atacante sigue lento)&lt;br/&gt;Two-person: NO escala a auto-isolate&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#b91c1c;fontSize=12;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="1230" y="450" width="390" height="130" as="geometry" />
+</mxCell>
+<mxCell id="u4-tradeoff" value="&lt;b&gt;Trade-off del Two-Person Rule (intencional):&lt;/b&gt; sacrificas el modo agresivo &lt;i&gt;&quot;si nadie responde isolate igual&quot;&lt;/i&gt; a cambio de evitar que un timeout aísle un activo crítico por accidente.&lt;br/&gt;Mitigación de daño durante la ventana: el throttle preventivo aplicado a t=0 limita queries por segundo del atacante — &lt;b&gt;el daño se acota aún si nadie responde&lt;/b&gt;." style="text;html=1;align=center;fontSize=11;fontColor=#5f6c7b;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="410" y="615" width="1230" height="60" as="geometry" />
+</mxCell>
+<mxCell id="u4-e1" value="ataque" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=3;fontSize=10;" edge="1" parent="1" source="u4-1" target="u4-2">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-e2" value="queries audit" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u4-2" target="u4-3">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-e3" value="evento normalizado" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u4-3" target="u4-4">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-e4" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-4" target="u4-5a">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-e4b" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b58e1a;strokeWidth=2;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-5a" target="u4-5b">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-e5" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#0288d1;strokeWidth=2;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-5a" target="u4-p1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-e6" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#0288d1;strokeWidth=2;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-5a" target="u4-p3">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-out-e1" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#16a34a;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-p1" target="u4-out-exec">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-out-e2" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#cf272d;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-p2" target="u4-out-conflict">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-out-e3" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b91c1c;strokeWidth=2;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u4-p4" target="u4-out-timeout">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u4-legend" value="📖  Leyenda · Timers (orden cronológico)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="80" y="715" width="1560" height="230" as="geometry" />
+</mxCell>
+<mxCell id="u4-leg-1" value="&lt;b&gt;t = 0&lt;/b&gt; — Incident creado&lt;br/&gt;• Sigma + ML disparan&lt;br/&gt;• Tier T2 asignado&lt;br/&gt;• &lt;b&gt;Throttle preventivo&lt;/b&gt; aplicado (limita queries/s del atacante)&lt;br/&gt;• Telegram + Discord enviados a 4 aprobadores&lt;br/&gt;• Streamlit Console muestra incident T2" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="100" y="750" width="360" height="180" as="geometry" />
+</mxCell>
+<mxCell id="u4-leg-2" value="&lt;b&gt;t = 60 s&lt;/b&gt; — Escalación voz&lt;br/&gt;• Si &lt;b&gt;nadie&lt;/b&gt; respondió → Twilio llama a los 4 celulares&lt;br/&gt;• Captura DTMF: 1 = approve, 2 = reject&lt;br/&gt;• Si alguien YA respondió, &lt;b&gt;no se llama&lt;/b&gt;&lt;br/&gt;&amp;nbsp;&amp;nbsp;(la ventana de 60 s consolidation ya está corriendo)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="470" y="750" width="360" height="180" as="geometry" />
+</mxCell>
+<mxCell id="u4-leg-3" value="&lt;b&gt;Ventana de 60 s consolidation&lt;/b&gt;&lt;br/&gt;• Se abre con la &lt;b&gt;primera&lt;/b&gt; respuesta (no a t=0)&lt;br/&gt;• Durante esa ventana captura respuestas adicionales&lt;br/&gt;• Al cerrar evalúa quorum&lt;br/&gt;• Si solo 1 respondió → no hay quorum → espera 180 s" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="840" y="750" width="360" height="180" as="geometry" />
+</mxCell>
+<mxCell id="u4-leg-4" value="&lt;b&gt;t = 180 s&lt;/b&gt; — Hard timeout (ADR-0003 Q9)&lt;br/&gt;• Production-critical + two-person → &lt;b&gt;block&lt;/b&gt; (no auto-execute)&lt;br/&gt;• Throttle rollback&lt;br/&gt;• Notif a equipo: &quot;incident X cerrado por timeout sin quorum&quot;&lt;br/&gt;• Decisión registrada con policy=no_quorum_timeout en audit log" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="1210" y="750" width="420" height="180" as="geometry" />
+</mxCell>
+  </root>
+</mxGraphModel>
+</diagram>
+<diagram id="uc-06" name="UC-06 DDoS T1">
+<mxGraphModel dx="1700" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+<mxCell id="title" value="UC-06 — DDoS (T1 auto-throttle reversible)" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#0a3d62;" vertex="1" parent="1">
+  <mxGeometry x="380" y="15" width="940" height="32" as="geometry" />
+</mxCell>
+<mxCell id="subtitle" value="hping3 SYN flood / slowhttptest · Layer 1 Sigma red · severity=HIGH → T1 · acción reversible automática · sin HITL" style="text;html=1;align=center;fontSize=11;fontColor=#5f6c7b;fontStyle=2;" vertex="1" parent="1">
+  <mxGeometry x="380" y="50" width="940" height="22" as="geometry" />
+</mxCell>
+<mxCell id="u6-1" value="🎯  &lt;b&gt;Atacante externo&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;sudo hping3 -S --flood -p 80 192.168.56.21&lt;br/&gt;O: slowhttptest -c 1000 -B -t POST -u http://...&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="100" width="460" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u6-2" value="🌐  &lt;b&gt;linux-victim — capa de red saturada&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;SYN queue desbordándose · connections in TIME_WAIT&lt;br/&gt;servicio HTTP responde con timeout o 503&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="220" width="460" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u6-3" value="🛡️  &lt;b&gt;Sigma Layer 1 — reglas de red firing&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;✓ T1498 Network Denial of Service&lt;br/&gt;✓ T1499 Endpoint Denial of Service (slow HTTP)&lt;br/&gt;Wazuh detecta tasa SYN/s anómala vs baseline&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="340" width="460" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u6-4" value="⚙️  &lt;b&gt;SOAR Decision Engine → Tier T1&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;severity = HIGH → SEVERITY_TO_BASE_TIER[HIGH] = T1&lt;br/&gt;num_layers_fired = 1 (sólo Layer 1 red)&lt;br/&gt;técnica T1498 NO está en AUTO_T0 → no escala a T0&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="470" width="460" height="100" as="geometry" />
+</mxCell>
+<mxCell id="u6-5a" value="⚡  &lt;b&gt;ACCIÓN AUTOMÁTICA&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Wazuh API rate-limit / iptables&lt;br/&gt;DROP source IP&lt;br/&gt;(reversible · no isolate completo)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="75" y="600" width="220" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u6-5b" value="🔔  &lt;b&gt;Notif&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Telegram&lt;br/&gt;Discord&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="305" y="600" width="130" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u6-5c" value="📊  &lt;b&gt;Audit log&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;PostgreSQL&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="445" y="600" width="135" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u6-6" value="✅  &lt;b&gt;OUTCOME: tráfico fuente bloqueado · servicio recupera disponibilidad en &lt;25 s&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontSize=13;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="120" y="710" width="460" height="50" as="geometry" />
+</mxCell>
+<mxCell id="u6-e1" value="flood" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=3;fontSize=10;" edge="1" parent="1" source="u6-1" target="u6-2">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e2" value="Wazuh agent" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u6-2" target="u6-3">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e3" value="evento normalizado" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u6-3" target="u6-4">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e4" value="Tier T1" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;strokeWidth=2;fontSize=10;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u6-4" target="u6-5a">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e5" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u6-4" target="u6-5b">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e6" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u6-4" target="u6-5c">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e7" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#15803d;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u6-5a" target="u6-6">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e8" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u6-5b" target="u6-6">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-e9" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u6-5c" target="u6-6">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u6-legend" value="📖  Leyenda · Reglas · Timers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="720" y="100" width="920" height="770" as="geometry" />
+</mxCell>
+<mxCell id="u6-leg-1" value="&lt;b&gt;MITRE ATT&amp;CK&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;T1498&lt;/b&gt; Network Denial of Service (SYN flood, hping3)&lt;br/&gt;• &lt;b&gt;T1499&lt;/b&gt; Endpoint Denial of Service (slow HTTP, slowhttptest)&lt;br/&gt;• &lt;b&gt;T1498.001&lt;/b&gt; Reflection Amplification (variantes futuras)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="140" width="880" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u6-leg-2" value="&lt;b&gt;Severity &amp; Tier asignados&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;Severity:&lt;/b&gt; HIGH (servicio degradado, no comprometido)&lt;br/&gt;• &lt;b&gt;Tier:&lt;/b&gt; T1 (acción automática reversible — no isolate completo)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="235" width="880" height="80" as="geometry" />
+</mxCell>
+<mxCell id="u6-leg-3" value="&lt;b&gt;¿Por qué T1 y no T0?&lt;/b&gt;&lt;br/&gt;• Las técnicas T1498/T1499 &lt;b&gt;NO&lt;/b&gt; están en &lt;tt&gt;AUTO_T0_TECHNIQUES&lt;/tt&gt;&lt;br/&gt;• Solo Layer 1 firing → num_layers = 1 (no hay boost por consenso)&lt;br/&gt;• Severity = HIGH → mapea a T1, no a T0&lt;br/&gt;• Las acciones T1 son &lt;b&gt;reversibles&lt;/b&gt; (rate-limit, iptables DROP)&lt;br/&gt;• Si el atacante deja de generar tráfico, la regla expira y todo vuelve normal" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="320" width="880" height="140" as="geometry" />
+</mxCell>
+<mxCell id="u6-leg-4" value="&lt;b&gt;Timers / Reglas que NO aplican&lt;/b&gt;&lt;br/&gt;• Ventana 60s consolidación: &lt;b&gt;no aplica&lt;/b&gt; (no hay HITL)&lt;br/&gt;• Timeout 180s: &lt;b&gt;no aplica&lt;/b&gt;&lt;br/&gt;• Twilio voz: &lt;b&gt;no aplica&lt;/b&gt;&lt;br/&gt;• Two-Person: &lt;b&gt;no aplica&lt;/b&gt; (acción es reversible, no irrevocable)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="465" width="880" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u6-leg-5" value="&lt;b&gt;Reglas que SÍ aplican&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;Auto-rollback&lt;/b&gt; del rate-limit: 5 min sin nueva detección → desactiva regla iptables&lt;br/&gt;• Si el flood se reanuda → vuelve a disparar T1 (idempotente)&lt;br/&gt;• Si en algún momento sube a 3 capas (DDoS + escaneo + intento de exfil) → boost a T0" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="580" width="880" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u6-leg-6" value="&lt;b&gt;SLA esperado&lt;/b&gt;&lt;br/&gt;• Latencia ataque → detection Sigma red: ≤ 12 s (depende de threshold de tasa)&lt;br/&gt;• Latencia detection → Tier T1: ≤ 3 s&lt;br/&gt;• Latencia tier → rate-limit aplicado: ≤ 10 s&lt;br/&gt;• &lt;b&gt;Total p95: ≤ 25 segundos&lt;/b&gt;  ·  servicio recupera disponibilidad inmediatamente" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="740" y="695" width="880" height="110" as="geometry" />
+</mxCell>
+  </root>
+</mxGraphModel>
+</diagram>
+<diagram id="uc-07" name="UC-07 SELECT FP">
+<mxGraphModel dx="1700" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1000" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+<mxCell id="title" value="UC-07 — SELECT masivo benigno · false positive con HITL cancellation" style="text;html=1;align=center;fontSize=22;fontStyle=1;fontColor=#0a3d62;" vertex="1" parent="1">
+  <mxGeometry x="380" y="15" width="940" height="32" as="geometry" />
+</mxCell>
+<mxCell id="subtitle" value="Analista legítima ejecuta SELECT 200k filas a las 3 AM · ML lo confunde con exfiltración · aprobadores cancelan la contención" style="text;html=1;align=center;fontSize=11;fontColor=#5f6c7b;fontStyle=2;" vertex="1" parent="1">
+  <mxGeometry x="380" y="50" width="940" height="22" as="geometry" />
+</mxCell>
+<mxCell id="u7-1" value="👤  &lt;b&gt;Analista legítima&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;user=analyst@empresa&lt;br/&gt;3:14 AM (horario no laboral)&lt;br/&gt;query: SELECT * FROM payroll&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="100" width="280" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u7-2" value="⭐  &lt;b&gt;PostgreSQL :5432&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;app_prod · production-critical&lt;br/&gt;query devuelve ~200k filas&lt;br/&gt;pgAudit registra evento READ&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="220" width="280" height="90" as="geometry" />
+</mxCell>
+<mxCell id="u7-3" value="🧠🛡️  &lt;b&gt;Detection (Layer 1 + 2)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Sigma: pg_select_massive_unusual_table&lt;br/&gt;ML: rows_returned outlier + hora atípica&lt;br/&gt;technique = T1078 (Valid Accounts)&lt;br/&gt;num_layers = 2 · confidence = 0.72&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="340" width="280" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u7-4" value="⚙️  &lt;b&gt;SOAR → Tier T2 (two-person)&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;target = production-critical → two-person rule&lt;br/&gt;⚠️ &lt;b&gt;Throttle preventivo aplicado&lt;/b&gt;&lt;br/&gt;query del analista &lt;i&gt;ralentizada&lt;/i&gt; (NO bloqueada)&lt;br/&gt;LLM Triage prepara contexto explicativo&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="480" width="280" height="110" as="geometry" />
+</mxCell>
+<mxCell id="u7-5" value="🔔  Telegram + Discord a 4 aprobadores&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;mensaje incluye LLM context:&lt;br/&gt;&quot;User=analyst, hora_inusual, tabla=payroll, posiblemente reporte mensual&quot;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="620" width="280" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u7-llm" value="🧠  Layer 4 — LLM Triage genera contexto que llega a los aprobadores" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3fdf3;strokeColor=#16a34a;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="410" y="100" width="1230" height="290" as="geometry" />
+</mxCell>
+<mxCell id="u7-llm-text" value="&lt;b&gt;Prompt LLM (OpenAI gpt-4o-mini con RAG):&lt;/b&gt;&lt;br/&gt;&amp;nbsp;&amp;nbsp;Event context: user='analyst', SQL='SELECT * FROM payroll', rows=200_456, time='3:14 AM',&lt;br/&gt;&amp;nbsp;&amp;nbsp;source_ip=internal, target_table=payroll&lt;br/&gt;&amp;nbsp;&amp;nbsp;Historical context (vector DB): user 'analyst' ejecuta queries similares cada último viernes del mes&lt;br/&gt;&lt;br/&gt;&lt;b&gt;LLM verdict (incluido en el mensaje al aprobador):&lt;/b&gt;&lt;br/&gt;&amp;nbsp;&amp;nbsp;&lt;span style=&#39;color:#15803d&#39;&gt;{ &quot;label&quot;: &quot;benign&quot;, &quot;confidence&quot;: 0.81,&lt;/span&gt;&lt;br/&gt;&amp;nbsp;&amp;nbsp;&lt;span style=&#39;color:#15803d&#39;&gt;&amp;nbsp;&amp;nbsp;&quot;reasoning&quot;: &quot;Pattern matches monthly payroll report. User has consistent access. No data exfil signals.&quot; }&lt;/span&gt;&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Decisión humana esperada:&lt;/b&gt; reject (cancelar contención) — el throttle se libera, la analista termina su query." style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="430" y="140" width="1190" height="230" as="geometry" />
+</mxCell>
+<mxCell id="u7-outcomes" value="🎯  Outcomes posibles (orden de probabilidad)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="410" y="405" width="1230" height="270" as="geometry" />
+</mxCell>
+<mxCell id="u7-out-reject" value="✅  &lt;b&gt;BLOCK / two_person_reject&lt;/b&gt; (escenario ideal)&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;2 aprobadores leen el LLM context, reconocen patrón mensual, presionan [Reject]&lt;br/&gt;Throttle rollback inmediato&lt;br/&gt;Analista termina su query (con 5-10s extra de latencia)&lt;br/&gt;Audit log marca el evento como false_positive=true&lt;br/&gt;Feedback loop: ML re-entrena con este caso&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#16a34a;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="430" y="450" width="380" height="200" as="geometry" />
+</mxCell>
+<mxCell id="u7-out-conflict" value="⚠️  &lt;b&gt;BLOCK / conservative-wins&lt;/b&gt;&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;1 approve + 1 reject (discrepancia)&lt;br/&gt;Conservative-wins → reject prevalece&lt;br/&gt;Throttle rollback&lt;br/&gt;Mismo resultado que BLOCK pero log con flag &quot;disagreement&quot;&lt;br/&gt;Sirve para post-mortem: ¿quién aprobó? entrenar mejor&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fadbd8;strokeColor=#cf272d;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="830" y="450" width="380" height="200" as="geometry" />
+</mxCell>
+<mxCell id="u7-out-timeout" value="⏱  &lt;b&gt;BLOCK / no_quorum_timeout&lt;/b&gt; (peor caso pero seguro)&lt;br/&gt;&lt;span style=&#39;font-size:10px&#39;&gt;Nadie respondió en 180 s (3 AM, todos dormidos)&lt;br/&gt;Two-person rule: NO auto-escala a isolate&lt;br/&gt;Throttle rollback automático&lt;br/&gt;Analista pierde 3 minutos de productividad&lt;br/&gt;Por eso Twilio voz a t=60s: para despertar a alguien&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#b91c1c;fontSize=11;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="1230" y="450" width="390" height="200" as="geometry" />
+</mxCell>
+<mxCell id="u7-out-bad" value="❌  &lt;b&gt;Outcome catastrófico evitado:&lt;/b&gt; si esto fuera T2 estándar (NO two-person), un timeout sin respuesta a los 180s habría &lt;b&gt;auto-aislado&lt;/b&gt; el host de la analista — productividad mensual perdida. La two-person rule existe precisamente para casos como este." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#b91c1c;fontSize=12;align=center;strokeWidth=2;fontStyle=1;" vertex="1" parent="1">
+  <mxGeometry x="80" y="700" width="1560" height="70" as="geometry" />
+</mxCell>
+<mxCell id="u7-e1" value="SELECT" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u7-1" target="u7-2">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e2" value="pgAudit log" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u7-2" target="u7-3">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e3" value="evento normalizado" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="u7-3" target="u7-4">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e4" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#16a34a;strokeWidth=2;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="u7-4" target="u7-llm">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e5" value="" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#9673a6;strokeWidth=2;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u7-4" target="u7-5">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e6" value="ideal" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#15803d;strokeWidth=2;fontSize=10;exitX=0.2;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u7-llm" target="u7-out-reject">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e7" value="raro" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#666;strokeWidth=2;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u7-llm" target="u7-out-conflict">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-e8" value="peor" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#b91c1c;strokeWidth=2;fontSize=10;dashed=1;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="u7-llm" target="u7-out-timeout">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+<mxCell id="u7-legend" value="📖  Leyenda · ¿Por qué este UC importa?" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#999;fontStyle=1;fontSize=13;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+  <mxGeometry x="80" y="790" width="1560" height="180" as="geometry" />
+</mxCell>
+<mxCell id="u7-leg-1" value="&lt;b&gt;Severity &amp; Tier&lt;/b&gt;&lt;br/&gt;• Severity = MEDIUM (anomalía estadística, no signal claro)&lt;br/&gt;• Tier = T2 (acción reversible con HITL preventivo)&lt;br/&gt;• Two-person rule activa porque target es production-critical&lt;br/&gt;• LLM Triage es DECISIVO aquí: sin contexto, los aprobadores aprueban por miedo" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="100" y="825" width="500" height="130" as="geometry" />
+</mxCell>
+<mxCell id="u7-leg-2" value="&lt;b&gt;Reglas que aplican&lt;/b&gt;&lt;br/&gt;• Ventana 60 s consolidation: SÍ&lt;br/&gt;• Hard timeout 180 s: SÍ (con two-person → block, no auto-execute)&lt;br/&gt;• Twilio escalation a 60 s: SÍ (probablemente necesario, son las 3 AM)&lt;br/&gt;• Throttle preventivo: SÍ (limita queries/s pero NO bloquea)" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="620" y="825" width="510" height="130" as="geometry" />
+</mxCell>
+<mxCell id="u7-leg-3" value="&lt;b&gt;Valor del UC para el demo&lt;/b&gt;&lt;br/&gt;Es el más sofisticado: demuestra que el sistema:&lt;br/&gt;• Detecta anomalías estadísticas (ML)&lt;br/&gt;• Aplica contención PREVENTIVA &lt;b&gt;sin&lt;/b&gt; destruir productividad&lt;br/&gt;• Da contexto LLM al humano para decidir bien&lt;br/&gt;• Tiene fallback seguro si el humano no responde" style="text;html=1;align=left;fontSize=11;fontColor=#333;spacingLeft=8;spacingRight=8;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+  <mxGeometry x="1150" y="825" width="480" height="130" as="geometry" />
+</mxCell>
+  </root>
+</mxGraphModel>
+</diagram>
+</mxfile>
