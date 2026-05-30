@@ -225,6 +225,85 @@ lab/professor_kit/
 
 Cada script con un comentario explicando qué hace y qué se espera ver en ARGOS. P4 los arma. Owner: **P4** en Fase 4.
 
+### 4.4 G4 — JWT signing en botones de aprobación (ideal/mínimo)
+
+**Problema:** El HTML argos_use_cases.html menciona "botones inline firmados con JWT" (en UC-04 CU-04 stack pill "JWT firmado") pero ninguna implementación o config existe en el código. Si el profesor pregunta "muéstrame la firma", o hay implementación o se queda en aspiracional.
+
+**Meta ideal:** implementar JWT signing real en el Approval API. Patrón mínimo:
+
+```python
+# soar/approval_api/jwt_signer.py — ~40 líneas
+import jwt, os, time
+from typing import Literal
+
+ARGOS_JWT_SECRET = os.environ["ARGOS_JWT_SECRET"]   # rotated quarterly
+ALGO = "HS256"
+
+def sign_approval(incident_id: str, approver_id: str, decision: Literal["approve","reject"]) -> str:
+    payload = {
+        "iss": "argos-soar",
+        "sub": approver_id,
+        "incident_id": incident_id,
+        "decision": decision,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 600,   # 10 min validity
+    }
+    return jwt.encode(payload, ARGOS_JWT_SECRET, algorithm=ALGO)
+
+def verify_approval(token: str) -> dict:
+    return jwt.decode(token, ARGOS_JWT_SECRET, algorithms=[ALGO])
+```
+
+El `callback_data` de los botones inline de Telegram se reemplaza por el JWT (limitado a 64 bytes por Telegram → usar `jti` corto + JWT en el body del callback). El `/telegram/callback` endpoint del Approval API verifica el JWT antes de mutar Redis.
+
+Owner: **P1** durante Fase 4 (~30 min de código + 1 test unitario).
+
+**Mínimo indispensable:** **aspiracional documentado.** Quitar la referencia "JWT firmado" del HTML use cases card stack pill. Documentar en informe técnico §Recomendaciones de mejora: "Los botones inline actualmente confían en `callback_data` enviado por Telegram. Hardening recomendado para producción: firmar el callback con JWT HS256 + verificación en Approval API (ver patrón en `soar/approval_api/jwt_signer.py.template`)". Dejar el archivo `.template` con el patrón como guía.
+
+**Trigger fallback:** si en T-10 días no hay JWT funcional, P1 cae al mínimo y edita el HTML para sacar la mención.
+
+### 4.5 G5 — Versión de PostgreSQL pinneada
+
+**Problema:** Docs anteriores mencionan "PostgreSQL 15" genéricamente sin point release. En banca real esto importa por CVEs aplicables y por reproducibilidad del lab.
+
+**Decisión (sin alternativa ideal/mínimo — esto es no-negociable):**
+
+**`postgres:17.5-bookworm`** (Debian 12, PostgreSQL 17.5).
+
+Razones:
+- PostgreSQL 17 es el major estable más reciente al cierre de docs (GA septiembre 2024, suporte hasta noviembre 2029).
+- 17.5 es la point release madura — ya pasó por el ciclo de bugfixes iniciales.
+- `bookworm` es Debian 12 LTS → estable hasta junio 2028.
+- pgAudit 17 está soportado oficialmente (`pgaudit/pg17` package).
+
+Owner implementación: **P4** durante Fase 2.
+
+**Find-replace deferido:** las menciones a "PostgreSQL 15" en HTMLs ya generados, manuales y `OPEN_QUESTIONS_RESOLUTION.md` se actualizan cuando P4 escriba `lab/postgres/init.sql`. NO se regeneran los PDFs/HTMLs ahora — eso es churn innecesario. La autoridad de la versión es este ADR-0010 §4.5, no las menciones históricas.
+
+Configuración base para Docker Compose (la implementación real va en `manual-p4-diego.md` Fase 2):
+
+```yaml
+postgres:
+  image: postgres:17.5-bookworm
+  environment:
+    POSTGRES_USER: inti_dba
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    POSTGRES_DB: app_prod
+  volumes:
+    - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    - postgres-data:/var/lib/postgresql/data
+  command:
+    - postgres
+    - -c
+    - shared_preload_libraries=pgaudit
+    - -c
+    - pgaudit.log=read,write,ddl,role
+    - -c
+    - pgaudit.log_parameter=on
+    - -c
+    - statement_timeout=5min
+```
+
 ## 5. Política de fallback (cuándo bajar del ideal al mínimo)
 
 Reglas explícitas para evitar discusiones en momentos de stress:
@@ -235,6 +314,8 @@ Reglas explícitas para evitar discusiones en momentos de stress:
 | 2.2 Webapp UC-08 | T-14 días sin Flask corriendo | P4 anuncia |
 | 2.3 ML temporal | T-21 días sin dataset temporal | P2 anuncia |
 | 2.4 HITL real-time | Rehearsal > 1 min fuera de tiempo | P4 anuncia tras rehearsal |
+| 4.4 JWT signing | T-10 días sin implementación funcional | P1 anuncia |
+| 4.5 Postgres versión | N/A (no-negociable, decidido en este ADR) | — |
 
 **No-veto del fallback:** si el trigger se cumple, el fallback aplica automáticamente. No se discute. Esto evita la trampa de "esperemos un día más" que termina rompiendo el demo.
 
@@ -255,6 +336,8 @@ Reglas explícitas para evitar discusiones en momentos de stress:
 | **P4** | Dirigir rehearsals con timer audible | Fase 4 | §2.4 |
 | **P1 Enzo** | Redactar narrativa de backup en informe | Fase 4 (informe) | §3.4 |
 | **P1** | Pre-acuerdo de tiempos HITL (tabla §2.4) | Fase 4 | §2.4 |
+| **P1** | `soar/approval_api/jwt_signer.py` (ideal) o quitar mención JWT del HTML (mínimo) | Fase 4 | §4.4 |
+| **P4** | Pinear `postgres:17.5-bookworm` en lab + actualizar refs históricas en init.sql | Fase 2 | §4.5 |
 
 ## 7. Cosas que este ADR NO decide (deliberadamente fuera de scope)
 
@@ -267,3 +350,4 @@ Reglas explícitas para evitar discusiones en momentos de stress:
 | Versión | Fecha | Cambio | Autor |
 |---------|-------|--------|-------|
 | 1.0 | 2026-05-30 | Initial — consolida 4 decisiones bloqueantes + 4 de informe + 3 gaps de realismo, todas con patrón ideal/mínimo. | P1 |
+| 1.1 | 2026-05-30 | Añade §4.4 G4 JWT signing (ideal/mínimo) y §4.5 G5 versión PostgreSQL 17.5 pinneada (no-negociable). Find-replace de PG 15 en docs históricos diferido a Fase 2. | P1 |
