@@ -407,7 +407,7 @@
     <header class="doc-header">
       <p class="eyebrow">Tópicos Avanzados de Ciberseguridad · 2026-1 · Universidad de Lima</p>
       <h1>ARGOS — Flujo Secuencial del Sistema</h1>
-      <p class="subtitle">Detección y respuesta a ransomware con defensa en profundidad de 4 capas + SOAR + aprobación humana</p>
+      <p class="subtitle">Multi-vector XDR — Adaptive Response Guard with Orchestrated Surveillance · 4 capas + SOAR + HITL · ADR-0008</p>
       <span class="asset-callout">Activo defendido: Base de datos PostgreSQL en producción (Linux VM · criticidad alta)</span>
     </header>
 
@@ -457,7 +457,7 @@
         </div>
         <div class="card p1">
           <span class="badge">P1</span>
-          <h3>Simulador de ransomware</h3>
+          <h3>Simuladores multi-vector</h3>
           <p class="what">Script Python reproducible: enumera archivos, borra Volume Shadow Copies, cifra con AES-256, deja nota, simula beacon C2.</p>
           <span class="status todo"><span class="dot"></span>Pendiente</span>
         </div>
@@ -757,7 +757,7 @@
           <p class="who">Líder · LLM Triage · SOAR · Coordinación</p>
           <ul>
             <li><strong>argos_contracts</strong> (Pydantic v2 compartidos entre equipos) — único módulo ya entregado.</li>
-            <li>Simulador de ransomware reproducible para el demo.</li>
+            <li>Simuladores multi-vector reproducibles: ransomware (lockbit_like.py), DDoS (hping3 + slowhttptest), SQL injection (sqlmap).</li>
             <li>Capa 4 LLM Triage completa: FastAPI <code>/triage</code>, mini-RAG (BM25 + BGE-large + RRF), cliente vendor-agnostic OpenAI + Llama 3.1 local (per ADR-0001 v2).</li>
             <li>Motor SOAR completo: clasificador de tier, máquina de estados en Redis, lógica de fusión.</li>
             <li>Approval API (FastAPI + JWT con jti anti-replay) + política conservative-wins y regla de dos personas.</li>
@@ -784,7 +784,7 @@
             <li>Modelo de datos de los dashboards OpenSearch.</li>
             <li>ROC curves + plots ablation para el informe técnico.</li>
           </ul>
-          <p class="gate">Su capa es la pieza central de UC-03 (variante novel + split-brain).</p>
+          <p class="gate">Su capa es crítica en UC-04 (Postgres two-person rule) y UC-07 (SELECT FP con LLM context).</p>
         </div>
 
         <div class="summary-card p3">

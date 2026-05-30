@@ -1637,7 +1637,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
             color: var(--amber); font-family: var(--mono); font-size: 10px;
             letter-spacing: 2px; text-align: center; padding: 5px 18px;
             backdrop-filter: blur(4px);">
-  ▸ ARQUITECTURA DECIDIDA · DOC FREEZE SEMANA 7 · IMPLEMENTACIÓN GATE 2-3 EN CURSO · KPIs MARCAN OBJETIVOS, NO ESTADO ACTUAL
+  ▸ ARQUITECTURA DECIDIDA · DOC FREEZE · ENTREGA FINAL 13 JUN 2026 · SCOPE MULTI-VECTOR (ADR-0008) · KPIs MARCAN OBJETIVOS
 </div>
 <style>
   /* Ajustar el espacio superior para compensar el banner */
@@ -1706,7 +1706,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
     <p class="hero-classify"><span id="typed" class="typed"></span></p>
     <h1 class="hero-title" data-text="ARGOS">ARGOS</h1>
     <div class="hero-title-deco"><span class="ln"></span><span class="id">SYSTEM // 2026.05</span><span class="ln"></span></div>
-    <p class="hero-sub">Guardia Adaptativa con Vigilancia Orquestada contra Ransomware</p>
+    <p class="hero-sub">Adaptive Response Guard with Orchestrated Surveillance · Multi-vector XDR</p>
     <p class="hero-desc">
       Cinco escenarios operacionales de extremo a extremo. Cuatro capas de detección en paralelo.
       Automatización escalonada por nivel de confianza. Un sistema que replica la arquitectura de
@@ -1714,7 +1714,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
     </p>
     <div class="hero-chips">
       <span class="chip">Universidad de Lima · 2026-1</span>
-      <span class="chip">MITRE ATT&amp;CK · 6 técnicas</span>
+      <span class="chip">MITRE ATT&amp;CK · 9 técnicas</span>
       <span class="chip">64 pruebas de contrato</span>
       <span class="chip">~13 min de demo · 5 escenarios</span>
     </div>
@@ -1806,7 +1806,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
 </div>
 <section class="section" id="scenariosSection">
   <p class="sec-tag">// ESCENARIOS OPERACIONALES</p>
-  <h2 class="sec-title">Cinco Simulaciones de Ataque<span class="sec-title-deco"></span></h2>
+  <h2 class="sec-title">Cinco Escenarios Principales + UC-08 Nice-to-have<span class="sec-title-deco"></span></h2>
   <div class="uc-list">
 
     <!-- CU-01 -->
@@ -1956,287 +1956,219 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       </div>
     </div>
 
-    <!-- CU-03 ESTRELLA -->
+    <!-- CU-06 -->
+    <div class="uc-card reveal" style="--c:var(--cyan);--g:rgba(0,212,255,.22)">
+      <div class="circuit-border"></div>
+      <div class="uc-inner">
+        <div class="live-dot">LIVE</div>
+        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">06</span></div>
+        <div class="col-info">
+          <h3 class="uc-title">DDoS contra el Servicio de Aplicación — T1 Auto-Throttle</h3>
+          <p class="uc-focus">Enfoque de demo: vector multi-capa más allá del ransomware · acción reversible automática · sin HITL · degradación de servicio mitigada en segundos</p>
+          <p class="uc-desc">Atacante externo lanza un SYN flood (hping3) y/o slow HTTP POST (slowhttptest) contra el puerto público del servicio que protege la base de datos. La Capa 1 (Sigma de red sobre eventos Wazuh) detecta la tasa anómala y eleva una alerta con severity=HIGH. El SOAR clasifica T1 (no T0: la técnica T1498/T1499 no está en la whitelist AUTO_T0 y solo una capa firing) y aplica rate-limit + iptables DROP sobre la IP origen — acción reversible que expira a los 5 min sin reincidencia. El servicio recupera disponibilidad en menos de 25 s. Si el flood persiste, la regla se renueva idempotentemente. Notificación informativa a Telegram + Discord.</p>
+          <div class="mitre-row">
+            <span class="mitre-chip">T1498 · DDOS DE RED</span>
+            <span class="mitre-chip">T1499 · DDOS DE ENDPOINT</span>
+          </div>
+        </div>
+        <div class="col-flow">
+          <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
+          <div class="flow-list">
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">hping3 SYN flood o slowhttptest contra :80 del servicio web</span></div>
+            <div class="flow-item"><span class="ft">t+5-12s</span><span class="fx">Wazuh detecta tasa anómala de SYN/s o conexiones lentas pendientes · Sigma de red firing</span></div>
+            <div class="flow-item"><span class="ft">t+12s</span><span class="fx">SOAR clasifica T1 · severity=HIGH · técnica NO está en AUTO_T0_TECHNIQUES</span></div>
+            <div class="flow-item critical"><span class="ft">t+15s</span><span class="fx">Active-response: iptables DROP source IP · rate-limit nginx<span class="critical-tag">★ DECISIÓN</span></span></div>
+            <div class="flow-item"><span class="ft">t+18s</span><span class="fx">Servicio recupera disponibilidad · Telegram + Discord notif informativa</span></div>
+            <div class="flow-item"><span class="ft">t+5min</span><span class="fx">Si no hay reincidencia, regla iptables expira automáticamente</span></div>
+          </div>
+        </div>
+        <div class="col-meta">
+          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier" style="border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.06)">🔵 T1 AUTO-REVERSIBLE</div></div>
+          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">0.75 – 0.90</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--cyan)" data-w="82%"></div></div></div>
+          <div><p class="meta-lbl">CAPAS ACTIVAS</p>
+            <div class="layers">
+              <span class="lp on" style="border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 8px rgba(0,212,255,.25)">C1</span>
+              <span class="lp">C2</span>
+              <span class="lp">C3</span>
+              <span class="lp">C4</span>
+            </div>
+          </div>
+          <div class="outcome" style="border-left-color:var(--cyan)">Acción reversible (no isolate completo) · servicio disponible &lt;25s · auto-rollback a los 5 min sin reincidencia · sin HITL</div>
+          <button class="replay-btn" data-cu="06">REPRODUCIR ATAQUE</button>
+        </div>
+      </div>
+      <div class="uc-stack">
+        <span class="us-lbl">// STACK</span>
+        <span class="us-pill key">Wazuh + Sigma red</span>
+        <span class="us-pill key">hping3</span>
+        <span class="us-pill key">slowhttptest</span>
+        <span class="us-pill">iptables / nginx rate-limit</span>
+        <span class="us-pill">SOAR T1 router</span>
+        <span class="us-pill">Active-response reversible</span>
+      </div>
+    </div>
+
+    <!-- CU-04 ESTRELLA -->
     <div class="uc-card star-card reveal" style="--c:var(--amber);--g:rgba(255,184,0,.3)">
       <div class="circuit-border"></div>
-      <div class="star-banner">★ ESCENARIO CENTRAL DE LA DEMO · RESOLUCIÓN DE SPLIT-BRAIN EN TIEMPO REAL ★</div>
+      <div class="star-banner">★ ESCENARIO CENTRAL DE LA DEMO · TWO-PERSON RULE SOBRE EL ACTIVO DEFENDIDO ★</div>
       <div class="uc-inner">
         <div class="live-dot" style="color:var(--amber)">PRIORITY</div>
-        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">03</span><span class="uc-star-ico">★</span></div>
+        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">04</span><span class="uc-star-ico">★</span></div>
         <div class="col-info">
-          <h3 class="uc-title glitch-text" data-text="Variante Novel + Resolución de Split-Brain">Variante Novel + Resolución de Split-Brain</h3>
-          <p class="uc-focus">Enfoque de demo: el ML detecta lo que las reglas no ven · split-brain con 4 aprobadores (2 aprueban · 1 rechaza · 1 timeout) · conservative-wins en vivo</p>
-          <p class="uc-desc">Escenario central de la demo. Una variante zero-day evade todas las reglas Sigma existentes — el peor caso para detección por firmas. Solo la Capa 2 (Ensamble ML) detecta el comportamiento anómalo, clasificando T2 (0.60–0.80). El SOAR aplica limitación de velocidad de inmediato para reducir el ritmo de cifrado en ≥80% mientras espera aprobación humana de 3 minutos. Cuatro aprobadores discrepan (2 aprueban · 1 rechaza · 1 timeout): ADR-0006 "conservative-wins" consolida la decisión al cierre de una ventana de 60 segundos iniciada por la primera respuesta.</p>
+          <h3 class="uc-title glitch-text" data-text="PostgreSQL en Producción · Two-Person Rule">PostgreSQL en Producción · Two-Person Rule</h3>
+          <p class="uc-focus">Enfoque de demo: activo defendido + criticality=production-critical · 4 aprobadores en multi-canal · 3 outcomes posibles (execute · conflict · timeout) · throttle preventivo desde t=0</p>
+          <p class="uc-desc">El esquema PostgreSQL <code>app_prod</code> (datos de RRHH y finanzas) está marcado en Wazuh como <code>criticality=production-critical</code>. Cuando Sigma + ML detectan patrones de ataque sobre él (T1190 inyección + T1078 cuentas válidas), el SOAR clasifica T2 con regla two-person (ADR-0006) — exige al menos 2 aprobadores explícitos antes de cualquier acción irreversible. En el mismo t=0 se aplica throttle preventivo (límite de queries/s) que acota el daño durante la ventana de decisión. Tres outcomes determinísticos: <b>execute</b> con 2 approves, <b>block</b> por conflict (conservative-wins · ADR-0006) con 1+approve y 1+reject, <b>block</b> por no_quorum_timeout a t=180s. La two-person rule por diseño NO auto-ejecuta isolation por timeout — la inacción cae a bloqueo, no a contención agresiva.</p>
           <div class="mitre-row">
-            <span class="mitre-chip">T1486 · CIFRADO DE DATOS</span>
+            <span class="mitre-chip">T1190 · EXPLOTACIÓN DE APP PÚBLICA</span>
+            <span class="mitre-chip">T1078 · CUENTAS VÁLIDAS</span>
             <span class="mitre-chip">T1490 · INHIBICIÓN DE RECUPERACIÓN</span>
           </div>
         </div>
         <div class="col-flow">
           <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
           <div class="flow-list">
-            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Variante novel inicia · Reglas Sigma: sin coincidencia de firma conocida</span></div>
-            <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Ensamble ML detecta anomalía conductual (score &gt;0.72) · solo Capa 2</span></div>
-            <div class="flow-item"><span class="ft">t+5s</span><span class="fx">SOAR: clasifica T2 → limitación de velocidad + snapshot preventivo</span></div>
-            <div class="flow-item"><span class="ft">t+8s</span><span class="fx">LLM triage (Capa 4) enriquece alerta con contexto histórico vía RAG</span></div>
-            <div class="flow-item"><span class="ft">t+8s</span><span class="fx">4 aprobadores reciben solicitud por Telegram + Discord en paralelo con botón JWT firmado</span></div>
-            <div class="flow-item"><span class="ft">t+18-52s</span><span class="fx">Respuestas: 1 rechaza · 2 aprueban · ventana de consolidación de 60s abierta tras la primera respuesta</span></div>
-            <div class="flow-item"><span class="ft">t+78s</span><span class="fx">P4 sin responder → marcado como timeout al cierre de ventana</span></div>
-            <div class="flow-item critical"><span class="ft">t+78s</span><span class="fx">ADR-0006 conservative-wins aplicado: 2 aprueban · 1 rechaza · 1 timeout → ejecutar aislamiento<span class="critical-tag">★ DECISIÓN</span></span></div>
-            <div class="flow-item"><span class="ft">t+80s</span><span class="fx">Aislamiento completo · throttle mantuvo daño acotado al ≤20% del ritmo base de cifrado</span></div>
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ataque al esquema argos_demo_prod · Sigma + ML firing · 2 capas</span></div>
+            <div class="flow-item"><span class="ft">t+3s</span><span class="fx">SOAR clasifica T2 · target=production-critical → activa Two-Person Rule</span></div>
+            <div class="flow-item"><span class="ft">t+3s</span><span class="fx">Throttle preventivo aplicado (limita queries/s del atacante) · reversible</span></div>
+            <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Telegram + Discord enviados a 4 aprobadores con botones [Approve][Reject]</span></div>
+            <div class="flow-item"><span class="ft">t+8s</span><span class="fx">LLM Triage (Capa 4) enriquece contexto vía RAG y envía como reasoning a aprobadores</span></div>
+            <div class="flow-item"><span class="ft">t+10-40s</span><span class="fx">Aprobadores responden · primera respuesta abre ventana de consolidación de 60s</span></div>
+            <div class="flow-item"><span class="ft">t+60s</span><span class="fx">Si nadie respondió aún → Twilio Voice escala (DTMF 1=approve / 2=reject)</span></div>
+            <div class="flow-item critical"><span class="ft">t+70-100s</span><span class="fx">Quorum alcanzado o ventana cerrada → decisión final<span class="critical-tag">★ DECISIÓN</span></span></div>
+            <div class="flow-item"><span class="ft">t+180s</span><span class="fx">Hard timeout absoluto (ADR-0003 Q9) · two-person rule → block + rollback throttle (NO auto-execute)</span></div>
           </div>
         </div>
         <div class="col-meta">
-          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier tier-T2">🟡 T2 HUMANO EN BUCLE</div></div>
-          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">0.60 – 0.80</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--amber)" data-w="72%"></div></div></div>
+          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier tier-T2">🟡 T2 · TWO-PERSON RULE</div></div>
+          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">0.70 – 0.90</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--amber)" data-w="80%"></div></div></div>
           <div><p class="meta-lbl">CAPAS ACTIVAS</p>
             <div class="layers">
-              <span class="lp">C1</span>
+              <span class="lp on" style="border-color:var(--amber);color:var(--amber);box-shadow:0 0 8px rgba(255,184,0,.3)">C1</span>
               <span class="lp on" style="border-color:var(--amber);color:var(--amber);box-shadow:0 0 8px rgba(255,184,0,.3)">C2</span>
               <span class="lp">C3</span>
               <span class="lp on" style="border-color:var(--amber);color:var(--amber);box-shadow:0 0 8px rgba(255,184,0,.3)">C4</span>
             </div>
           </div>
-          <div class="outcome" style="border-left-color:var(--amber)">Throttle –80% del daño · timeout T2 de 3 min (ADR-0003) · ventana de consolidación 60s (ADR-0006) · 2 aprueban · 1 rechaza · 1 timeout · conservative-wins → aislamiento</div>
-          <button class="replay-btn" data-cu="03">REPRODUCIR ATAQUE</button>
-        </div>
-      </div>
-      <div class="uc-stack">
-        <span class="us-lbl">// STACK</span>
-        <span class="us-pill key">Isolation Forest</span>
-        <span class="us-pill key">OC-SVM Ensemble</span>
-        <span class="us-pill">FastAPI</span>
-        <span class="us-pill">Mini-RAG · BGE-large</span>
-        <span class="us-pill">LLM Triage</span>
-        <span class="us-pill key">ADR-0006</span>
-        <span class="us-pill">Rate Limiter</span>
-      </div>
-      <div class="uc-stage" data-cu="03">
-        <div class="stage-header">
-          <span class="sh-l">SIMULACIÓN · CONFLICTO DE APROBADORES · ADR-0006 EN VIVO</span>
-          <span class="sh-r">T+<b class="cu03-time">0</b>s · <b class="cu03-status">ESPERANDO VOTOS</b></span>
-        </div>
-        <div class="stage-meta">
-          <span class="sm-chip demo">DEMO: <b>~7s</b></span>
-          <span class="sm-chip real">INCIDENTE REAL: <b>~91s</b></span>
-          <span class="sm-chip">RATIO: <b>13×</b> acelerado</span>
-        </div>
-        <div class="cu03-board">
-          <div class="cu03-approvers">
-            <div class="cu03-approver" data-vote="reject"  data-delay="600"><span class="av">A1</span><span class="nm">SOC LEAD</span><span class="vt"></span></div>
-            <div class="cu03-approver" data-vote="approve" data-delay="1300"><span class="av">A2</span><span class="nm">INFRA SR</span><span class="vt"></span></div>
-            <div class="cu03-approver" data-vote="approve" data-delay="2000"><span class="av">A3</span><span class="nm">BUSINESS</span><span class="vt"></span></div>
-            <div class="cu03-approver" data-vote="timeout" data-delay="2700"><span class="av">A4</span><span class="nm">DPO</span><span class="vt"></span></div>
-          </div>
-          <div class="cu03-center">
-            <span class="cu03-clock-lbl">TIMEOUT T2 · ADR-0003</span>
-            <div class="cu03-clock" style="--clock-fill: 100%;"><span class="cu03-clock-num">3:00</span></div>
-            <div class="cu03-adr">VENTANA CONSOLIDACIÓN 60s · ADR-0006 · CONSERVATIVE WINS</div>
-          </div>
-          <div class="cu03-chart">
-            <div>
-              <div class="ch-hdr"><span>RATE DE CIFRADO</span><span><b class="cu03-pct">100</b>%</span></div>
-              <div class="cu03-bar"><div class="cu03-bar-fill"></div></div>
-            </div>
-            <div class="cu03-mini">
-              <div class="cu03-mini-row"><span>SCORE ML</span><b>0.72</b></div>
-              <div class="cu03-mini-row"><span>NIVEL</span><b style="color:var(--amber)">T2</b></div>
-              <div class="cu03-mini-row"><span>RATE-LIMIT</span><b class="cu03-rl">—</b></div>
-              <div class="cu03-mini-row crit"><span>VOTOS</span><b class="cu03-votes">0 / 4</b></div>
-              <div class="cu03-mini-row"><span>RESULTADO</span><b class="cu03-result">PENDIENTE</b></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CU-04 -->
-    <div class="uc-card reveal" style="--c:var(--blue);--g:rgba(0,212,255,.25)">
-      <div class="circuit-border"></div>
-      <div class="uc-inner">
-        <div class="live-dot">LIVE</div>
-        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">04</span></div>
-        <div class="col-info">
-          <h3 class="uc-title">PostgreSQL en Producción — Regla de Dos Personas</h3>
-          <p class="uc-focus">Enfoque de demo: vocabulario de cumplimiento normativo · principio de cuatro ojos · gobernanza corporativa</p>
-          <p class="uc-desc">El activo más crítico de la organización requiere el nivel más alto de control humano. Las Capas 1 y 2 corroboran el ataque con confianza T1. Por política (ADR-0006), las acciones irreversibles sobre la base PostgreSQL de producción activan la regla de dos personas: se necesitan al menos dos aprobadores explícitos antes de ejecutar el aislamiento. Un único aprobador comprometido no puede ni vetar ni aprobar solo. Genera un log de auditoría inmutable alineado con SOC 2 §CC6 e ISO 27001 §A.9.4.</p>
-          <div class="mitre-row">
-            <span class="mitre-chip">T1490 · INHIBICIÓN DE RECUPERACIÓN</span>
-            <span class="mitre-chip">T1021 · SERVICIOS REMOTOS</span>
-          </div>
-        </div>
-        <div class="col-flow">
-          <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
-          <div class="flow-list">
-            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ransomware ataca la base PostgreSQL de producción (esquema argos_demo_prod sobre Linux VM)</span></div>
-            <div class="flow-item"><span class="ft">t+3s</span><span class="fx">Sigma detecta consultas de cifrado y acceso anómalo · Capa 1 alerta</span></div>
-            <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Ensamble ML corrobora comportamiento anómalo · confianza T1 (0.85)</span></div>
-            <div class="flow-item"><span class="ft">t+5s</span><span class="fx">SOAR identifica activo crítico → activa Regla de Dos Personas (ADR-0006)</span></div>
-            <div class="flow-item critical"><span class="ft">t+20s</span><span class="fx">Dos aprobadores autorizan simultáneamente → aislamiento ejecutado<span class="critical-tag">★ DECISIÓN</span></span></div>
-            <div class="flow-item"><span class="ft">t+22s</span><span class="fx">Log de auditoría inmutable generado (SOC 2 · ISO 27001)</span></div>
-          </div>
-        </div>
-        <div class="col-meta">
-          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier tier-T1">🔵 T1 + REGLA-2P</div></div>
-          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">0.80 – 0.95</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--blue)" data-w="85%"></div></div></div>
-          <div><p class="meta-lbl">CAPAS ACTIVAS</p>
-            <div class="layers">
-              <span class="lp on" style="border-color:var(--blue);color:var(--blue);box-shadow:0 0 8px rgba(0,212,255,.25)">C1</span>
-              <span class="lp on" style="border-color:var(--blue);color:var(--blue);box-shadow:0 0 8px rgba(0,212,255,.25)">C2</span>
-              <span class="lp">C3</span>
-              <span class="lp">C4</span>
-            </div>
-          </div>
-          <div class="outcome" style="border-left-color:var(--blue)">Cuatro ojos · log de auditoría inmutable · alineado con SOC 2 §CC6 e ISO 27001 §A.9.4</div>
+          <div class="outcome" style="border-left-color:var(--amber)">Throttle desde t=0 acota daño · 60s consolidation (ADR-0006) · 180s hard timeout (ADR-0003) · 3 outcomes posibles · audit log SOC 2 / ISO 27001 / pgAudit</div>
           <button class="replay-btn" data-cu="04">REPRODUCIR ATAQUE</button>
         </div>
       </div>
       <div class="uc-stack">
         <span class="us-lbl">// STACK</span>
         <span class="us-pill key">Wazuh + Sigma</span>
-        <span class="us-pill">ML Ensemble</span>
-        <span class="us-pill">LLM Triage</span>
-        <span class="us-pill key">ADR-0006 · Regla 2P</span>
-        <span class="us-pill">JWT firmado</span>
-        <span class="us-pill">Append-only audit (OpenSearch)</span>
+        <span class="us-pill key">ML Ensemble</span>
+        <span class="us-pill key">LLM Triage + RAG</span>
+        <span class="us-pill key">ADR-0006 · Two-Person</span>
+        <span class="us-pill">ADR-0003 · 180s timeout</span>
+        <span class="us-pill">pgAudit append-only</span>
+        <span class="us-pill">Twilio voice DTMF</span>
         <span class="us-pill">SOC 2 / ISO 27001</span>
-      </div>
-      <div class="uc-stage" data-cu="04">
-        <div class="stage-header">
-          <span class="sh-l">SIMULACIÓN · AUTORIZACIÓN SIMULTÁNEA · CONTROL DE 4 OJOS</span>
-          <span class="sh-r">T+<b class="cu04-time">0</b>s · <b class="cu04-status">ESPERANDO LLAVES</b></span>
-        </div>
-        <div class="stage-meta">
-          <span class="sm-chip demo">DEMO: <b>~5s</b></span>
-          <span class="sm-chip real">INCIDENTE REAL: <b>~22s</b></span>
-          <span class="sm-chip">RATIO: <b>4×</b> acelerado</span>
-        </div>
-        <div class="cu04-board">
-          <div class="cu04-keys">
-            <div class="cu04-key-station">
-              <span class="op">OPERADOR <b>A · SOC</b></span>
-              <div class="cu04-key-wrap">
-                <div class="cu04-key" id="cu04Key1">
-                  <svg viewBox="0 0 40 40">
-                    <circle cx="14" cy="20" r="7" fill="none" stroke="#00d4ff" stroke-width="2"/>
-                    <circle cx="14" cy="20" r="2" fill="#00d4ff"/>
-                    <rect x="20" y="18.5" width="16" height="3" fill="#00d4ff"/>
-                    <rect x="30" y="21.5" width="3" height="3" fill="#00d4ff"/>
-                    <rect x="34" y="21.5" width="2" height="3" fill="#00d4ff"/>
-                  </svg>
-                </div>
-              </div>
-              <span class="cu04-key-status" id="cu04Status1">AUTH PENDIENTE</span>
-            </div>
-            <div class="cu04-key-station">
-              <span class="op">OPERADOR <b>B · INFRA</b></span>
-              <div class="cu04-key-wrap">
-                <div class="cu04-key" id="cu04Key2">
-                  <svg viewBox="0 0 40 40">
-                    <circle cx="14" cy="20" r="7" fill="none" stroke="#00d4ff" stroke-width="2"/>
-                    <circle cx="14" cy="20" r="2" fill="#00d4ff"/>
-                    <rect x="20" y="18.5" width="16" height="3" fill="#00d4ff"/>
-                    <rect x="30" y="21.5" width="3" height="3" fill="#00d4ff"/>
-                    <rect x="34" y="21.5" width="2" height="3" fill="#00d4ff"/>
-                  </svg>
-                </div>
-              </div>
-              <span class="cu04-key-status" id="cu04Status2">AUTH PENDIENTE</span>
-            </div>
-          </div>
-          <div class="cu04-audit">
-            <div class="cu04-audit-hdr"><span>// AUDIT LOG · IMMUTABLE</span><span>HASH: <b class="cu04-hash">—</b></span></div>
-            <div class="cu04-audit-line"><span class="k">timestamp</span> = <span class="v">2026-05-16T14:32:08Z</span></div>
-            <div class="cu04-audit-line"><span class="k">incident</span>   = <span class="v">CU-04 · prod-db-cluster</span></div>
-            <div class="cu04-audit-line"><span class="k">approver_a</span> = <span class="v">soc.lead@argos · JWT</span></div>
-            <div class="cu04-audit-line"><span class="k">approver_b</span> = <span class="v">infra.sr@argos · JWT</span></div>
-            <div class="cu04-audit-line"><span class="k">action</span>     = <span class="v">NETWORK_ISOLATION</span></div>
-            <div class="cu04-audit-line"><span class="k">compliance</span> = <span class="v">SOC 2 · ISO 27001 · OK</span></div>
-            <div class="cu04-seal">✓ SEALED</div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- CU-05 -->
-    <div class="uc-card reveal" style="--c:var(--red);--g:rgba(255,77,106,.28)">
+    <!-- CU-07 -->
+    <div class="uc-card reveal" style="--c:var(--green);--g:rgba(0,255,179,.22)">
       <div class="circuit-border"></div>
       <div class="uc-inner">
-        <div class="live-dot" style="color:var(--red)">CRITICAL</div>
-        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">05</span></div>
+        <div class="live-dot">LIVE</div>
+        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">07</span></div>
         <div class="col-info">
-          <h3 class="uc-title">Ataque Sigiloso — Eliminación del Agente + Detección por Latido</h3>
-          <p class="uc-focus">Enfoque de demo: el silencio del agente es la señal · resiliencia ante evasión del defensor</p>
-          <p class="uc-desc">El atacante sofisticado no ataca el objetivo — ataca al defensor. T1562.001 intenta eliminar el agente Wazuh para cegar el SIEM antes del ataque principal. ARGOS invierte la lógica: la ausencia de señal de latido en ~60 segundos es en sí misma una alerta de alta confianza. La Capa 1 captura el evento `Stop-Service` antes de que el agente muera (real-time shipping) y la regla Wazuh 502 cierra la confirmación al perder el latido. El sistema dispara el aislamiento de red antes de que el ransomware principal se ejecute. El silencio los traiciona.</p>
+          <h3 class="uc-title">SELECT Masivo Benigno · False Positive con HITL Cancellation</h3>
+          <p class="uc-focus">Enfoque de demo: el caso más sofisticado · ML acierta-pero-equivocadamente · LLM Triage genera contexto · aprobadores cancelan contención · zero pérdida de productividad para analista legítima</p>
+          <p class="uc-desc">Una analista legítima ejecuta <code>SELECT * FROM payroll</code> a las 3:14 AM (reporte mensual). Devuelve ~200k filas en horario no laboral. ML clasifica como anómalo (rows_returned outlier + hora_atípica) y Sigma firing por patrón de uso inusual sobre tabla sensible. SOAR clasifica T2 con two-person rule (target es production-critical). En t=0 se aplica throttle preventivo que RALENTIZA la query (sin bloquearla). LLM Triage (gpt-4o-mini con RAG sobre historial del usuario) genera reasoning explícito: "Patrón coincide con reporte mensual de payroll. Usuario tiene acceso consistente. No hay signals de exfiltración." Aprobadores leen el contexto, presionan [Reject], throttle rollback, analista termina query con 5-10s extra. Audit log marca <code>false_positive=true</code>. Demuestra que ARGOS detecta sin destruir productividad.</p>
           <div class="mitre-row">
-            <span class="mitre-chip">T1562.001 · DETERIORO DE DEFENSAS</span>
-            <span class="mitre-chip">Wazuh rule 502 · agente desconectado</span>
+            <span class="mitre-chip">T1078 · CUENTAS VÁLIDAS (FP)</span>
+            <span class="mitre-chip">T1213 · DATOS DE REPOSITORIOS</span>
           </div>
         </div>
         <div class="col-flow">
           <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
           <div class="flow-list">
-            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Atacante obtiene acceso privilegiado al endpoint objetivo</span></div>
-            <div class="flow-item"><span class="ft">t+5s</span><span class="fx">Intento de eliminación del proceso Wazuh-agent (T1562.001)</span></div>
-            <div class="flow-item"><span class="ft">t+5s</span><span class="fx">Capa 1: regla "proceso de agente terminado" dispara de inmediato</span></div>
-            <div class="flow-item critical"><span class="ft">t+65s</span><span class="fx">Alerta de pérdida de latido confirmada → aislamiento de red ejecutado<span class="critical-tag">★ DECISIÓN</span></span></div>
-            <div class="flow-item"><span class="ft">t+66s</span><span class="fx">El ransomware principal nunca llega a ejecutarse en el host</span></div>
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Analista ejecuta SELECT a las 3:14 AM · pgAudit registra READ con 200k rows</span></div>
+            <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Sigma pg_select_massive_unusual_table + ML query pattern outlier firing</span></div>
+            <div class="flow-item"><span class="ft">t+6s</span><span class="fx">SOAR clasifica T2 (production-critical) · throttle preventivo aplicado · query ralentizada (NO bloqueada)</span></div>
+            <div class="flow-item"><span class="ft">t+8s</span><span class="fx">LLM Triage genera reasoning con historial del usuario vía RAG · "patrón mensual conocido"</span></div>
+            <div class="flow-item"><span class="ft">t+9s</span><span class="fx">Telegram + Discord a 4 aprobadores · mensaje incluye verdict LLM "benign · 0.81"</span></div>
+            <div class="flow-item critical"><span class="ft">t+25s</span><span class="fx">2 aprobadores [Reject] · conservative-wins → block + rollback throttle<span class="critical-tag">★ DECISIÓN</span></span></div>
+            <div class="flow-item"><span class="ft">t+27s</span><span class="fx">Analista termina query con +5-10s de latencia · audit log: false_positive=true</span></div>
+            <div class="flow-item"><span class="ft">+24h</span><span class="fx">Feedback loop: ML re-entrena con este caso para reducir FPs futuros</span></div>
           </div>
         </div>
         <div class="col-meta">
-          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier" style="border-color:var(--red);color:var(--red);background:rgba(255,77,106,.06)">🔴 T0 AUTOMÁTICO</div></div>
-          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">≥ 0.95</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--red)" data-w="95%"></div></div></div>
+          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier" style="border-color:var(--green);color:var(--green);background:rgba(0,255,179,.06)">🟢 T2 · HITL CANCELLATION</div></div>
+          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">0.60 – 0.75</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--green)" data-w="68%"></div></div></div>
           <div><p class="meta-lbl">CAPAS ACTIVAS</p>
             <div class="layers">
-              <span class="lp on" style="border-color:var(--red);color:var(--red);box-shadow:0 0 8px rgba(255,77,106,.28)">C1</span>
-              <span class="lp">C2</span>
-              <span class="lp on" style="border-color:var(--red);color:var(--red);box-shadow:0 0 8px rgba(255,77,106,.28)">C3</span>
-              <span class="lp on" style="border-color:var(--red);color:var(--red);box-shadow:0 0 8px rgba(255,77,106,.28)">LAT</span>
+              <span class="lp on" style="border-color:var(--green);color:var(--green);box-shadow:0 0 8px rgba(0,255,179,.25)">C1</span>
+              <span class="lp on" style="border-color:var(--green);color:var(--green);box-shadow:0 0 8px rgba(0,255,179,.25)">C2</span>
+              <span class="lp">C3</span>
+              <span class="lp on" style="border-color:var(--green);color:var(--green);box-shadow:0 0 8px rgba(0,255,179,.25)">C4</span>
             </div>
           </div>
-          <div class="outcome" style="border-left-color:var(--red)">Aislamiento pre-ejecución · agente eliminado = señal de alta confianza · ransomware nunca corre</div>
-          <button class="replay-btn" data-cu="05">REPRODUCIR ATAQUE</button>
+          <div class="outcome" style="border-left-color:var(--green)">Productividad preservada · LLM contexto evita FP destructivo · throttle reversible · two-person rule previene auto-isolate a 180s · feedback loop a ML</div>
+          <button class="replay-btn" data-cu="07">REPRODUCIR ATAQUE</button>
         </div>
       </div>
       <div class="uc-stack">
         <span class="us-lbl">// STACK</span>
-        <span class="us-pill key">Wazuh agent heartbeat</span>
-        <span class="us-pill key">Sigma · T1562</span>
-        <span class="us-pill">Capa LAT (60s)</span>
-        <span class="us-pill">Network isolation</span>
-        <span class="us-pill">Real-time event shipping</span>
-        <span class="us-pill">SOAR pre-execution</span>
+        <span class="us-pill key">pgAudit</span>
+        <span class="us-pill key">Sigma + ML query pattern</span>
+        <span class="us-pill key">LLM Triage + RAG</span>
+        <span class="us-pill">Two-Person Rule</span>
+        <span class="us-pill">Throttle reversible</span>
+        <span class="us-pill">Feedback loop ML</span>
       </div>
-      <div class="uc-stage" data-cu="05">
-        <div class="stage-header">
-          <span class="sh-l">SIMULACIÓN · LATIDO DEL AGENTE WAZUH · DETECCIÓN POR SILENCIO</span>
-          <span class="sh-r">T+<b class="cu05-time">0</b>s · <b class="cu05-status">AGENTE ACTIVO</b></span>
-        </div>
-        <div class="stage-meta">
-          <span class="sm-chip demo">DEMO: <b>~8s</b></span>
-          <span class="sm-chip real">INCIDENTE REAL: <b>~66s</b></span>
-          <span class="sm-chip">RATIO: <b>8×</b> acelerado</span>
-        </div>
-        <div class="cu05-board">
-          <div class="cu05-ecg alive" id="cu05Ecg">
-            <div class="cu05-ecg-hdr">
-              <span class="st">● HEARTBEAT WAZUH-AGENT-01</span>
-              <span class="bpm">BPM: <b class="cu05-bpm">60</b></span>
-            </div>
-            <div class="cu05-ecg-grid"></div>
-            <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
-              <path class="ecg-line" d="M 0 40 L 80 40 L 95 40 L 105 20 L 115 60 L 125 30 L 140 40 L 220 40 L 235 40 L 245 20 L 255 60 L 265 30 L 280 40 L 360 40 L 375 40 L 385 20 L 395 60 L 405 30 L 420 40 L 500 40 L 515 40 L 525 20 L 535 60 L 545 30 L 560 40 L 640 40 L 655 40 L 665 20 L 675 60 L 685 30 L 700 40 L 780 40 L 795 40 L 805 20 L 815 60 L 825 30 L 840 40 L 920 40 L 935 40 L 945 20 L 955 60 L 965 30 L 980 40 L 1060 40 L 1075 40 L 1085 20 L 1095 60 L 1105 30 L 1120 40 L 1200 40"/>
-            </svg>
-          </div>
-          <div class="cu05-side">
-            <div class="cu05-counter" id="cu05Counter">
-              <div class="lbl">CUENTA ATRÁS LATIDO</div>
-              <div class="num"><span class="cu05-num">60</span></div>
-              <div class="un">SEGUNDOS</div>
-            </div>
-            <div class="cu05-action" id="cu05Action">AISLAMIENTO EN ESPERA</div>
+    </div>
+
+
+    <!-- CU-08 NICE-TO-HAVE -->
+    <div class="uc-card reveal" style="--c:var(--red);--g:rgba(255,77,106,.22);border-style:dashed;opacity:.92">
+      <div class="circuit-border"></div>
+      <div class="uc-inner">
+        <div class="live-dot" style="color:var(--red);background:rgba(255,77,106,.08)">BONUS</div>
+        <div class="col-num"><span class="uc-code">CU</span><span class="uc-num" style="color:var(--red)">08</span></div>
+        <div class="col-info">
+          <h3 class="uc-title">SQL Injection (sqlmap) · Bonus / Nice-to-have</h3>
+          <p class="uc-focus">Enfoque de demo: vector aplicación web · sqlmap automatizado · si hay tiempo en la presentación; sino se menciona como capacidad</p>
+          <p class="uc-desc">Atacante usa <code>sqlmap</code> contra una webapp dummy (DVWA o similar) que sirve como frontend de la base PostgreSQL defendida. sqlmap enumera bases, tablas, columnas. La Capa 1 (Sigma DB sobre pgAudit) detecta patrones de inyección típica (UNION SELECT, COMMENT bypass, tautologías). La Capa 2 ML corrobora con query rate anómalo. SOAR clasifica T2 (target production-critical → two-person rule, como en UC-04). Mismo flujo HITL: throttle preventivo + 4 aprobadores + 60s consolidation + 180s timeout. Outcome esperado: 2 aprobadores aprueban (la firma sqlmap es inequívoca) → isolate del IP origen + bloqueo del endpoint vulnerable a nivel web server.</p>
+          <div class="mitre-row">
+            <span class="mitre-chip">T1190 · EXPLOTACIÓN DE APP PÚBLICA</span>
+            <span class="mitre-chip">T1213 · DATOS DE REPOSITORIOS</span>
           </div>
         </div>
+        <div class="col-flow">
+          <p class="flow-hdr">// LÍNEA DE TIEMPO (estimada)</p>
+          <div class="flow-list">
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">sqlmap -u "http://app/login.php?u=admin" --batch --level=2 --dbs</span></div>
+            <div class="flow-item"><span class="ft">t+10s</span><span class="fx">pgAudit registra cascada de SELECTs sospechosos · Sigma DB firing</span></div>
+            <div class="flow-item"><span class="ft">t+15s</span><span class="fx">SOAR clasifica T2 two-person · throttle preventivo</span></div>
+            <div class="flow-item"><span class="ft">t+18s</span><span class="fx">Telegram a 4 aprobadores · LLM context muestra patrón sqlmap inequívoco</span></div>
+            <div class="flow-item critical"><span class="ft">t+35s</span><span class="fx">2 [Approve] → isolate IP + bloqueo endpoint en nginx<span class="critical-tag">★ DECISIÓN</span></span></div>
+          </div>
+        </div>
+        <div class="col-meta">
+          <div><p class="meta-lbl">NIVEL DE RESPUESTA</p><div class="tier" style="border-color:var(--red);color:var(--red);background:rgba(255,77,106,.06)">🔴 T2 · TWO-PERSON</div></div>
+          <div><p class="meta-lbl">CONFIANZA</p><p class="meta-val">0.85 – 0.95</p><div class="conf-wrap"><div class="conf-fill" style="width:0%;background:var(--red)" data-w="90%"></div></div></div>
+          <div><p class="meta-lbl">CAPAS ACTIVAS</p>
+            <div class="layers">
+              <span class="lp on" style="border-color:var(--red);color:var(--red);box-shadow:0 0 8px rgba(255,77,106,.25)">C1</span>
+              <span class="lp on" style="border-color:var(--red);color:var(--red);box-shadow:0 0 8px rgba(255,77,106,.25)">C2</span>
+              <span class="lp">C3</span>
+              <span class="lp on" style="border-color:var(--red);color:var(--red);box-shadow:0 0 8px rgba(255,77,106,.25)">C4</span>
+            </div>
+          </div>
+          <div class="outcome" style="border-left-color:var(--red)">Nice-to-have · si hay tiempo en la presentación; sino se documenta como capacidad demostrada por código pero no en vivo</div>
+          <button class="replay-btn" data-cu="08">REPRODUCIR ATAQUE</button>
+        </div>
+      </div>
+      <div class="uc-stack">
+        <span class="us-lbl">// STACK</span>
+        <span class="us-pill key">sqlmap</span>
+        <span class="us-pill key">pgAudit + Sigma DB</span>
+        <span class="us-pill">ML query pattern</span>
+        <span class="us-pill">Two-Person Rule</span>
+        <span class="us-pill">nginx endpoint block</span>
       </div>
     </div>
 
@@ -2244,100 +2176,148 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
 </section>
 
 <div class="section-end"><span class="se-bar"></span><span class="se-tag">// FIN · <b>ESCENARIOS OPERACIONALES</b></span><span class="se-bar"></span></div>
-<div class="section-divider-thick"><span class="sd-emblem">5 / 5 CASOS COMPLETADOS</span></div>
+<div class="section-divider-thick"><span class="sd-emblem">5 CASOS PRINCIPALES + 1 BONUS</span></div>
 
 <!-- ============ MITRE ATT&CK HEATMAP ============ -->
 <div class="section-marker">
   <span class="sm-num">03 / 06</span>
   <span class="sm-name">COBERTURA MITRE ATT&amp;CK</span>
   <span class="sm-bar"></span>
-  <span class="sm-meta">6 técnicas mapeadas a 5 casos</span>
+  <span class="sm-meta">9 técnicas mapeadas a 6 casos</span>
 </div>
 <div class="anim-divider"></div>
 <div class="mitre-section reveal" id="mitreSection">
   <p class="sec-tag">// COBERTURA MITRE ATT&amp;CK</p>
   <h2 class="sec-title" style="font-size:clamp(22px,3vw,36px);margin-bottom:14px">Matriz de Técnicas Cubiertas<span class="sec-title-deco"></span></h2>
   <p style="font-size:13px;font-weight:300;color:var(--text);max-width:760px;line-height:1.65;margin-bottom:8px">
-    Seis técnicas del marco MITRE ATT&amp;CK mapeadas contra los cinco escenarios operacionales.
+    Nueve técnicas del marco MITRE ATT&amp;CK mapeadas contra los cinco escenarios principales + UC-08 nice-to-have.
     La intensidad de cada celda refleja el número de casos de uso que invocan la técnica.
   </p>
   <div class="mitre-grid" id="mitreGrid">
-    <div class="mitre-cell" style="--c-mitre: var(--red); --cov-w: 60%; --cov-pct: .6">
+    <div class="mitre-cell" style="--c-mitre: var(--red); --cov-w: 50%; --cov-pct: .5">
       <div class="mt-id">T1486</div>
       <div class="mt-name">Cifrado de datos para impacto</div>
-      <div class="mt-cov-lbl"><span>COBERTURA</span><b>3 / 5 CASOS</b></div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>2 / 6 CASOS</b></div>
       <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
       <div class="mt-cases">
         <span class="mt-case-tag">CU-01</span>
         <span class="mt-case-tag">CU-02</span>
-        <span class="mt-case-tag">CU-03</span>
         <span class="mt-case-tag" style="opacity:.3">CU-04</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-05</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
       </div>
     </div>
-    <div class="mitre-cell" style="--c-mitre: var(--amber); --cov-w: 60%; --cov-pct: .6">
+    <div class="mitre-cell" style="--c-mitre: var(--amber); --cov-w: 33%; --cov-pct: .33">
       <div class="mt-id">T1490</div>
       <div class="mt-name">Inhibición de recuperación</div>
-      <div class="mt-cov-lbl"><span>COBERTURA</span><b>3 / 5 CASOS</b></div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>2 / 6 CASOS</b></div>
       <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
       <div class="mt-cases">
         <span class="mt-case-tag">CU-01</span>
         <span class="mt-case-tag" style="opacity:.3">CU-02</span>
-        <span class="mt-case-tag">CU-03</span>
         <span class="mt-case-tag">CU-04</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-05</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
       </div>
     </div>
-    <div class="mitre-cell" style="--c-mitre: var(--blue); --cov-w: 60%; --cov-pct: .6">
+    <div class="mitre-cell" style="--c-mitre: var(--blue); --cov-w: 33%; --cov-pct: .33">
       <div class="mt-id">T1083</div>
       <div class="mt-name">Descubrimiento de archivos</div>
-      <div class="mt-cov-lbl"><span>COBERTURA</span><b>3 / 5 CASOS</b></div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>2 / 6 CASOS</b></div>
       <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
       <div class="mt-cases">
         <span class="mt-case-tag">CU-01</span>
         <span class="mt-case-tag">CU-02</span>
-        <span class="mt-case-tag">CU-03</span>
         <span class="mt-case-tag" style="opacity:.3">CU-04</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-05</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
       </div>
     </div>
-    <div class="mitre-cell" style="--c-mitre: var(--red); --cov-w: 20%; --cov-pct: .2">
-      <div class="mt-id">T1562.001</div>
-      <div class="mt-name">Deterioro de defensas · Wazuh kill</div>
-      <div class="mt-cov-lbl"><span>COBERTURA</span><b>1 / 5 CASOS</b></div>
+    <div class="mitre-cell" style="--c-mitre: var(--cyan); --cov-w: 17%; --cov-pct: .17">
+      <div class="mt-id">T1498</div>
+      <div class="mt-name">DDoS de red (SYN flood)</div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>1 / 6 CASOS</b></div>
       <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
       <div class="mt-cases">
         <span class="mt-case-tag" style="opacity:.3">CU-01</span>
         <span class="mt-case-tag" style="opacity:.3">CU-02</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-03</span>
         <span class="mt-case-tag" style="opacity:.3">CU-04</span>
-        <span class="mt-case-tag">CU-05</span>
+        <span class="mt-case-tag">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
       </div>
     </div>
-    <div class="mitre-cell" style="--c-mitre: var(--cyan); --cov-w: 20%; --cov-pct: .2">
-      <div class="mt-id">T1021</div>
-      <div class="mt-name">Servicios remotos</div>
-      <div class="mt-cov-lbl"><span>COBERTURA</span><b>1 / 5 CASOS</b></div>
+    <div class="mitre-cell" style="--c-mitre: var(--cyan); --cov-w: 17%; --cov-pct: .17">
+      <div class="mt-id">T1499</div>
+      <div class="mt-name">DDoS de endpoint (slow HTTP)</div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>1 / 6 CASOS</b></div>
       <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
       <div class="mt-cases">
         <span class="mt-case-tag" style="opacity:.3">CU-01</span>
         <span class="mt-case-tag" style="opacity:.3">CU-02</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-03</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-04</span>
+        <span class="mt-case-tag">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
+      </div>
+    </div>
+    <div class="mitre-cell" style="--c-mitre: var(--red); --cov-w: 33%; --cov-pct: .33">
+      <div class="mt-id">T1190</div>
+      <div class="mt-name">Explotación de app pública</div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>2 / 6 CASOS</b></div>
+      <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
+      <div class="mt-cases">
+        <span class="mt-case-tag" style="opacity:.3">CU-01</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-02</span>
         <span class="mt-case-tag">CU-04</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-05</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag">CU-08</span>
       </div>
     </div>
-    <div class="mitre-cell" style="--c-mitre: var(--green); --cov-w: 20%; --cov-pct: .2">
-      <div class="mt-id">T1071</div>
-      <div class="mt-name">Protocolo de capa de aplicación</div>
-      <div class="mt-cov-lbl"><span>COBERTURA</span><b>1 / 5 CASOS</b></div>
+    <div class="mitre-cell" style="--c-mitre: var(--green); --cov-w: 33%; --cov-pct: .33">
+      <div class="mt-id">T1078</div>
+      <div class="mt-name">Cuentas válidas (FP detection)</div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>2 / 6 CASOS</b></div>
       <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
       <div class="mt-cases">
-        <span class="mt-case-tag">CU-01</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-01</span>
         <span class="mt-case-tag" style="opacity:.3">CU-02</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-03</span>
+        <span class="mt-case-tag">CU-04</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
+      </div>
+    </div>
+    <div class="mitre-cell" style="--c-mitre: var(--green); --cov-w: 33%; --cov-pct: .33">
+      <div class="mt-id">T1213</div>
+      <div class="mt-name">Datos de repositorios</div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>2 / 6 CASOS</b></div>
+      <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
+      <div class="mt-cases">
+        <span class="mt-case-tag" style="opacity:.3">CU-01</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-02</span>
         <span class="mt-case-tag" style="opacity:.3">CU-04</span>
-        <span class="mt-case-tag" style="opacity:.3">CU-05</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag">CU-07</span>
+        <span class="mt-case-tag">CU-08</span>
+      </div>
+    </div>
+    <div class="mitre-cell" style="--c-mitre: var(--cyan); --cov-w: 17%; --cov-pct: .17">
+      <div class="mt-id">T1021</div>
+      <div class="mt-name">Servicios remotos (lateral)</div>
+      <div class="mt-cov-lbl"><span>COBERTURA</span><b>1 / 6 CASOS</b></div>
+      <div class="mt-cov-bar"><div class="mt-cov-fill"></div></div>
+      <div class="mt-cases">
+        <span class="mt-case-tag" style="opacity:.3">CU-01</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-02</span>
+        <span class="mt-case-tag">CU-04</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-06</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-07</span>
+        <span class="mt-case-tag" style="opacity:.3">CU-08</span>
       </div>
     </div>
   </div>
