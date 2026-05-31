@@ -267,7 +267,7 @@ source .venv/bin/activate
 
 pip install --upgrade pip
 pip install -e ./argos_contracts
-pip install -r soar/requirements.txt
+pip install -e ".[soar,dev]"
 ```
 
 ### Salida esperada
@@ -302,7 +302,7 @@ argos_contracts 1.1.0
 | Síntoma | Causa | Fix |
 |---------|-------|-----|
 | `ModuleNotFoundError: argos_contracts` después de `pip install -e` | Instalaste fuera del venv | `which python` debe terminar en `.venv/bin/python`. Si no, `source .venv/bin/activate` |
-| `pytest: command not found` | Falta dep del SOAR | `pip install -r soar/requirements.txt` |
+| `pytest: command not found` | Falta dep del SOAR | `pip install -e ".[soar,dev]"` |
 | `git clone` pide password HTTPS | No tienes SSH key configurada | `gh auth login` o `git clone https://github.com/EnzoOrdonez/argos.git` |
 
 ---
@@ -388,6 +388,8 @@ env NO vacío
 ---
 
 # Fase 2 — Skeletons funcionales
+
+> **Nota de reconciliacion — ADR-0011:** los snippets de codigo de esta seccion se escribieron contra un diseno previo del contrato y **no son la fuente de verdad**. La implementacion real vive en `soar/` (en verde con tests) y sigue `argos_contracts` v1.1.0 + las correcciones de **ADR-0011** (`docs/decisions/0011-soar-implementation-reconciliation.md` §2.2). Trata los snippets como guia del flujo; para el contrato exacto, mira el codigo y ADR-0011.
 
 > Goal: cada componente individual corre y pasa sus tests unitarios, **aún con stubs** en lugar de servicios reales. La conexión al lab real viene en Fase 3.
 
@@ -1457,6 +1459,8 @@ test_consolidation.py::test_consolidation_partial_quorum_blocks PASSED
 ---
 
 # Fase 3 — Integración real
+
+> **Nota de reconciliacion — ADR-0011:** los snippets de esta seccion (consumer con `NormalizedEvent`, `IncidentState.NEW`, `Incident.llm_verdict`) estan desfasados de `argos_contracts` v1.1.0. Antes de implementar Fase 3 segui **ADR-0011 §3**: consumer sobre `NormalizedAlert`, `Incident.llm_analysis: TriageResponse`, estados reales del enum, y las dependencias bloqueantes (throttle/snapshot/scheduler).
 
 ## 3.1 Consumer del stream `events:normalized`
 
