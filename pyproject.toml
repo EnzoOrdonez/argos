@@ -58,6 +58,7 @@ soar = [
     "python-telegram-bot>=21.0",     # ADR-0007 v2 primary
     "discord-webhook>=1.3",          # ADR-0007 v2 visibility
     "twilio>=9.0",                   # ADR-0007 v2 escalation
+    "python-multipart>=0.0.9",       # FastAPI Form() en Approval API (§2.6)
 ]
 ui = [
     "streamlit>=1.30",
@@ -116,12 +117,12 @@ ignore = ["S101"]  # pytest assert OK
 "**/tests/**" = ["S", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["argos_contracts/tests", "llm_triage/tests"]
+testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["argos_contracts", "llm_triage"]
+source = ["argos_contracts", "llm_triage", "soar"]
 omit = ["*/tests/*", "*/__init__.py"]
 
 [tool.coverage.report]
@@ -132,3 +133,6 @@ exclude_lines = [
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
 ]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Form", "fastapi.Query"]
