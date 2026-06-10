@@ -11,6 +11,22 @@
 
 ---
 
+## Update 2026-06-10 (cierre Fase 3) — orquestación SOAR completa
+
+La Fase 3 del SOAR quedó implementada end-to-end y testeable sin lab. `pytest -q` global = **250 passed** (eran 166 al cierre de Fase 2). Cobertura `soar/` **97%** global, `tier_router.py` **100%**, cada módulo nuevo ≥ 93% (piso de ADR-0011 §4 = 80%). Lo entregado:
+
+- **Playbooks (ADR-0012):** `ResponseExecutor` (Protocol), `SimulatedExecutor` demo-safe e idempotente, `WazuhActiveResponseExecutor` real mockeable, builders de throttle/snapshot/isolation/kill.
+- **Consumer + correlación (ADR-0013):** stream `events:normalized` (grupo `soar-router`), correlación por host con dos índices, fusión noisy-OR, fast-path canary/AUTO_T0, `Incident` con id `INC-` diario, throttle+snapshot pre-aprobación, XACK con poison guard. Criticidad por inventario (`soar/inventory.py`).
+- **Scheduler:** tres relojes asyncio (consolidación 60s desde el primer voto, timeout T2 180s, escalación por voz 60s), deterministas con sleep inyectable.
+- **Hook LLM:** `TriageClient` no bloqueante (R-2), gate T2 ∪ two-person sin DDoS, stub HTTP en `scripts/triage_stub.py`.
+- **Audit dual fail-soft:** MemorySink + OpenSearchSink + `schema.sql` para P4.
+- **Inyector demo:** `scripts/demo_injector.py`, un comando por UC; los 5 (uc01/02/04/06/07) salen con el desenlace esperado en modo `--in-process`.
+- **JWT signing (ADR-0010 §4.4):** HS256 estricto, single-use por `jti` (GETDEL), verificación en el callback de Telegram. Cierra el trigger T-10 (18-jun) antes de tiempo.
+
+Pendiente real (no de P1): los servicios de P2/P3/P4 (ML, Sigma, canary, lab, UI, audit DB). El SOAR los consume por contrato y degrada fail-soft si no están.
+
+---
+
 ## Update 2026-06-10 — prórroga y estado SOAR
 
 - **Entrega final movida al sábado 28 de junio de 2026** (anuncio del profesor). Todo doc que diga "13 de junio" está desactualizado en ese punto. Los triggers de fallback de ADR-0010 §5 son relativos al demo y quedan así: **T-21 = 7-jun (ya vencido: aplica a ML temporal §2.3 si P2 no entregó dataset temporal), T-14 = 14-jun (Flask UC-08, P4), T-10 = 18-jun (JWT signing, P1), T-7 = 21-jun (UC-05 cameo, P4)**.

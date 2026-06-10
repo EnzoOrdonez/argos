@@ -179,3 +179,42 @@ throttle/snapshot, (2) consumer + correlacion, (3) hook LLM + audit. Todo testea
 y dejo un `.git/index.lock` huerfano; los commits, las ramas `feature/p1/fase2-*` y `main`
 (→ `eccd882`) estan intactos. Recuperar en maquina real: `rm -f .git/index.lock` y, si HEAD
 quedo roto, `git symbolic-ref HEAD refs/heads/main`.
+
+---
+
+## Actualizacion — 2026-06-10 (cierre Fase 3 SOAR · P1)
+
+> Esta seccion manda sobre la de Fase 2. Entrega movida al **28-jun** (prorroga del profesor);
+> los triggers de ADR-0010 §5 se recalculan contra esa fecha (T-14 = 14-jun, T-10 = 18-jun,
+> T-7 = 21-jun; T-21 ya vencio el 7-jun).
+
+**Fase 3 del SOAR entregada y en verde.** `pytest -q` global = **250 passed** (eran 166).
+Cobertura `soar/` **97%**, `tier_router.py` **100%**, cada modulo nuevo ≥ 93% (piso ADR-0011 §4 = 80%).
+
+**Lo implementado (todo testeable sin lab: fakeredis / respx / SimulatedExecutor):**
+
+1. `soar/playbooks/` — ResponseExecutor (Protocol), SimulatedExecutor, WazuhActiveResponseExecutor, builders. ADR-0012.
+2. `soar/decision_engine/consumer.py` + `soar/inventory.py` — consumer de `events:normalized`, correlacion por host con dos indices, fast-path, throttle+snapshot pre-aprobacion, poison guard. ADR-0013.
+3. `soar/decision_engine/containment.py` — apply_decision para los tres outcomes (idempotente, fail-soft).
+4. `soar/decision_engine/scheduler.py` — tres relojes asyncio (60s / 180s / voz 60s).
+5. `soar/decision_engine/triage_hook.py` + `scripts/triage_stub.py` — hook LLM no bloqueante (R-2), gate T2 ∪ two-person sin DDoS.
+6. `soar/audit/` — audit dual fail-soft (MemorySink + OpenSearch) + `schema.sql` para P4.
+7. `scripts/demo_injector.py` — inyector por UC (uc01/02/04/06/07), modo `--in-process`.
+8. `soar/approval_api/jwt_signer.py` — JWT HS256 single-use, verificacion en el callback de Telegram. Cierra el trigger T-10 (18-jun) antes de tiempo.
+
+**ADR-0012 y ADR-0013 pasaron a ✅ Accepted** tras el review de P1 del 2026-06-10 (seccion §7 de cada uno,
+con las correcciones incorporadas como texto nuevo, sin reescribir el historico).
+
+**Wiring de Fase 2 que cambio:** el callback del Approval API (`soar/approval_api/main.py`) ahora,
+tras cada voto, arranca la ventana de consolidacion con el primer voto, ejecuta la contencion al
+fijarse la decision y audita; los colaboradores (executor, scheduler, audit, signer) son opcionales
+para que el API degrade a Fase 2 si no se inyectan. Los snippets del manual P1 §Fase 3 siguen
+superseded por ADR-0011/0013, no por este handoff.
+
+**Frontera de P1 respetada:** no se toco `llm_triage/`, `ml/`, `detection/`, `deception/`, `lab/`,
+`ui/`, `attack-simulation/`. El inyector y el stub viven en `scripts/` (carpeta nueva sin owner;
+`attack-simulation/` es de P4 per CONTEXT.md §5). Capa 4: P1 solo escribio el hook desde `soar/`.
+
+**Deuda anotada:** unificar el nombre canonico del host DB (hoy `LIN-VICTIM-01` y `LIN-DB-01`
+conviven en el inventario, coordinar con P4); el corpus RAG cita NIST 800-61 r2 y ya existe la
+r3 (abril 2025), cambiarlo es decision de P2.
