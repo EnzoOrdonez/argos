@@ -21,6 +21,7 @@ from fastapi import Depends, FastAPI, Form, Request, Response
 from argos_contracts.enums import NotificationChannelType
 from argos_contracts.incident import Incident
 from soar.approval_api.handlers import build_final_decision_if_ready, record_approval_response
+from soar.approval_api.jwt_signer import ApprovalSigner, TokenInvalid, consume_token
 from soar.approval_api.twiml import build_voice_gather_xml, dtmf_to_response
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
@@ -37,6 +38,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.audit = AuditLogger([MemorySink()])
     app.state.executor = SimulatedExecutor()
     app.state.scheduler = WindowScheduler(app.state.redis, audit=app.state.audit)
+    # ADR-0010 §4.4: con ARGOS_JWT_SECRET (o JWT_SECRET) en el entorno, los
+    # callbacks exigen JWT firmado y single-use; sin secreto, modo legacy.
+    app.state.signer = ApprovalSigner.from_env()
     try:
         yield
     finally:
@@ -104,9 +108,30 @@ async def telegram_callback(
     callback = update.get("callback_query")
     if not callback:
         return {"ok": False, "error": "missing callback_query"}
-    action, _, incident_id = (callback.get("data") or "").partition(":")
+    parts = (callback.get("data") or "").split(":")
+    action = parts[0] if parts else ""
+    incident_id = parts[1] if len(parts) >= 2 else ""
+    jti = parts[2] if len(parts) >= 3 else None
     if action not in ("approve", "reject") or not incident_id:
         return {"ok": False, "error": "bad callback_data"}
+
+    # Verificacion JWT antes de mutar Redis (ADR-0010 §4.4, RFC 8725):
+    # jti single-use (GETDEL: el segundo uso no encuentra token) + firma,
+    # algoritmo unico, exp, iss y binding incidente/decision.
+    signer: ApprovalSigner | None = getattr(request.app.state, "signer", None)
+    if signer is not None:
+        if jti is None:
+            return {"ok": False, "error": "missing signed token"}
+        token = await consume_token(r, jti)
+        if token is None:
+            return {"ok": False, "error": "unknown or replayed token"}
+        try:
+            signer.verify_approval(
+                token, expected_incident=incident_id, expected_decision=action
+            )
+        except TokenInvalid as exc:
+            return {"ok": False, "error": f"invalid token: {exc}"}
+
     user = callback.get("from", {})
     email = f"telegram:{user.get('id')}"
     try:

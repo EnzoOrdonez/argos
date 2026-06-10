@@ -7,7 +7,9 @@ import json
 import httpx
 import respx
 
-from argos_contracts.enums import Tier
+from argos_contracts.enums import Criticality, Tier
+from argos_contracts.triage import HostInfo
+from soar.approval_api.jwt_signer import ApprovalSigner
 from soar.notifications.channels.telegram import (
     TelegramChannel,
     _code_safe,
@@ -18,8 +20,16 @@ from soar.notifications.channels.telegram import (
 _URL = "https://api.telegram.org/botTESTTOKEN/sendMessage"
 
 
-def _channel() -> TelegramChannel:
-    return TelegramChannel(bot_token="TESTTOKEN", chat_id="999", client=httpx.Client())
+def _channel(**kwargs: object) -> TelegramChannel:
+    return TelegramChannel(
+        bot_token="TESTTOKEN", chat_id="999", client=httpx.Client(), **kwargs
+    )
+
+
+def _standard_host() -> HostInfo:
+    return HostInfo(
+        id="WIN-VICTIM-01", criticality=Criticality.STANDARD, ip="10.0.0.21", os="Win11"
+    )
 
 
 def test_code_safe_escapes_backtick_and_backslash():
@@ -41,14 +51,48 @@ def test_inline_keyboard_has_approve_and_reject():
     assert btns[1]["callback_data"] == "reject:INC-2026-05-30-001"
 
 
-def test_dispatch_success_no_buttons_for_t0(make_incident):
+def test_dispatch_success_no_buttons_for_t0_standard(make_incident):
+    """T0 en host ESTANDAR es auto-execute post-facto, sin botones. (El host
+    critico del conftest si lleva botones desde ADR-0013 §7.9: ver test abajo.)"""
     with respx.mock:
         route = respx.post(_URL).mock(return_value=httpx.Response(200, json={"ok": True}))
-        r = _channel().dispatch(make_incident(tier=Tier.T0))
+        r = _channel().dispatch(make_incident(tier=Tier.T0, host=_standard_host()))
     assert r.success is True and r.error is None
     body = json.loads(route.calls.last.request.content)
     assert body["parse_mode"] == "MarkdownV2"
     assert "reply_markup" not in body
+
+
+def test_dispatch_t1_production_critical_lleva_botones(make_incident):
+    """ADR-0013 §7.9: botones por espera humana, no por tier. UC-04 = T1+critico."""
+    with respx.mock:
+        route = respx.post(_URL).mock(return_value=httpx.Response(200, json={"ok": True}))
+        _channel().dispatch(make_incident(tier=Tier.T1))  # host default: critico
+    body = json.loads(route.calls.last.request.content)
+    assert "reply_markup" in body
+
+
+def test_dispatch_con_signer_manda_jti_corto_y_persiste_tokens(make_incident):
+    """ADR-0010 §4.4: callback_data = accion:incident:jti, < 64 bytes; el token
+    completo va al sink para resolverlo server-side."""
+    sink: dict[str, str] = {}
+    signer = ApprovalSigner(secret="s3cret-de-test-0123456789abcdef-32B+")
+    channel = _channel(
+        signer=signer, token_sink=lambda jti, token, ttl: sink.__setitem__(jti, token)
+    )
+    with respx.mock:
+        route = respx.post(_URL).mock(return_value=httpx.Response(200, json={"ok": True}))
+        channel.dispatch(make_incident(tier=Tier.T2))
+    body = json.loads(route.calls.last.request.content)
+    buttons = body["reply_markup"]["inline_keyboard"][0]
+    for button in buttons:
+        data = button["callback_data"]
+        assert len(data.encode()) <= 64  # limite de Telegram
+        action, incident_id, jti = data.split(":")
+        assert action in ("approve", "reject")
+        assert incident_id == "INC-2026-05-30-001"
+        assert jti in sink  # token completo persistido
+    assert len(sink) == 2
 
 
 def test_dispatch_t2_includes_inline_keyboard(make_incident):

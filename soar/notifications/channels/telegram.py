@@ -1,9 +1,13 @@
 """Telegram — canal primario de notificación a t=0 (ADR-0007 v2).
 
-Mensaje en MarkdownV2. Para incidentes T2 (pre-aprobación, ADR-0003) agrega
-botones inline Approve/Reject; el `callback_data` lo consume el Approval API (§2.6).
-El botón "Revert" para T0/T1 (post-facto) y la firma JWT de los callbacks son
-Fase 4 (ADR-0010 §4.4 G4) — acá no se implementan.
+Mensaje en MarkdownV2. Los botones inline Approve/Reject aparecen cuando el
+incidente espera decisión humana: tier T2 o two-person por host
+production-critical / acción irreversible (ADR-0013 §7.9; UC-04 es T1+crítico
+y lleva botones). Con un `ApprovalSigner` configurado (ADR-0010 §4.4), cada
+botón viaja con un `jti` corto (`accion:incident:jti`, < 64 bytes del límite
+de Telegram) y el token completo queda en Redis vía `token_sink`; el Approval
+API lo verifica y consume antes de mutar estado. El botón "Revert" para
+T0/T1 post-facto sigue siendo Fase 4.
 
 Adaptado al contrato congelado argos_contracts v1.1.0: los datos salen de
 `incident.alert` (NormalizedAlert) y `incident.host.id`, no de los campos planos
@@ -16,12 +20,17 @@ from __future__ import annotations
 
 import os
 import time
+from collections.abc import Callable
 
 import httpx
 
-from argos_contracts.enums import NotificationChannelType, Tier
+from argos_contracts.enums import Criticality, NotificationChannelType, Tier
 from argos_contracts.incident import Incident
+from soar.approval_api.jwt_signer import ApprovalSigner
 from soar.notifications.base import DispatchResult, NotificationChannel
+
+# Persiste (jti, token, ttl_seconds) para que el API lo resuelva server-side.
+TokenSink = Callable[[str, str, int], None]
 
 _API = "https://api.telegram.org/bot{token}/sendMessage"
 
@@ -58,15 +67,32 @@ def _format(incident: Incident) -> str:
     )
 
 
-def _inline_keyboard(incident_id: str) -> dict[str, object]:
+def _inline_keyboard(
+    incident_id: str,
+    jti_approve: str | None = None,
+    jti_reject: str | None = None,
+) -> dict[str, object]:
+    """Sin jtis: formato legacy de Fase 2. Con jtis: `accion:incident:jti`."""
+    approve = f"approve:{incident_id}" + (f":{jti_approve}" if jti_approve else "")
+    reject = f"reject:{incident_id}" + (f":{jti_reject}" if jti_reject else "")
     return {
         "inline_keyboard": [
             [
-                {"text": "Approve", "callback_data": f"approve:{incident_id}"},
-                {"text": "Reject", "callback_data": f"reject:{incident_id}"},
+                {"text": "Approve", "callback_data": approve},
+                {"text": "Reject", "callback_data": reject},
             ]
         ]
     }
+
+
+def _needs_buttons(incident: Incident) -> bool:
+    """Espera humana = T2 o two-person (ADR-0013 §7.9). Refleja
+    `approval_api.handlers.requires_two_person` sin acoplar los paquetes."""
+    if incident.tier == Tier.T2:
+        return True
+    if incident.host.criticality == Criticality.PRODUCTION_CRITICAL:
+        return True
+    return any(not action.reversible for action in incident.proposed_actions)
 
 
 class TelegramChannel(NotificationChannel):
@@ -78,10 +104,25 @@ class TelegramChannel(NotificationChannel):
         chat_id: str | None = None,
         client: httpx.Client | None = None,
         timeout: float = 5.0,
+        signer: ApprovalSigner | None = None,
+        token_sink: TokenSink | None = None,
     ) -> None:
         self._token = bot_token or os.environ["TELEGRAM_BOT_TOKEN"]
         self._chat_id = chat_id or os.environ["TELEGRAM_CHAT_ID"]
         self._client = client or httpx.Client(timeout=timeout)
+        self._signer = signer
+        self._token_sink = token_sink
+
+    def _signed_keyboard(self, incident_id: str) -> dict[str, object]:
+        if self._signer is None:
+            return _inline_keyboard(incident_id)
+        approver = f"telegram:{self._chat_id}"
+        token_a, jti_a = self._signer.sign_approval(incident_id, approver, "approve")
+        token_r, jti_r = self._signer.sign_approval(incident_id, approver, "reject")
+        if self._token_sink is not None:
+            self._token_sink(jti_a, token_a, self._signer.ttl_seconds)
+            self._token_sink(jti_r, token_r, self._signer.ttl_seconds)
+        return _inline_keyboard(incident_id, jti_a, jti_r)
 
     def dispatch(self, incident: Incident) -> DispatchResult:
         started = time.monotonic()
@@ -90,10 +131,10 @@ class TelegramChannel(NotificationChannel):
             "text": _format(incident),
             "parse_mode": "MarkdownV2",
         }
-        # T2 = pre-aprobación con botones (ADR-0003). `requires_approval` se DERIVA
-        # del tier; no es un campo del Incident en v1.1.0.
-        if incident.tier == Tier.T2:
-            body["reply_markup"] = _inline_keyboard(incident.incident_id)
+        # Botones cuando hay espera humana (T2 o two-person, ADR-0013 §7.9).
+        # `requires_approval` se DERIVA; no es un campo del Incident en v1.1.0.
+        if _needs_buttons(incident):
+            body["reply_markup"] = self._signed_keyboard(incident.incident_id)
         try:
             response = self._client.post(_API.format(token=self._token), json=body)
             response.raise_for_status()
