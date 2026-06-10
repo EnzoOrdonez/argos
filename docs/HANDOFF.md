@@ -1,12 +1,12 @@
 # HANDOFF · Brief para continuar el proyecto ARGOS en sesión nueva
 
-> Documento creado el 2026-05-30. Si la fecha actual es > 2026-06-13, este handoff está **expirado** — la entrega final ya pasó.
+> Documento creado el 2026-05-30, actualizado el 2026-06-10. Si la fecha actual es > 2026-06-28, este handoff está **expirado**: la entrega final ya pasó.
 
 ---
 
 ## Quién soy y cuál es el contexto
 
-Soy **Enzo Ordoñez Flores** (P1, líder técnico) del equipo ARGOS. ARGOS es un proyecto de fin de curso para *Tópicos Avanzados de Ciberseguridad* — Universidad de Lima, ciclo 2026-1. **Entrega final: sábado 13 de junio de 2026.** Tres deliverables: informe técnico (~30 % peso), demo en vivo (~40 %), presentación oral (~20 %).
+Soy **Enzo Ordoñez Flores** (P1, líder técnico) del equipo ARGOS. ARGOS es un proyecto de fin de curso para *Tópicos Avanzados de Ciberseguridad* — Universidad de Lima, ciclo 2026-1. **Entrega final: sábado 28 de junio de 2026** (prórroga del profesor anunciada el 2026-06-10; los docs que aún digan 13-jun están desactualizados en ese punto). Tres deliverables: informe técnico (~30 % peso), demo en vivo (~40 %), presentación oral (~20 %).
 
 El proyecto es una plataforma **multi-vector XDR** (Extended Detection and Response) llamada **Adaptive Response Guard with Orchestrated Surveillance**. Defiende una DB bancaria ficticia (**Banco Inti S.A.A.** / brand **IntiBank**) contra ransomware, DDoS, SQL injection y false positives, usando 4 capas (Sigma + Wazuh / ML / Canary FIM / LLM Triage) más un SOAR con HITL multi-canal.
 

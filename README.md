@@ -8,8 +8,8 @@
 
 [![Status](https://img.shields.io/badge/status-active%20development-orange)](docs/PROJECT_STATUS.md)
 [![Contracts](https://img.shields.io/badge/argos__contracts-v1.1.0-blue)](argos_contracts/)
-[![Tests](https://img.shields.io/badge/tests-69%20passing-brightgreen)](argos_contracts/tests/)
-[![Deadline](https://img.shields.io/badge/entrega-13%20jun%202026-red)](docs/EVALUATION_CRITERIA.md)
+[![Tests](https://img.shields.io/badge/tests-166%20passing-brightgreen)](pyproject.toml)
+[![Deadline](https://img.shields.io/badge/entrega-28%20jun%202026-red)](docs/EVALUATION_CRITERIA.md)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 **Activo defendido:** 🛡 PostgreSQL Production DB · **Curso:** Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
@@ -168,7 +168,7 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 
 | Componente | Estado | Notas |
 |---|:---:|---|
-| 📐 Arquitectura & diseño (SAD, threat model, 8 ADRs, contracts spec, use cases) | ✅ | Completo |
+| 📐 Arquitectura & diseño (SAD, threat model, 13 ADRs, contracts spec, use cases) | ✅ | Completo |
 | 📦 [`argos_contracts/`](./argos_contracts/) — Pydantic v2 cross-team | ✅ | **v1.1.0** · 25 modelos · 9 enums · **69 tests** · TD-01 y TD-02 cerrados |
 | 🎨 [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html) — flujo + ownership | ✅ | Entregado al equipo |
 | 🛡 PostgreSQL como activo defendido (UC-04) | ✅ | Documentado en `OPEN_QUESTIONS §Q2` |
@@ -176,7 +176,7 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 | 🤖 Capa 2 (ML anomaly) | 🚧 | Pendiente |
 | 🍯 Capa 3 (Canary FIM) | 🚧 | Pendiente |
 | 🧠 Capa 4 (LLM Triage) | 🚧 | Esqueletos + TODOs (OpenAI + Llama stubs) |
-| ⚙️ Motor SOAR + Approval API | 🚧 | Pendiente |
+| ⚙️ Motor SOAR + Approval API | 🚧 | **Fase 2 entregada**: tier router, notificaciones Telegram/Discord/Twilio, Approval API, two-person + conservative-wins, ventana 60s (84 tests soar, cobertura 99%, `tier_router.py` 100%, ADR-0011). Fase 3 en curso: playbooks, consumer, scheduler, hook LLM, audit, JWT (ADR-0012/0013) |
 | 🏗 Lab Vagrant + Wazuh deployment | 🚧 | Pendiente |
 | 🎯 Simulador de ransomware | 🚧 | Pendiente |
 | 📺 UI Streamlit + Approval Console | 🚧 | Pendiente |
@@ -189,15 +189,15 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 
 ## Quick start
 
-El módulo de contratos es ejecutable hoy. Las otras capas están en esqueleto o pendientes.
+Los contratos y la Fase 2 del SOAR son ejecutables hoy. El resto de capas está en esqueleto o pendiente.
 
 ```bash
 git clone https://github.com/EnzoOrdonez/argos.git
 cd argos
 
-# Suite de tests de contracts (69 tests)
-pip install -e ".[contracts,dev]"
-pytest argos_contracts/tests/ -v
+# Suite global (166 tests: contracts + SOAR Fase 2 + llm_triage)
+pip install -e ".[soar,llm,dev]"
+pytest -q
 ```
 
 Los 69 tests bloquean las interfaces inter-capa (alerts, ML scores, triage I/O, incidents, approvals) para que los cuatro work-streams puedan implementar en paralelo sin fricción de integración.
@@ -266,7 +266,7 @@ Cinco escenarios end-to-end de ataque diseñados para la exposición en vivo (~1
 | 🔒 | LLM data handling + sanitization | [`docs/data-handling.md`](./docs/data-handling.md) |
 | 📋 | Rúbrica del curso + deliverables | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
 | 📊 | Status honesto (shipped vs documentado) | [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) |
-| 🧠 | Architecture decisions (8 ADRs) | [`docs/decisions/`](./docs/decisions/) |
+| 🧠 | Architecture decisions (13 ADRs) | [`docs/decisions/`](./docs/decisions/) |
 | 🎬 | Use cases & escenarios demo | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
 
 ---
@@ -304,7 +304,7 @@ argos/
 │   │   ├── argos_flow.html    #     Flujo + ownership (navegador)
 │   │   ├── argos_flow.drawio  #     Mismo flujo editable en draw.io
 │   │   └── ...
-│   └── decisions/             #     8 ADRs + OPEN_QUESTIONS_RESOLUTION
+│   └── decisions/             #     13 ADRs + OPEN_QUESTIONS_RESOLUTION
 │
 ├── lab/                       # Vagrant + Terraform IaC + PostgreSQL provisioning
 ├── detection/                 # Sigma rules + Wazuh decoders
@@ -322,7 +322,7 @@ argos/
 
 ## Hito siguiente
 
-🎯 **Entrega final: 13 de junio de 2026** — informe técnico + demo en vivo + presentación.
+🎯 **Entrega final: 28 de junio de 2026** (prórroga del profesor, 2026-06-10): informe técnico + demo en vivo + presentación. Los triggers de fallback de ADR-0010 §5 se recalculan contra esta fecha: T-21 = 7-jun (vencido), T-14 = 14-jun, T-10 = 18-jun, T-7 = 21-jun.
 
 El alcance se va recortando según el orden documentado en [`docs/PROJECT_STATUS.md §4`](./docs/PROJECT_STATUS.md) si la presión de calendario lo exige. UC-01 + UC-02 + UC-04 son los irrenunciables del demo.
 
