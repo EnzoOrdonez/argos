@@ -88,7 +88,7 @@ Repository = "https://github.com/EnzoOrdonez/argos"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["argos_contracts*", "llm_triage*"]
+include = ["argos_contracts*", "llm_triage*", "soar*"]
 exclude = ["tests*", "docs*", "lab*", "evaluation*", "attack-simulation*"]
 
 [tool.mypy]
