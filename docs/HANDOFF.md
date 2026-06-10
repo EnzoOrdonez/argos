@@ -142,3 +142,40 @@ A 2026-05-30 hay commits locales que no he pusheado a GitHub. Si querés validar
 ---
 
 **Empezá leyendo los 7 archivos del bloque superior. No respondas con planes ni código hasta que hayas leído al menos los ADRs 0008, 0009 y 0010 — son las decisiones más recientes y las que más probablemente afectan lo que voy a pedir.**
+
+
+---
+
+## Actualizacion — 2026-05-30 (post implementacion Fase 2 SOAR · P1)
+
+> Esta seccion refleja el estado **despues** de implementar la Fase 2 del SOAR. Lo de arriba
+> (commit `aeb7d4f`, "69 tests", "arrancar Fase 2") es el estado previo; lo de aca manda.
+
+**Fase 2 del SOAR (manual P1 §2.1-§2.8) implementada y en verde:** tier router, Notification
+Service + canales (Telegram/Discord/Twilio), Approval API, two-person + conservative-wins,
+ventana de 60s. `pytest -q` global = **166 passed**; cobertura `soar` 99% (`tier_router.py` 100%).
+
+**Doc nueva — LEER ANTES DE TOCAR SOAR (se suma a los 7 archivos de arriba):**
+
+1. `decisions/0011-soar-implementation-reconciliation.md` (✅ Accepted) — **fuente de verdad**:
+   reconcilia el manual con `argos_contracts` v1.1.0. Los snippets de `manual-p1-enzo.md`
+   §Fase 2-3 quedaron **superseded** (el manual lleva banner). Si vas a tocar SOAR, lee esto PRIMERO.
+2. `decisions/0012-response-playbooks.md` (🟡 Proposed) — diseno de playbooks
+   (ResponseExecutor: Wazuh AR + SimulatedExecutor; throttle/snapshot/isolation/kill).
+3. `decisions/0013-soar-orchestration.md` (🟡 Proposed) — diseno del consumer + correlacion
+   por host + scheduler + hook LLM + audit de Fase 3.
+
+**Regla actualizada:** la autoridad SOAR es `argos_contracts` v1.1.0 (inmutable) + ADRs + el
+codigo en `soar/`. Los snippets del manual son ilustrativos, NO fuente de verdad (ADR-0011 §2.1).
+
+**Proximo paso P1 — Fase 3 (tras review de ADR-0012/0013):** orden (1) ResponseExecutor +
+throttle/snapshot, (2) consumer + correlacion, (3) hook LLM + audit. Todo testeable sin lab
+(fakeredis / respx / SimulatedExecutor).
+
+**Deuda team-wide** registrada en ADR-0011 §7: `manual-p2-sebastian.md` usa `NormalizedEvent`/
+`llm_verdict` (real: `NormalizedAlert` / `Incident.llm_analysis: TriageResponse`) — ya tiene banner.
+
+**Nota git:** durante la sesion el mount del sandbox corrompio `.git/HEAD` (rama trunca `featu`)
+y dejo un `.git/index.lock` huerfano; los commits, las ramas `feature/p1/fase2-*` y `main`
+(→ `eccd882`) estan intactos. Recuperar en maquina real: `rm -f .git/index.lock` y, si HEAD
+quedo roto, `git symbolic-ref HEAD refs/heads/main`.
