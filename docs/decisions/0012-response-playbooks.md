@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Status | 🟡 Proposed · 2026-05-30 (pendiente review P1 antes de implementar) |
+| Status | ✅ Accepted · 2026-06-10 (review P1; Proposed desde 2026-05-30) |
 | Deciders | P1 (Enzo) — toca a P3 (Wazuh AR) y P4 (lab) |
 | Related | ADR-0003 (tiers + reversibilidad), ADR-0006 (Sit.B throttle-and-wait), ADR-0010 §2.1 (UC-05 agent-kill), ADR-0011 §3 (dependencias Fase 3), SAD §6.3, `argos_contracts` v1.1.0 (`ActionType`, `ProposedAction`, `FinalDecision`) |
 | Doc-first | Se documenta el diseño **antes** de implementar (`soar/playbooks/`) para no re-tocar doc a mitad de Fase 3. |
@@ -104,8 +104,21 @@ Patrón: los playbooks **construyen** la `ProposedAction` (puro, testeable) y el
 - Crea dependencia explícita en P3 (AR scripts) y P4 (lab) para el modo real; mitigado con `SimulatedExecutor` para no bloquear a P1.
 - El paridad real/simulado hay que mantenerla (que el simulado refleje fielmente lo que el real haría) para que el ensayo sea representativo.
 
-## 7. Change log
+## 7. Review P1 (2026-06-10): confirmaciones y ajustes
+
+Review hecho contra el contrato v1.1.0 y el código real de Fase 2 antes de implementar. El diseño se acepta con estas precisiones, que mandan sobre el borrador de arriba donde difieran:
+
+1. **Interfaz (§2.5) confirmada.** `ResponseExecutor` como `Protocol` con `run`/`revert` alcanza: idempotencia y fail-soft son invariantes de implementación que los tests fijan, no necesitan más superficie de interfaz. `ExecutionResult` es dataclass local a `soar/` con `action_id`, `status`, `detail`, `latency_ms`; `status` usa los mismos valores que `ExecutionStatus` del contrato (`success|failed|partial`) para que el orquestador lo copie directo a `FinalDecision.execution_status`.
+2. **Catálogo (§2.2) validado contra `ActionType` v1.1.0.** Los cuatro tipos existen (`PROCESS_THROTTLE`, `DISK_SNAPSHOT`, `HOST_ISOLATION`, `PROCESS_KILL`). `NOTIFICATION` queda fuera del catálogo de playbooks: lo cubre el Notification Service.
+3. **`reversible=True` en los cuatro builders**, per tabla de reversibilidad de ADR-0003 (kill cuenta como reversible: el servicio se relanza). Consecuencia operativa: `requires_two_person()` no se activa por acción en v1, solo por criticidad del host.
+4. **Idempotencia en el executor**, con registro por `(type, target)`: re-ejecutar una acción aplicada devuelve no-op success.
+5. **Paridad real/simulado:** `SimulatedExecutor` expone inyección de fallos para ensayar `failed`/`partial` en tests, con el mismo shape de resultado que el executor Wazuh.
+6. **Revert:** `revert()` de isolation produce el outcome `REVERTED` (lo fija el orquestador); `revert()` de snapshot es no-op success (N/A per §2.2).
+7. **Wazuh AR encapsulado** en un cliente httpx mockeable (`PUT /active-response` del API del manager, credenciales `WAZUH_API_*` del `.env`). Sin lab de P4 se valida con `respx`; la validación contra el lab real queda para integración.
+
+## 8. Change log
 
 | Versión | Fecha | Cambio | Autor |
 |---------|-------|--------|-------|
 | 1.0 (Proposed) | 2026-05-30 | Initial — modelo de ejecución (ResponseExecutor: Wazuh AR + Simulated), catálogo de playbooks, contrato, reversibilidad/fail-soft, deps cross-team. Pendiente review de P1 antes de implementar. | P1 |
+| 1.1 (Accepted) | 2026-06-10 | Review P1: confirma interfaz y catálogo, idempotencia en el executor, reversible=True en los 4 builders, paridad real/simulado con inyección de fallos, revert de snapshot no-op. Status a Accepted. | P1 |

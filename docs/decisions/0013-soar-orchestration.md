@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Status | 🟡 Proposed · 2026-05-30 (pendiente review P1 antes de implementar) |
+| Status | ✅ Accepted · 2026-06-10 (review P1 con correcciones, ver §7; Proposed desde 2026-05-30) |
 | Deciders | P1 (Enzo) — toca a P2 (LLM Triage), P3 (alertas en `events:normalized`), P4 (audit DB/OpenSearch) |
 | Related | `argos_contracts` v1.1.0, ADR-0003/0006/0011 (decisión), ADR-0012 (playbooks), ADR-0009 §2.6 (matriz capa×UC), SAD §6.5/§7, OPEN_QUESTIONS Q4 (schema Incident) |
 | Doc-first | Se documenta el diseño del orquestador **antes** de implementar (`soar/decision_engine/consumer.py` + hook + audit), para cerrar la doc de Fase 3 y no re-tocarla. |
@@ -112,8 +112,24 @@ Cuando `build_final_decision_if_ready` o `close_window` fijan `FinalDecision = E
 - El enriquecimiento incremental + re-ruteo + notificación de escalación agrega complejidad (re-notificar cuando el tier sube). Mitigable: para el demo, los ataques scripted disparan las capas casi juntas, así que el caso común es 1 sola construcción de incidente.
 - Dependencia en P2 (`/triage`) y P4 (audit). Mitigado: el hook es no-bloqueante y el audit fail-soft, así que P1 no se bloquea si esos servicios no están.
 
-## 7. Change log
+## 7. Review P1 (2026-06-10): correcciones al diseño
+
+Review contra contrato v1.1.0, ADR-0009 y el código de Fase 2. Estas correcciones mandan sobre el texto de arriba donde difieran; el histórico queda intacto como registro del borrador.
+
+1. **§2.1, `layer_origin` no existe.** El campo del contrato es `source_layer` y el enum `Layer` v1.1.0 solo define `layer_1|layer_2|layer_3`. La Capa 4 (LLM) no emite `NormalizedAlert`: es enriquecimiento (invariante R-2), no detección. P2 publica al stream únicamente alertas ML (`layer_2`).
+2. **Formato de entry del stream (faltaba fijarlo):** cada entry de `events:normalized` lleva un campo `payload` con `NormalizedAlert.model_dump_json()`. Es el contrato operativo para P2/P3.
+3. **§2.2, la ventana fija de 5s se reemplaza por dos índices.** `corr:{host_id}` con TTL 5s deslizante (agrupa la ráfaga; cada alerta del host refresca el TTL) + `corr:open:{host_id}` apuntando al incidente sin `final_decision` (se borra al decidir; TTL de seguridad 600s). Lookup: `corr` → `corr:open` → crear incidente. Una alerta tardía (al segundo 6, o al 90) enriquece y re-rutea mientras el incidente siga sin decidir; si ya se decidió, se anexa al audit y a la vista de capas sin re-ejecutar ni re-notificar. Motivo: con 5s fija, la alerta del segundo 6 creaba un incidente duplicado y la re-notificación por escalación quedaba inútil frente al timer de 3 min del T2.
+4. **§2.3, el inventario no va por rango `10.10.50.x`.** ADR-0009 §2.7 define `10.10.50.0/24` como servidores de aplicación (red ficticia para reglas Sigma sobre `ip_address`), no el host DB. La criticidad se resuelve por `host_id` en `soar/inventory.py`: `LIN-VICTIM-01` (10.0.0.22, host PostgreSQL per OPEN_QUESTIONS Q2 y `.env`) y `LIN-DB-01` (alias que usa el conftest de Fase 2) son `PRODUCTION_CRITICAL`; `WIN-VICTIM-01` y `LAB-MANAGER` son `STANDARD`; host desconocido cae a `STANDARD`. Deuda con P4: unificar el nombre canónico del host DB.
+5. **§2.5, gate del hook LLM corregido a "espera humana":** llama a `/triage` cuando `tier == T2` **o** `requires_two_person(incident)` (production-critical), excluyendo `T1498/T1499` (ADR-0009 §2.6). Motivo: UC-04 rutea T1 (L1+L2 corroboradas) sobre host crítico y ahí el LLM es "decisivo" per ADR-0009 §2.6; el gate "solo T2" lo dejaba sin contexto.
+6. **§2.6, asyncio puro en lugar de APScheduler**, consistente con `consolidation_task` de Fase 2 (los jobs son efímeros en memoria igual; tests deterministas con sleep inyectable). Y son **tres** relojes, no uno: (A) consolidación de 60s desde el **primer voto** (ADR-0006), poblando `Incident.consolidation_window`; (B) timeout T2 de 180s desde la notificación (ADR-0003): cero votos en host estándar cierra con `timeout-escalation`, cero votos en production-critical sigue esperando (Sit.B), y con votos el timer no actúa porque la ventana manda; (C) escalación Twilio a t=60s sin respuesta (ADR-0007 v2, `escalate_to_voice` ya existe).
+7. **XACK y poison guard:** una entry que falla queda sin ACK y se reintenta; a la tercera delivery (XPENDING) se ACKea y se registra `poison_discarded` en el audit, para que un mensaje malformado no cicle infinito.
+8. **Contador diario** `incident:counter:{YYYY-MM-DD}` con EXPIRE 48h para no acumular claves.
+9. **Botones de aprobación por espera humana, no por tier:** el canal Telegram muestra Approve/Reject cuando el incidente espera humano (T2 o two-person), no solo en T2. UC-04 es T1 + crítico y necesita botones.
+10. **`corroboration_confidence` = noisy-OR** de los `severity_score` de las capas que dispararon (`1 - prod(1 - s_i)`), documentado en el consumer. Con L1=0.85 y L2=0.90 da 0.985 ≥ 0.80, así UC-04 rutea T1 como espera el demo.
+
+## 8. Change log
 
 | Versión | Fecha | Cambio | Autor |
 |---------|-------|--------|-------|
 | 1.0 (Proposed) | 2026-05-30 | Initial — diseño del orquestador Fase 3: consumer + correlación incremental por host, construcción de Incident (INC-id, criticidad por inventario), acciones inmediatas, hook LLM no-bloqueante, scheduler, contención, audit dual con Literals reales. Pendiente review de P1. | P1 |
+| 1.1 (Accepted) | 2026-06-10 | Review P1 con 10 correcciones (§7): source_layer sin capa LLM, formato de entry, correlación con dos índices, inventario por host_id, gate LLM T2 ∪ two-person, asyncio + tres relojes, poison guard, EXPIRE del contador, botones por espera humana, noisy-OR. Status a Accepted. | P1 |
