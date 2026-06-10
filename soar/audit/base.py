@@ -9,7 +9,7 @@ Ambos fail-soft: la contención nunca se pierde por un fallo de auditoría.
 Vocabulario de `kind` (el consumer/scheduler/API emiten estos):
 - incident_created, alert_correlated, tier_escalated
 - action_executed, action_failed, action_reverted
-- approval_response, decision_final, timeout_wait
+- approval_response, decision_final, timeout_wait, voice_escalated
 - llm_triage_ok, llm_triage_failed
 - poison_discarded
 """
