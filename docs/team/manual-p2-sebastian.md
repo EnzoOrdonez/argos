@@ -10,6 +10,10 @@
 
 ---
 
+> **Nota de reconciliacion — ADR-0011:** los snippets de este manual que usan `NormalizedEvent`, `Incident.llm_verdict` o campos planos del `Incident` estan **desfasados** del contrato `argos_contracts` v1.1.0. Para tu trabajo: emiti `NormalizedAlert` al stream `events:normalized` (no `NormalizedEvent`), y el output del LLM Triage es `TriageResponse` (se guarda en `Incident.llm_analysis`, no `llm_verdict`). Fuente de verdad: `argos_contracts` v1.1.0 + **ADR-0011** (`docs/decisions/0011-soar-implementation-reconciliation.md` §2.2 y §3).
+
+---
+
 ## 0. Tu charter
 
 > Tus capas convierten señales débiles (un proceso raro, una secuencia de syscalls) en confianza numérica que el Tier Router de P1 pueda usar. Si tus modelos sobreajustan o tu LLM alucina, ARGOS pierde su mejor argumento de diferenciación frente a un SIEM tradicional.

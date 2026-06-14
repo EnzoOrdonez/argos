@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Owner | **P1 · Enzo Ordoñez Flores** (Lead · LLM/SOAR · Coordinator) |
-| Status | 📅 Planned · Weeks 4-9 (Gate 2 decision engine v1 · Gate 3 full HITL) |
-| Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §6, ADRs [0003](../docs/decisions/0003-confidence-tiered-automation.md) · [0005](../docs/decisions/0005-notification-channel-abstraction.md) · [0006](../docs/decisions/0006-split-brain-resolution.md) · [0007](../docs/decisions/0007-notification-multichannel-escalation.md) |
+| Status | 🚧 **Fase 2 entregada** (tier router + notificaciones + Approval API + HITL) · **Fase 3 en curso** (playbooks, consumer, relojes, hook LLM, audit) |
+| Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §6, ADRs [0003](../docs/decisions/0003-confidence-tiered-automation.md) · [0005](../docs/decisions/0005-notification-channel-abstraction.md) · [0006](../docs/decisions/0006-split-brain-resolution.md) · [0007](../docs/decisions/0007-notification-multichannel-escalation.md) · [0011](../docs/decisions/0011-soar-implementation-reconciliation.md) · [0012](../docs/decisions/0012-response-playbooks.md) · [0013](../docs/decisions/0013-soar-orchestration.md) |
 
 ---
 
@@ -24,8 +24,8 @@ This layer also owns the **state machine** for the human-in-the-loop approval fl
 |------|------|
 | Python 3.11+ + Pydantic v2 | Service + I/O validation via `argos_contracts` |
 | FastAPI | Approval API (`POST /approval/{token}`) + health |
-| Redis 7+ | State machine persistence + alert stream |
-| APScheduler | Timeouts, consolidation windows, escalation triggers |
+| Redis 7+ | State machine persistence + alert stream (`events:normalized`, grupo `soar-router`) |
+| asyncio (relojes) | Timeouts, ventana de consolidación y escalación por voz. APScheduler quedó descartado en el review (ADR-0013 §7.6) |
 | PyJWT | JWT signing for approval tokens (HS256 v1) |
 | Jinja2 | Notification message templates per channel |
 | python-telegram-bot, twilio, discord-webhook | Notification channels (per ADR-0007 v2) |
@@ -33,45 +33,40 @@ This layer also owns the **state machine** for the human-in-the-loop approval fl
 
 ---
 
-## What lives here (planned)
+## What lives here (real, Fase 2 + Fase 3)
+
+El árbol planeado original quedó superseded por la implementación contra el
+contrato v1.1.0 (ADR-0011). Cada subpaquete lleva su `tests/`.
 
 ```
 soar/
-├── README.md                       # This file
-├── requirements.txt
+├── README.md                        # Este archivo
+├── conftest.py                      # fixture make_incident (contrato v1.1.0)
+├── inventory.py                     # criticidad por host_id (ADR-0013 §7.4)
 ├── decision_engine/
-│   ├── tier_classifier.py          # Layer signals + scores → Tier (T0..T3) per ADR-0003
-│   ├── fusion.py                   # Layer combination rules (SAD §6.2 table)
-│   ├── criticality_router.py       # production-critical host → two-person rule (Q2)
-│   └── state_machine.py            # Incident state transitions in Redis
-├── approval/
-│   ├── api.py                      # FastAPI router: POST /approval/{token}
-│   ├── jwt_signer.py               # JWT generation + validation (HS256)
-│   ├── consolidation.py            # 60s window (ADR-0006) + conservative-wins
-│   └── timeout.py                  # 3-min T2 timeout (ADR-0003 Q9)
-├── notification/
-│   ├── base.py                     # NotificationChannel ABC (ADR-0005)
-│   ├── email_channel.py            # Post-facto summary (ADR-0007 v2)
-│   ├── telegram_channel.py         # Primary, t=0 (ADR-0007 v2)
-│   ├── discord_channel.py          # Team visibility, t=0 (ADR-0007 v2)
-│   ├── twilio_voice_channel.py     # Escalation t=60s, DTMF (ADR-0007 v2)
-│   └── orchestrator.py             # EscalationOrchestrator (which channel when)
-├── playbooks/
-│   ├── host_isolation.py           # iptables / NetFirewallRule
-│   ├── process_kill.py             # SIGKILL / Stop-Process
-│   ├── process_throttle.py         # cpulimit / ionice / rate-limit (T2 active mitigation)
-│   ├── disk_snapshot.py            # VSS / dd
-│   └── audit_logger.py             # Append-only JSON → OpenSearch
-└── tests/
-    ├── test_tier_classifier.py     # All 4 tiers covered with synthetic alerts
-    ├── test_state_machine.py
-    ├── test_consolidation.py       # Split-brain scenarios
-    ├── test_jwt.py
-    ├── test_channels/*.py
-    └── integration/
-        ├── test_t0_auto_isolate.py
-        ├── test_t2_full_flow.py    # Throttle + email + approve → isolate
-        └── test_t2_split_brain.py  # UC-03 scenario
+│   ├── policies.py                  # AUTO_T0 + umbrales (fuente única)
+│   ├── tier_router.py               # route(RoutingSignal) -> Tier (cobertura 100%)
+│   ├── consumer.py                  # events:normalized: correlación + orquestación
+│   ├── containment.py               # apply_decision: los 3 outcomes (ADR-0013 §2.7)
+│   ├── scheduler.py                 # 3 relojes asyncio: 60s / 180s / voz 60s
+│   └── triage_hook.py               # POST /triage no bloqueante (R-2)
+├── approval_api/
+│   ├── main.py                      # FastAPI: callbacks Telegram + Twilio DTMF
+│   ├── handlers.py                  # two-person rule / conservative-wins
+│   ├── consolidation.py             # close_window de la ventana de 60s
+│   └── twiml.py                     # TwiML + parseo DTMF
+├── notifications/
+│   ├── base.py · service.py         # despacho por tier, fail-soft (ADR-0007 v2)
+│   └── channels/                    # telegram · discord · twilio_voice
+├── playbooks/                       # ADR-0012
+│   ├── base.py                      # ResponseExecutor (Protocol) + ExecutionResult
+│   ├── builders.py                  # build_throttle/snapshot/isolation/kill
+│   ├── simulated.py                 # SimulatedExecutor demo-safe, idempotente
+│   └── wazuh.py                     # active-response real (httpx, mockeable)
+└── audit/                           # ADR-0013 §2.8
+    ├── base.py · logger.py          # AuditEvent + fan-out fail-soft
+    ├── memory.py · opensearch.py    # sinks (argos-audit-decisions)
+    └── schema.sql                   # DDL para P4 (PostgreSQL 17.5)
 ```
 
 ---
@@ -115,17 +110,36 @@ Strict typing **everywhere**. Pydantic v2 `model_validate_json` on every Redis r
 
 ## How to run
 
-```bash
-cd soar/
-pip install -r requirements.txt
+Todo desde la raíz del repo (no hay `requirements.txt`; extras de `pyproject`, ADR-0011 §2.2):
 
-# Run API service (requires Redis + lab/)
-uvicorn soar.approval.api:app --host 0.0.0.0 --port 8080 --reload
+```bash
+pip install -e ".[soar,llm,dev]"
+
+# Approval API (necesita Redis local y REDIS_URL en el entorno)
+uvicorn soar.approval_api.main:app --port 8003
+
+# Stub del LLM Triage en http://127.0.0.1:8002 (herramienta de P1 para
+# ensayar sin el servicio de P2; la capa llm_triage/ es de P2 y no se toca)
+python scripts/triage_stub.py
+
+# Inyector demo-safe: un comando por UC, < 30s, audit verificable
+python scripts/demo_injector.py uc01 --in-process   # smoke con fakeredis
+python scripts/demo_injector.py uc04 --redis-url redis://localhost:6379/0
 
 # Tests
-pytest tests/ -v
-pytest tests/integration/ -v --redis-host=localhost
+pytest -q          # suite global
+pytest soar -q     # solo SOAR
 ```
+
+Desenlaces esperados del inyector (matriz ADR-0009 §2.6; sale con código 0 si coincide):
+
+| UC | Secuencia | Desenlace |
+|----|-----------|-----------|
+| `uc01` | L1 T1486 + L2 + L3 en ráfaga (WIN-VICTIM-01) | `EXECUTE_ISOLATION` / `auto-execute` (T0 fast-path) |
+| `uc02` | canary sola (Capa 3) | `EXECUTE_ISOLATION` / `auto-execute` (T0) |
+| `uc04` | L1 `pg_mass_read` + L2 en LIN-VICTIM-01 (crítico) → 2 approve | `EXECUTE_ISOLATION` / `two-person-rule`, con throttle+snapshot pre-aprobación y `llm_analysis` poblado si el stub corre |
+| `uc06` | L1 T1498 (DDoS) | `EXECUTE_ISOLATION` / `auto-execute` (fast-path, sin LLM) |
+| `uc07` | L1 + L2 en LIN-VICTIM-01 → 1 reject | `NO_ACTION` / `two-person-rule`; throttle revertido, snapshot conservado |
 
 ---
 
