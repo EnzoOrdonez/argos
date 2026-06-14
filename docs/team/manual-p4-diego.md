@@ -10,6 +10,8 @@
 
 ---
 
+> **Conexión con el SOAR de P1 (ADR-0013 §3 · ver `_COORDINACION_INTERMEDIA.md`):** el SOAR de P1 ya está completo y testeado. Lo que necesita de vos: Redis disponible en el lab, las tablas de audit desde `soar/audit/schema.sql` más el índice OpenSearch `argos-audit-decisions`, y la Streamlit Approval Console que lee el `Incident` de Redis (clave `incident:{id}`) y muestra el HITL en vivo.
+
 ## 0. Tu charter
 
 > Si tu laptop arranca el lab en menos de 5 minutos con `vagrant up`, el equipo trabaja. Si no, todos quedan bloqueados. Eres también el operador del demo: clickeas los botones en vivo mientras P1 narra. Tu UI es la pantalla que el profesor mirará 12 minutos seguidos.

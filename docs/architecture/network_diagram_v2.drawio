@@ -1,0 +1,360 @@
+<mxfile host="app.diagrams.net" modified="2026-06-10T00:00:00.000Z" agent="ARGOS P1" version="24.0.0">
+  <diagram name="ARGOS Network" id="argos-network-v2">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1120" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="ARGOS · Diagrama de red y componentes — lab Vagrant + plano lógico IntiBank (v2 · 2026-06-10)" style="text;html=1;fontSize=18;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="15" width="980" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ext_box" value="SERVICIOS EXTERNOS · Internet (allowlist del lab)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1120" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_tg" value="Telegram Bot API&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;notificación t=0 · botones inline&lt;br&gt;Approve / Reject / Revert&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="105" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_dc" value="Discord Webhook&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;visibilidad de equipo t=0&lt;br&gt;embeds por tier&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="105" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_tw" value="Twilio Voice&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;escalación t=60s · DTMF&lt;br&gt;1=approve · 2=reject&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="480" y="105" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_oa" value="OpenAI GPT-4o-mini&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;LLM primario (ADR-0001 v2)&lt;br&gt;budget tope diario&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="105" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_ng" value="ngrok (túnel TLS)&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;URL pública → Approval API :8003&lt;br&gt;callbacks Telegram + TwiML&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="880" y="105" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="appr_box" value="APROBADORES HITL · celulares (red 203.0.113.0/24 lógica)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="60" width="460" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="appr_txt" value="SOC Lead (Enzo·P1) · DBA (Sebastian·P2)&lt;br&gt;Infra Lead (Angeles·P3) · Compliance (Diego·P4)&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Two-person rule en production-critical: 2 approve ejecutan, 1 reject cancela (ADR-0006 Sit. B). Conservative-wins en host estándar: cualquier approve aísla.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="90" width="420" height="105" as="geometry" />
+        </mxCell>
+
+        <mxCell id="host_box" value="HOST FÍSICO · laptop con VirtualBox + Vagrant · red host-only 10.0.0.0/24" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#f5f5f5;strokeColor=#666666;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="1120" height="830" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vm_mgr" value="VM lab-manager · 10.0.0.10" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#ffffff;strokeColor=#333333;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="70" y="290" width="630" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="m_wazuh" value="Wazuh Manager 4.7 [P3·P4]&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;agentes :1514/1515 · API :55000&lt;br&gt;reglas Sigma L1 · FIM L3 · AR&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="90" y="325" width="195" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="m_os" value="OpenSearch :9200 [P4]&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Dashboards :5601&lt;br&gt;índice argos-audit-decisions&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="90" y="430" width="195" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="m_redis" value="Redis 7 · :6379&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;stream events:normalized&lt;br&gt;(payload = NormalizedAlert JSON,&lt;br&gt;grupo soar-router)&lt;br&gt;incidents · corr:* · jwt:tok:*&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="90" y="530" width="195" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="m_ui" value="Streamlit UI :8501 [P4]&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Approval Workflow Console&lt;br&gt;lee Redis + OpenSearch&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="90" y="655" width="195" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="soar_box" value="SOAR · P1 (soar/)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="305" y="325" width="380" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="s_cons" value="Consumer + correlación&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;2 índices · fast-path AUTO_T0&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="355" width="170" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="s_tier" value="Tier Router T0–T3&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ADR-0003 · cobertura 100%&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="355" width="170" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="s_play" value="Playbooks · ResponseExecutor&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;throttle · snapshot · isolation · kill (Wazuh AR / Simulated)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="425" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s_sched" value="Scheduler: 3 relojes&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;60s consolidación · 180s T2 · voz 60s&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="425" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s_api" value="Approval API :8003&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;JWT HS256 single-use (jti)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="500" width="170" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="s_notif" value="Notification Service&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Telegram · Discord · Twilio · Email post-facto&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="500" width="170" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="s_audit" value="Audit dual fail-soft&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;OpenSearch + PostgreSQL (schema.sql)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="565" width="350" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="m_ml" value="ML pipeline [P2] · L2&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Isolation Forest + OC-SVM&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="305" y="630" width="185" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="m_llm" value="LLM Triage [P2] · :8002&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;POST /triage · mini-RAG&lt;br&gt;(BM25 + BGE-large + RRF)&lt;br&gt;corpus propio de ARGOS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="305" y="705" width="185" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="m_ollama" value="Ollama local · :11434&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Llama 3.1 8B · fallback&lt;br&gt;zero-egress (sin internet)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="510" y="705" width="175" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vm_win" value="VM victim-windows · 10.0.0.21 · STANDARD" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#ffffff;strokeColor=#333333;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="730" y="290" width="410" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="w_agent" value="Agente Wazuh + Sysmon&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;telemetría endpoint · heartbeat 60s&lt;br&gt;ejecuta Active Response&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="325" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="w_canary" value="Canary files L3 [P3]&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;FIM whodata · zero-FP&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="950" y="325" width="170" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="w_note" value="Target de UC-01 (ransomware 3 capas) y UC-02 (canary path) · UC-05 (agent-kill T1562.001: la pérdida de heartbeat ES la señal)" style="text;html=1;fontSize=10;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="750" y="420" width="370" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vm_lin" value="VM victim-linux · 10.0.0.22 · PRODUCTION-CRITICAL (two-person rule)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#ffffff;strokeColor=#b85450;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="730" y="545" width="410" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="l_agent" value="Agente Wazuh + auditd&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;telemetría + Active Response&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="585" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="l_pg" value="PostgreSQL 17.5 + pgAudit · :5432 [P4]&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;ACTIVO DEFENDIDO: schema intibank&lt;br&gt;(app_prod) + db argos_audit&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="945" y="585" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="l_web" value="Flask webapp dummy · :8080 [P4]&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;SQLi intencional (UC-08) · nginx :80&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="670" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="l_canary" value="Canary files L3 [P3]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="755" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="l_note" value="Target de UC-04 (two-person) · UC-06 (DDoS) · UC-07 (FP cancelado) · UC-08 (SQLi)" style="text;html=1;fontSize=10;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="945" y="690" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="atk_box" value="SIMULACIÓN DE ATAQUE (attack-simulation/ [P4] · scripts/ [P1])" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="70" y="885" width="1070" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sim" value="Atacantes simulados (IP lógica 198.51.100.0/24): lockbit_like.py (T1486 ransomware) · canary_path.py · postgres_attack.py (UC-04) · hping3 (T1498 DDoS) · sqlmap (T1190 SQLi) · Atomic Red Team / Caldera" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="90" y="915" width="610" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="a_inj" value="demo_injector.py [P1] · dual-track: publica NormalizedAlert directo al stream (5 UCs sin lab) + triage_stub.py :8002" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="90" y="990" width="610" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ov_box" value="RED LÓGICA IntiBank · overlay ficticio (RFC 5737)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="250" width="460" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_txt" value="10.10.0.0/16 — red corporativa interna (tellers, analistas)&lt;br&gt;10.10.50.0/24 — servidores de aplicación (middleware)&lt;br&gt;203.0.113.0/24 — NAT corporativo de oficinas (aprobadores)&lt;br&gt;198.51.100.0/24 — IPs de atacantes simulados&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Este plano existe SOLO en los datos y en las reglas Sigma sobre ip_address (ADR-0009 §2.7). El plano físico del lab es 10.0.0.0/24; la criticidad se resuelve por host_id en soar/inventory.py, no por rango (ADR-0013 §7.4).&lt;/font&gt;" style="text;html=1;fontSize=11;align=left;verticalAlign=top;whiteSpace=wrap;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="280" width="440" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg_box" value="LEYENDA · ownership" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="490" width="460" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" value="P1 Enzo · SOAR + contracts + inyector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="520" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" value="P2 Sebastian · ML (L2) + LLM Triage (L4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1440" y="520" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" value="P3 Angeles · Sigma (L1) + Canary (L3) + AR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="560" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" value="P4 Diego · lab + DB + UI + webapp" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1440" y="560" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="Infraestructura compartida" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="600" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" value="Servicios externos (Internet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1440" y="600" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg7" value="Ataque simulado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="640" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg8" value="— — fallback / camino alterno" style="text;html=1;fontSize=10;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1440" y="640" width="210" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="flow_box" value="FLUJO (numeración de las flechas)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=12;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="710" width="460" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="flow_txt" value="1 · Ataque contra las VMs víctima (o 1' inyector directo al stream).&lt;br&gt;2 · Telemetría de agentes al Wazuh Manager (:1514).&lt;br&gt;3 · Detecciones L1/L3 (Sigma, canary) y L2 (ML) publican NormalizedAlert en events:normalized.&lt;br&gt;4 · El consumer SOAR correlaciona por host y rutea tier (T0–T3).&lt;br&gt;5 · Acciones vía Wazuh API :55000 → el agente ejecuta (throttle + snapshot pre-aprobación; isolation al decidir).&lt;br&gt;6 · Notificación multi-canal t=0; voz a t=60s sin respuesta; email post-facto.&lt;br&gt;7 · El aprobador responde; el callback entra por ngrok al Approval API con JWT single-use.&lt;br&gt;8 · Hook LLM (T2 o two-person, sin DDoS): AlertContext → /triage → OpenAI o Llama local.&lt;br&gt;9 · Audit de cada paso en OpenSearch y PostgreSQL (fail-soft).&lt;br&gt;10 · La Approval Console (Streamlit) lee Redis y OpenSearch en tiempo real." style="text;html=1;fontSize=10;align=left;verticalAlign=top;whiteSpace=wrap;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1210" y="740" width="440" height="330" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;exitX=0.85;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="a_sim" target="vm_lin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1a_l" value="1" style="edgeLabel;html=1;fontSize=11;fontStyle=1;fontColor=#b85450;" vertex="1" connectable="0" parent="e1a">
+          <mxGeometry x="-0.2" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b85450;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.8;" edge="1" parent="1" source="a_sim" target="vm_win">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="715" y="945" />
+              <mxPoint x="715" y="474" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1b_l" value="1" style="edgeLabel;html=1;fontSize=11;fontStyle=1;fontColor=#b85450;" vertex="1" connectable="0" parent="e1b">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1c" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673a6;strokeWidth=2;dashed=1;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="1" source="a_inj" target="m_redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="55" y="1017" />
+              <mxPoint x="55" y="700" />
+              <mxPoint x="187" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1c_l" value="1' dual-track" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#9673a6;" vertex="1" connectable="0" parent="e1c">
+          <mxGeometry x="-0.5" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e2a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d79b00;strokeWidth=2;startArrow=classic;startFill=1;exitX=0;exitY=0.5;entryX=1;entryY=0.3;" edge="1" parent="1" source="w_agent" target="m_wazuh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2a_l" value="2 telemetría · 5 AR" style="edgeLabel;html=1;fontSize=10;fontColor=#d79b00;fontStyle=1;" vertex="1" connectable="0" parent="e2a">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d79b00;strokeWidth=2;startArrow=classic;startFill=1;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="1" source="l_agent" target="m_wazuh">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="187" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2b_l" value="2 · 5" style="edgeLabel;html=1;fontSize=10;fontColor=#d79b00;fontStyle=1;" vertex="1" connectable="0" parent="e2b">
+          <mxGeometry x="0.55" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e3a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d79b00;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="m_wazuh" target="m_redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="187" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3a_l" value="3 L1·L3" style="edgeLabel;html=1;fontSize=10;fontColor=#d79b00;fontStyle=1;" vertex="1" connectable="0" parent="e3a">
+          <mxGeometry x="0.7" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.7;" edge="1" parent="1" source="m_ml" target="m_redis">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3b_l" value="3 L2" style="edgeLabel;html=1;fontSize=10;fontColor=#6c8ebf;fontStyle=1;" vertex="1" connectable="0" parent="e3b">
+          <mxGeometry x="0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=1;exitY=0.2;entryX=0;entryY=0.5;" edge="1" parent="1" source="m_redis" target="s_cons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4_l" value="4" style="edgeLabel;html=1;fontSize=11;fontStyle=1;fontColor=#9673a6;" vertex="1" connectable="0" parent="e4">
+          <mxGeometry x="0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="s_play" target="m_wazuh">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="295" y="455" />
+              <mxPoint x="295" y="310" />
+              <mxPoint x="187" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5_l" value="5 ordena AR (:55000)" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#9673a6;" vertex="1" connectable="0" parent="e5">
+          <mxGeometry x="-0.4" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=1;exitY=0.5;entryX=0.35;entryY=1;" edge="1" parent="1" source="s_notif" target="ext_box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="527" />
+              <mxPoint x="700" y="240" />
+              <mxPoint x="432" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6_l" value="6 notifica t=0 · voz t=60s · email post-facto" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#9673a6;" vertex="1" connectable="0" parent="e6">
+          <mxGeometry x="-0.35" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d6b656;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="ext_box" target="appr_box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6b_l" value="alertas + botones / llamada" style="edgeLabel;html=1;fontSize=10;fontColor=#996600;" vertex="1" connectable="0" parent="e6b">
+          <mxGeometry x="0" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e7a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="appr_box" target="ext_ng">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1430" y="230" />
+              <mxPoint x="1030" y="230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7a_l" value="7 approve / reject / revert (jti firmado)" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#9673a6;" vertex="1" connectable="0" parent="e7a">
+          <mxGeometry x="0.25" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9673a6;strokeWidth=2;exitX=0.25;exitY=1;entryX=1;entryY=0.5;" edge="1" parent="1" source="ext_ng" target="s_api">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="930" y="270" />
+              <mxPoint x="710" y="270" />
+              <mxPoint x="710" y="527" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7b_l" value="7" style="edgeLabel;html=1;fontSize=11;fontStyle=1;fontColor=#9673a6;" vertex="1" connectable="0" parent="e7b">
+          <mxGeometry x="0.6" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e8a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;exitX=0.2;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="s_cons" target="m_llm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="354" y="620" />
+              <mxPoint x="397" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8a_l" value="8 AlertContext (T2 ∪ two-person)" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#6c8ebf;" vertex="1" connectable="0" parent="e8a">
+          <mxGeometry x="0.65" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;exitX=1;exitY=0.2;entryX=0.5;entryY=1;" edge="1" parent="1" source="m_llm" target="ext_oa">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="725" />
+              <mxPoint x="770" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8b_l" value="primario" style="edgeLabel;html=1;fontSize=10;fontColor=#6c8ebf;" vertex="1" connectable="0" parent="e8b">
+          <mxGeometry x="0.75" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8c" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="m_llm" target="m_ollama">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8c_l" value="fallback" style="edgeLabel;html=1;fontSize=10;fontColor=#6c8ebf;" vertex="1" connectable="0" parent="e8c">
+          <mxGeometry x="0" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e9a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="s_audit" target="m_os">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9a_l" value="9 audit" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" connectable="0" parent="e9a">
+          <mxGeometry x="0.2" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;strokeWidth=2;exitX=1;exitY=0.5;entryX=0.5;entryY=1;" edge="1" parent="1" source="s_audit" target="l_pg">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="585" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9b_l" value="9 audit SQL (argos_audit)" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#666666;" vertex="1" connectable="0" parent="e9b">
+          <mxGeometry x="0.35" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#82b366;strokeWidth=2;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="m_ui" target="m_redis">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10_l" value="10 lee" style="edgeLabel;html=1;fontSize=10;fontStyle=1;fontColor=#82b366;" vertex="1" connectable="0" parent="e10">
+          <mxGeometry x="0" relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

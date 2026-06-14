@@ -86,6 +86,8 @@ Cuando `build_final_decision_if_ready` o `close_window` fijan `FinalDecision = E
 - **P3:** emite alertas Sigma/Canary a `events:normalized` como `NormalizedAlert` con `source_layer` correcto; idealmente expone `criticality` del host.
 - **P4:** crea las tablas `audit_incidents`/`audit_responses` (con los Literals reales) + el índice OpenSearch.
 
+> **Aclaración de normalización (decisión P1, 2026-06-10).** El SOAR (P1) **solo consume** `NormalizedAlert` de `events:normalized`; **no normaliza crudo**. P2 y P3 normalizan en su lado y publican `NormalizedAlert` ya armado. El docstring de `NormalizedAlert` en `argos_contracts/alert.py` ("Alert after Decision Engine normalizes…") y el `Outputs blocking: events:raw_wazuh` del manual de P3 reflejan el diseño previo y quedan **superseded por este ADR**. El contrato congelado v1.1.0 no se toca; esta nota es la autoridad.
+
 ## 4. Scope POC / demo
 
 - Consumer + correlación + scheduler + hook + audit: implementables y **testeables sin lab** (fakeredis para el stream/estado, `respx` para el `/triage` de P2, `SimulatedExecutor` para playbooks).

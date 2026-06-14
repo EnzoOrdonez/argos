@@ -10,6 +10,8 @@
 
 ---
 
+> **Conexión con el SOAR de P1 (ADR-0013 §3 · ver `_COORDINACION_INTERMEDIA.md`):** el SOAR de P1 ya está completo y testeado, y **solo consume**. Tus alertas de Sigma (`source_layer=layer_1`) y canary (`source_layer=layer_3`) van al stream Redis `events:normalized` como `NormalizedAlert` (contrato `argos_contracts/alert.py`: con `technique_mitre`, `severity_label`, `severity_score`, `host_id`). P1 **no normaliza** el crudo; vos publicás ya normalizado. Y definí los comandos Wazuh active-response que invoca `soar/playbooks/wazuh.py` (throttle, snapshot, isolation, kill). La mención a `events:raw_wazuh` de abajo es del diseño previo.
+
 ## 0. Tu charter
 
 > Tú generas los eventos: tanto las **alertas** (Sigma rules que disparan sobre logs Wazuh, Canary FIM whodata) como los **ataques** que las disparan (ransomware simulator, DDoS con hping3/slowhttptest, SQL injection con sqlmap). Sin ti, las otras 3 capas no tienen nada que procesar.
