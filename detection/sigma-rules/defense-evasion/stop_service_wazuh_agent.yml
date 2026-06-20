@@ -1,0 +1,76 @@
+title: Defense Evasion - Security Agent Stop or Disable (UC-05)
+id: a1b2c3d4-e5f6-7890-abcd-ef1234560006
+status: experimental
+description: >
+  Detecta intentos de detener o deshabilitar herramientas de seguridad del host,
+  especialmente el agente Wazuh, auditd y firewall. Técnica usada en UC-05 para
+  cegar la detección antes del cifrado. Dispara T2 inmediato por criticidad.
+  # Validated by: T1562.001/AtomicTest#1 — Stop Wazuh agent via systemctl
+references:
+  - https://attack.mitre.org/techniques/T1562/001/
+  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1562.001/T1562.001.md
+author: Angeles Castillo — ARGOS Project P3, Universidad de Lima 2026-1
+date: 2026-05-24
+modified: 2026-05-24
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_stop_security_service:
+    Image|endswith:
+      - 'systemctl'
+      - 'service'
+    CommandLine|contains:
+      - 'wazuh-agent'
+      - 'wazuh-manager'
+      - 'ossec'
+      - 'auditd'
+      - 'apparmor'
+      - 'fail2ban'
+      - 'ufw'
+    CommandLine|contains:
+      - 'stop'
+      - 'disable'
+      - 'mask'
+  selection_kill_security_process:
+    Image|endswith:
+      - 'kill'
+      - 'pkill'
+      - 'killall'
+    CommandLine|contains:
+      - 'wazuh'
+      - 'ossec'
+      - 'auditd'
+      - 'syslog'
+  selection_audit_rules_flush:
+    Image|endswith: 'auditctl'
+    CommandLine|contains:
+      - '-D'
+      - '--delete'
+  selection_log_tampering:
+    Image|endswith:
+      - 'bash'
+      - 'sh'
+      - 'rm'
+    CommandLine|contains:
+      - '/var/ossec/logs'
+      - '/var/log/audit'
+      - '> /var/log/syslog'
+      - 'truncate -s 0'
+  condition: >
+    selection_stop_security_service or selection_kill_security_process or
+    selection_audit_rules_flush or selection_log_tampering
+falsepositives:
+  - Actualizaciones legítimas del agente Wazuh por administrador
+  - Mantenimiento programado documentado en change management
+level: high
+# Wazuh level mapping → 12 (HIGH → T2 Decision Engine)
+fields:
+  - Image
+  - CommandLine
+  - User
+  - ParentImage
+  - ProcessId

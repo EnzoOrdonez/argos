@@ -1,0 +1,43 @@
+title: Ransomware - VSS Shadow Copy Deletion via vssadmin
+id: a1b2c3d4-e5f6-7890-abcd-ef1234560003
+status: experimental
+description: >
+  Detecta el uso de vssadmin para eliminar Volume Shadow Copies, técnica
+  estándar de ransomware para impedir la restauración del sistema. Variante
+  primaria de T1490 cubierta por UC-01, UC-03 y UC-04.
+  # Validated by: T1490/AtomicTest#1 — Delete Volume Shadow Copies with vssadmin
+references:
+  - https://attack.mitre.org/techniques/T1490/
+  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1490/T1490.md
+  - https://github.com/SigmaHQ/sigma/blob/master/rules/windows/process_creation/proc_creation_win_vssadmin_delete_shadows.yml
+author: Angeles Castillo — ARGOS Project P3, Universidad de Lima 2026-1
+date: 2026-05-24
+modified: 2026-05-24
+tags:
+  - attack.impact
+  - attack.t1490
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    Image|endswith:
+      - 'vssadmin'
+      - 'vssadmin.exe'
+    CommandLine|contains|all:
+      - 'delete'
+      - 'shadows'
+  filter_legitimate:
+    User: 'backup-service'
+  condition: selection and not filter_legitimate
+falsepositives:
+  - Administradores de backup con scripts de limpieza de snapshots (usar filter)
+  - Mantenimiento programado de VSS por agente de backup corporativo
+level: high
+# Wazuh level mapping → 12 (HIGH → T2 Decision Engine)
+fields:
+  - Image
+  - CommandLine
+  - User
+  - ParentImage
+  - ProcessId

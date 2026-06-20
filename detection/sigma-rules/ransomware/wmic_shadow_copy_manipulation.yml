@@ -1,0 +1,59 @@
+title: Ransomware - Shadow Copy Deletion via WMIC (UC-03 Variant)
+id: a1b2c3d4-e5f6-7890-abcd-ef1234560004
+status: experimental
+description: >
+  Variante de T1490 usando WMIC para eliminar shadow copies. Cubre UC-03
+  donde el atacante usa una cadena de comandos alternativa para evadir
+  detección de vssadmin. También cubre bcdedit para deshabilitar recuperación
+  y equivalentes Linux (lvremove, btrfs snapshot delete).
+  # Validated by: T1490/AtomicTest#2 — Delete Shadow Copies via WMIC
+references:
+  - https://attack.mitre.org/techniques/T1490/
+  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1490/T1490.md
+author: Angeles Castillo — ARGOS Project P3, Universidad de Lima 2026-1
+date: 2026-05-24
+modified: 2026-05-24
+tags:
+  - attack.impact
+  - attack.t1490
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_wmic:
+    Image|endswith:
+      - 'wmic'
+      - 'wmic.exe'
+    CommandLine|contains|all:
+      - 'shadowcopy'
+      - 'delete'
+  selection_bcdedit:
+    Image|endswith:
+      - 'bcdedit'
+      - 'bcdedit.exe'
+    CommandLine|contains:
+      - 'recoveryenabled no'
+      - 'bootstatuspolicy ignoreallfailures'
+  selection_linux_lvm:
+    Image|endswith:
+      - 'lvremove'
+      - 'bash'
+      - 'sh'
+    CommandLine|contains:
+      - 'lvremove'
+      - 'btrfs subvolume delete'
+      - 'zfs destroy'
+      - 'rm -rf /backup'
+      - 'rm -rf /snapshots'
+  condition: selection_wmic or selection_bcdedit or selection_linux_lvm
+falsepositives:
+  - Scripts de administración de LVM legítimos
+  - Mantenimiento de snapshots ZFS/Btrfs por administrador
+level: high
+# Wazuh level mapping → 12 (HIGH → T2 Decision Engine)
+fields:
+  - Image
+  - CommandLine
+  - User
+  - ParentImage
+  - ProcessId

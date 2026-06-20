@@ -1,0 +1,10 @@
+T1486:
+  - ransomware/ransom_note_drop.yml
+  - ransomware/high_entropy_writes.yml
+T1490:
+  - ransomware/vssadmin_delete_shadows.yml
+  - ransomware/wmic_shadow_copy_manipulation.yml
+T1083:
+  - discovery/file_enumeration_powershell.yml
+T1562.001:
+  - defense-evasion/stop_service_wazuh_agent.yml
