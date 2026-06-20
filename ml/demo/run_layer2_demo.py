@@ -13,8 +13,9 @@ Run from project root:
 
     python -m ml.demo.run_layer2_demo
 """
-
 from __future__ import annotations
+
+from soar.response.forensics.collector import collect_forensic_bundle
 
 from argos_contracts.ml_score import MLFeatures
 
@@ -116,6 +117,26 @@ def main() -> None:
         print("    Result: Automatic response allowed.")
     else:
         print("    Result: Lower-priority triage path.")
+
+    print("\n[5.1] Creating lightweight forensic evidence bundle...")
+
+    forensic_result = collect_forensic_bundle(
+        incident_id="INC-DEMO-L2-001",
+        ml_score=ml_score,
+        tier=tier_name,
+        normalized_alert=alert,
+        decision_metadata={
+            "source": "ml.demo.run_layer2_demo",
+            "reason": "Layer 2 anomaly score routed by SOAR tier router",
+            "ensemble_score": ml_score.ensemble_score,
+        },
+        monitored_dirs=["ml"],
+        output_root="evidence",
+    )
+
+    print(f"    Evidence directory : {forensic_result.evidence_dir}")
+    print(f"    Evidence ID        : {forensic_result.manifest.evidence_id}")
+    print(f"    Artifacts captured : {len(forensic_result.manifest.artifacts)}")
 
     print("\n[6] Synthetic detection metrics...")
     y_true = [0, 0, 0, 1, 1]
