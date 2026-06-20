@@ -1,5 +1,14 @@
 """Console demo for ARGOS Layer 2.
 
+This script demonstrates the Layer 2 MVP flow:
+
+1. Build benign synthetic windows.
+2. Train Isolation Forest + One-Class SVM.
+3. Score a ransomware-like synthetic activity window.
+4. Convert MLScore into a SOAR-compatible RoutingSignal.
+5. Route the signal through the SOAR tier router.
+6. Print evaluation metrics, threshold sweep, MITRE coverage and ablation.
+
 Run from project root:
 
     python -m ml.demo.run_layer2_demo
@@ -15,10 +24,10 @@ from ml.evaluation.mitre import build_mitre_coverage_report
 from ml.models.ensemble import Layer2AnomalyEnsemble
 from ml.soar_adapter import ml_score_to_normalized_alert, ml_score_to_routing_signal
 from soar.decision_engine.tier_router import route
-from ml.forensics.snapshot import build_forensic_snapshot_record
 
 
 def build_benign_windows(size: int = 100) -> list[MLFeatures]:
+    """Create synthetic benign activity windows for demo training."""
     rows: list[MLFeatures] = []
 
     for index in range(size):
@@ -38,6 +47,7 @@ def build_benign_windows(size: int = 100) -> list[MLFeatures]:
 
 
 def build_ransomware_like_window() -> MLFeatures:
+    """Create one synthetic ransomware-like activity window."""
     return MLFeatures(
         file_write_rate=5.0,
         avg_entropy=7.9,
@@ -50,24 +60,25 @@ def build_ransomware_like_window() -> MLFeatures:
 
 
 def format_tier(tier: object) -> str:
+    """Safely format enum-like tier values."""
     return getattr(tier, "name", str(tier))
 
 
 def main() -> None:
-    print("=" * 72)
-    print("ARGOS LAYER 2 DEMO")
+    print("=" * 78)
+    print("ARGOS LAYER 2 MVP DEMO")
     print("Isolation Forest + One-Class SVM + SOAR Routing")
-    print("=" * 72)
+    print("=" * 78)
 
     print("\n[1] Building benign synthetic training windows...")
     benign_windows = build_benign_windows(size=100)
-    print(f"    Benign windows: {len(benign_windows)}")
+    print(f"    Benign windows generated: {len(benign_windows)}")
 
     print("\n[2] Training Layer 2 anomaly ensemble...")
     model = Layer2AnomalyEnsemble().fit(benign_windows)
     print(f"    Model version: {model.model_version}")
 
-    print("\n[3] Scoring ransomware-like activity window...")
+    print("\n[3] Scoring ransomware-like synthetic activity window...")
     suspicious_features = build_ransomware_like_window()
 
     ml_score = model.predict_score(
@@ -84,31 +95,27 @@ def main() -> None:
     print("\n[4] Converting MLScore to SOAR-compatible alert...")
     alert = ml_score_to_normalized_alert(ml_score)
 
-    print(f"    Alert ID       : {alert.alert_id}")
-    print(f"    Source layer   : {alert.source_layer}")
-    print(f"    Severity score : {alert.severity_score}")
-    print(f"    Severity label : {alert.severity_label}")
-    print(f"    MITRE technique: {alert.technique_mitre}")
+    print(f"    Alert ID        : {alert.alert_id}")
+    print(f"    Source layer    : {alert.source_layer}")
+    print(f"    Host ID         : {alert.host_id}")
+    print(f"    Severity score  : {alert.severity_score}")
+    print(f"    Severity label  : {alert.severity_label}")
+    print(f"    Triggering rule : {alert.triggering_rule}")
+    print(f"    MITRE technique : {alert.technique_mitre}")
 
     print("\n[5] Routing through SOAR tier router...")
     signal = ml_score_to_routing_signal(ml_score)
     tier = route(signal)
+    tier_name = format_tier(tier)
 
-    print(f"    SOAR tier decision: {format_tier(tier)}")
+    print(f"    SOAR tier decision: {tier_name}")
 
-    if format_tier(tier) == "T2":
+    if tier_name == "T2":
         print("    Result: Human-in-the-loop approval required.")
-    elif format_tier(tier) == "T0":
+    elif tier_name == "T0":
         print("    Result: Automatic response allowed.")
     else:
         print("    Result: Lower-priority triage path.")
-        
-    print("\n[5.1] Creating safe simulated forensic snapshot...")
-    snapshot = build_forensic_snapshot_record(ml_score)
-
-    print(f"    Snapshot ID   : {snapshot.snapshot_id}")
-    print(f"    Snapshot type : {snapshot.snapshot_type}")
-    print(f"    Storage path  : {snapshot.storage_path}")
 
     print("\n[6] Synthetic detection metrics...")
     y_true = [0, 0, 0, 1, 1]
@@ -129,7 +136,7 @@ def main() -> None:
         f"FN={metrics.false_negatives}"
     )
 
-    print("\n[7] Threshold sweep...")
+    print("\n[7] Threshold sweep for MVP calibration...")
     for result in sweep_thresholds(y_true, y_score):
         print(
             f"    threshold={result.threshold:.2f} "
@@ -152,6 +159,16 @@ def main() -> None:
         f"({mitre_report.coverage_ratio})"
     )
 
+    for technique in mitre_report.techniques:
+        status = "covered" if technique.covered else "not covered"
+        cases = ", ".join(technique.supporting_cases) or "-"
+        print(
+            f"    {technique.technique_id} | "
+            f"{technique.name} | "
+            f"{status} | "
+            f"cases={cases}"
+        )
+
     print("\n[9] Ablation study...")
     ablation_results = run_ablation_study(
         y_true,
@@ -171,9 +188,9 @@ def main() -> None:
             f"f1={result.metrics.f1:.2f}"
         )
 
-    print("\n" + "=" * 72)
+    print("\n" + "=" * 78)
     print("DEMO COMPLETED")
-    print("=" * 72)
+    print("=" * 78)
 
 
 if __name__ == "__main__":
