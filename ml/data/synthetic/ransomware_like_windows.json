@@ -1,0 +1,302 @@
+[
+  {
+    "label": 1,
+    "file_write_rate": 3.5,
+    "avg_entropy": 7.2,
+    "extension_modification_ratio": 0.7,
+    "crypto_api_calls": 18,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 5.0,
+    "io_burst_score": 6.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.95,
+    "avg_entropy": 7.3,
+    "extension_modification_ratio": 0.74,
+    "crypto_api_calls": 19,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 5.5,
+    "io_burst_score": 6.6
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.4,
+    "avg_entropy": 7.4,
+    "extension_modification_ratio": 0.78,
+    "crypto_api_calls": 20,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 6.0,
+    "io_burst_score": 7.2
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.85,
+    "avg_entropy": 7.5,
+    "extension_modification_ratio": 0.82,
+    "crypto_api_calls": 21,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 6.5,
+    "io_burst_score": 7.8
+  },
+  {
+    "label": 1,
+    "file_write_rate": 5.3,
+    "avg_entropy": 7.6,
+    "extension_modification_ratio": 0.86,
+    "crypto_api_calls": 22,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 7.0,
+    "io_burst_score": 8.4
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.5,
+    "avg_entropy": 7.7,
+    "extension_modification_ratio": 0.7,
+    "crypto_api_calls": 23,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 5.0,
+    "io_burst_score": 9.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.95,
+    "avg_entropy": 7.2,
+    "extension_modification_ratio": 0.74,
+    "crypto_api_calls": 24,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 5.5,
+    "io_burst_score": 6.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.4,
+    "avg_entropy": 7.3,
+    "extension_modification_ratio": 0.78,
+    "crypto_api_calls": 25,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 6.0,
+    "io_burst_score": 6.6
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.85,
+    "avg_entropy": 7.4,
+    "extension_modification_ratio": 0.82,
+    "crypto_api_calls": 18,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 6.5,
+    "io_burst_score": 7.2
+  },
+  {
+    "label": 1,
+    "file_write_rate": 5.3,
+    "avg_entropy": 7.5,
+    "extension_modification_ratio": 0.86,
+    "crypto_api_calls": 19,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 7.0,
+    "io_burst_score": 7.8
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.5,
+    "avg_entropy": 7.6,
+    "extension_modification_ratio": 0.7,
+    "crypto_api_calls": 20,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 5.0,
+    "io_burst_score": 8.4
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.95,
+    "avg_entropy": 7.7,
+    "extension_modification_ratio": 0.74,
+    "crypto_api_calls": 21,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 5.5,
+    "io_burst_score": 9.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.4,
+    "avg_entropy": 7.2,
+    "extension_modification_ratio": 0.78,
+    "crypto_api_calls": 22,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 6.0,
+    "io_burst_score": 6.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.85,
+    "avg_entropy": 7.3,
+    "extension_modification_ratio": 0.82,
+    "crypto_api_calls": 23,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 6.5,
+    "io_burst_score": 6.6
+  },
+  {
+    "label": 1,
+    "file_write_rate": 5.3,
+    "avg_entropy": 7.4,
+    "extension_modification_ratio": 0.86,
+    "crypto_api_calls": 24,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 7.0,
+    "io_burst_score": 7.2
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.5,
+    "avg_entropy": 7.5,
+    "extension_modification_ratio": 0.7,
+    "crypto_api_calls": 25,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 5.0,
+    "io_burst_score": 7.8
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.95,
+    "avg_entropy": 7.6,
+    "extension_modification_ratio": 0.74,
+    "crypto_api_calls": 18,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 5.5,
+    "io_burst_score": 8.4
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.4,
+    "avg_entropy": 7.7,
+    "extension_modification_ratio": 0.78,
+    "crypto_api_calls": 19,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 6.0,
+    "io_burst_score": 9.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.85,
+    "avg_entropy": 7.2,
+    "extension_modification_ratio": 0.82,
+    "crypto_api_calls": 20,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 6.5,
+    "io_burst_score": 6.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 5.3,
+    "avg_entropy": 7.3,
+    "extension_modification_ratio": 0.86,
+    "crypto_api_calls": 21,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 7.0,
+    "io_burst_score": 6.6
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.5,
+    "avg_entropy": 7.4,
+    "extension_modification_ratio": 0.7,
+    "crypto_api_calls": 22,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 5.0,
+    "io_burst_score": 7.2
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.95,
+    "avg_entropy": 7.5,
+    "extension_modification_ratio": 0.74,
+    "crypto_api_calls": 23,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 5.5,
+    "io_burst_score": 7.8
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.4,
+    "avg_entropy": 7.6,
+    "extension_modification_ratio": 0.78,
+    "crypto_api_calls": 24,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 6.0,
+    "io_burst_score": 8.4
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.85,
+    "avg_entropy": 7.7,
+    "extension_modification_ratio": 0.82,
+    "crypto_api_calls": 25,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 6.5,
+    "io_burst_score": 9.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 5.3,
+    "avg_entropy": 7.2,
+    "extension_modification_ratio": 0.86,
+    "crypto_api_calls": 18,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 7.0,
+    "io_burst_score": 6.0
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.5,
+    "avg_entropy": 7.3,
+    "extension_modification_ratio": 0.7,
+    "crypto_api_calls": 19,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 5.0,
+    "io_burst_score": 6.6
+  },
+  {
+    "label": 1,
+    "file_write_rate": 3.95,
+    "avg_entropy": 7.4,
+    "extension_modification_ratio": 0.74,
+    "crypto_api_calls": 20,
+    "new_outbound_connections": 4,
+    "cpu_burst_score": 5.5,
+    "io_burst_score": 7.2
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.4,
+    "avg_entropy": 7.5,
+    "extension_modification_ratio": 0.78,
+    "crypto_api_calls": 21,
+    "new_outbound_connections": 5,
+    "cpu_burst_score": 6.0,
+    "io_burst_score": 7.8
+  },
+  {
+    "label": 1,
+    "file_write_rate": 4.85,
+    "avg_entropy": 7.6,
+    "extension_modification_ratio": 0.82,
+    "crypto_api_calls": 22,
+    "new_outbound_connections": 2,
+    "cpu_burst_score": 6.5,
+    "io_burst_score": 8.4
+  },
+  {
+    "label": 1,
+    "file_write_rate": 5.3,
+    "avg_entropy": 7.7,
+    "extension_modification_ratio": 0.86,
+    "crypto_api_calls": 23,
+    "new_outbound_connections": 3,
+    "cpu_burst_score": 7.0,
+    "io_burst_score": 9.0
+  }
+]

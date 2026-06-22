@@ -245,3 +245,6 @@ evaluation/temp/
 *.bak.*
 *.preserve.*
 *.truncated.*
+
+# ARGOS forensic evidence bundles
+evidence/

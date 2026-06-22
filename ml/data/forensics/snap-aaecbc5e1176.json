@@ -1,0 +1,11 @@
+{
+  "snapshot_id": "snap-aaecbc5e1176",
+  "created_at": "2026-06-20T01:09:48.755835+00:00",
+  "host_id": "WIN-VICTIM-01",
+  "process_id": 4321,
+  "process_name": "unknown.exe",
+  "trigger_score_id": "ml-3b890878229b",
+  "ensemble_score": 0.8644,
+  "snapshot_type": "simulated-process-context",
+  "storage_path": "ml\\data\\forensics\\snap-aaecbc5e1176.json"
+}
