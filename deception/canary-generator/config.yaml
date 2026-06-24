@@ -1,0 +1,34 @@
+# deception/canary-generator/config.yaml
+#
+# Estrategia de colocación de canaries por host.
+# TODAS las rutas son absolutas (regla de disciplina del manual P3).
+# Los hosts reales del laboratorio dependen de P4 — usar placeholders
+# hasta que P4 confirme nombres/IPs finales.
+
+hosts:
+  - name: victim-windows-01      # <VICTIM_LAB_IP> — pendiente de confirmar con P4
+    os: windows
+    canary_paths:
+      - "C:\\Users\\victim\\Documents\\financials_Q4_2025.xlsx"
+      - "C:\\Users\\victim\\Desktop\\passwords.txt"
+      - "C:\\Backups\\db_backup.sql"
+      - "C:\\Users\\victim\\Documents\\accounts_admin.csv"
+
+  - name: victim-linux-01        # <VICTIM_LAB_IP> — pendiente de confirmar con P4
+    os: linux
+    canary_paths:
+      - "/home/victim/Documents/financials_Q4_2025.xlsx"
+      - "/home/victim/passwords.txt"
+      - "/var/backups/db_backup.sql"
+      - "/home/victim/Documents/accounts_admin.csv"
+
+# Rango de antigüedad simulada para mtime/atime de los canaries (en días).
+timestamp_range_days:
+  min: 60
+  max: 180
+
+# Carpeta sandbox usada por defecto en pruebas locales (NO el lab real).
+# El generador SIEMPRE valida que el destino esté dentro de esta carpeta
+# cuando se ejecuta con --local-sandbox, para evitar tocar rutas fuera
+# del entorno controlado durante desarrollo.
+local_sandbox_root: "./sandbox-output"

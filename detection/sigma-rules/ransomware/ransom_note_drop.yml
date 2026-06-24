@@ -1,0 +1,30 @@
+title: Creación de nota de rescate (ransom note) en disco
+id: 2a6c8e4f-9b1d-4f7a-bc3e-5d8f1a2b3c4d
+status: experimental
+description: |
+    Detecta la creación de archivos cuyo nombre coincide con patrones
+    típicos de notas de rescate dejadas por ransomware tras cifrar
+    archivos (READ_ME, HOW_TO_DECRYPT, RESTORE_FILES, etc).
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1486/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1486/T1486.md (Atomic Red Team)
+logsource:
+    category: file_event
+    product: windows
+detection:
+    selection:
+        EventID: 11  # Sysmon FileCreate
+        TargetFilename|contains:
+            - 'README'
+            - 'HOW_TO_DECRYPT'
+            - 'RESTORE_FILES'
+            - 'DECRYPT_INSTRUCTIONS'
+    condition: selection
+falsepositives:
+    - Documentación legítima de proyecto con nombres similares (raro, revisar contenido)
+level: critical
+tags:
+    - attack.t1486
+    - attack.impact

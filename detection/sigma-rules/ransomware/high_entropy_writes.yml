@@ -1,0 +1,35 @@
+title: Escrituras masivas de archivos con alta entropía (posible cifrado)
+id: 9b3e1c7a-5d2f-4b8e-a1c3-6f7e8d9c0a1b
+status: experimental
+description: |
+    Detecta un volumen anómalo de escrituras de archivo con extensión
+    cambiada y contenido de alta entropía en un corto periodo de tiempo,
+    patrón característico de ransomware cifrando archivos masivamente.
+    Esta regla espera un decoder/campo de entropía calculado upstream
+    (p. ej. por Sysmon + script auxiliar o por el agente Wazuh); el
+    nombre exacto del campo depende de cómo P4/infra instrumente el
+    cálculo de entropía — pendiente de confirmar con P4.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1486/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1486/T1486.md (Atomic Red Team)
+logsource:
+    category: file_event
+    product: windows
+detection:
+    selection:
+        EventID: 11  # Sysmon FileCreate
+        TargetFilename|contains:
+            - '.locked'
+            - '.encrypted'
+            - '.crypt'
+    timeframe: 1m
+    condition: selection | count() by Image > 20
+falsepositives:
+    - Compresión o respaldo masivo legítimo de archivos
+    - Sincronización de carpetas (OneDrive, Dropbox) en primer arranque
+level: high
+tags:
+    - attack.t1486
+    - attack.impact

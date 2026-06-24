@@ -1,153 +1,100 @@
 # detection/ — Layer 1 (Rule-Based Detection)
 
-| Field | Value |
-|-------|-------|
-| Owner | **P3 · Angeles Castillo** (Detection Engineer) |
-| Status | 📅 Planned · Weeks 2-5 (Gate 1) + Weeks 8-11 (Sigma upstream PRs) |
-| Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §5.1, [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) |
+**Owner: P3 · Angeles Castillo**
+
+Este README es la guía operativa de mi parte (P3) dentro de `detection/`.
+No modifica nada de `ml/`, `llm_triage/`, `soar/`, `ui/` ni `lab/`.
 
 ---
 
-## Purpose
+## 1. Qué me corresponde como P3
 
-Layer 1 of the defense-in-depth stack. Sigma rules written in YAML, mapped explicitly to MITRE ATT&CK techniques, converted to Wazuh-native format via `sigma-cli` and deployed to the Wazuh manager. **High precision, limited recall against novel variants** — Layer 2 covers that gap.
+- Escribir reglas Sigma (YAML) para las técnicas MITRE asignadas.
+- Mantener `mitre-mapping.yaml` (matriz técnica → regla).
+- Convertir las reglas Sigma a formato Wazuh (`wazuh-rules/local_rules.xml`).
+- Escribir tests que validen sintaxis Sigma, mapeo MITRE y pareo con Atomic Red Team.
+- Documentar PRs upstream a `SigmaHQ/sigma` (carpeta `upstream-prs/`).
 
-Bonus killer: **2-4 Sigma rules accepted upstream** in `SigmaHQ/sigma` (see Roadmap §10 in PROJECT_BRIEF.md).
+## 2. Qué NO toco aquí
 
----
+- No importo ni modifico `argos_contracts/` (solo lo leo como referencia de nombres MITRE válidos — `MITRE_WHITELIST`).
+- No implemento el Decision Engine, normalización de alertas, ni notificaciones — eso es `soar/` (P1).
+- No despliego infraestructura (`lab/`, Vagrant, Wazuh manager real) — eso es P4. Los comandos de despliegue de abajo usan placeholders y están marcados como pendientes.
 
-## Stack
+## 3. Instalación (solo lo de P3)
 
-| Tool | Role |
-|------|------|
-| Sigma + `sigma-cli` | Detection format + converter |
-| YAML | Rule source |
-| pytest + `sigma-cli analyze` | Local testing |
-| Wazuh 4.7 | Runtime engine (rule format `decoder` + `rule`) |
-| Atomic Red Team | Positive-case validation (each rule paired with at least one Atomic test) |
+```bash
+# Desde la raíz del monorepo
+python -m venv .venv
+source .venv/bin/activate          # En Git Bash / Linux / Mac
+# .venv\Scripts\activate           # En CMD de Windows (no Git Bash)
 
----
+# Dependencias de desarrollo compartidas (pytest, ruff, etc.) — ya están en pyproject.toml
+pip install -e ".[dev]"
 
-## What lives here (planned)
+# Dependencias específicas de detection/ (NO instalar extras de ml, soar, llm, ui)
+pip install -r detection/requirements.txt
+```
+
+> ⚠️ No ejecutar `pip install -e ".[ml]"`, `".[soar]"`, `".[llm]"` ni `".[ui]"`. Esas son de otros integrantes.
+
+## 4. Comandos de trabajo diario
+
+```bash
+# Validar sintaxis de todas las reglas Sigma
+sigma-cli check detection/sigma-rules/
+
+# Si el target "wazuh" no existe en tu versión de sigma-cli, verifica con:
+sigma-cli list targets
+sigma-cli convert --help
+
+# Convertir Sigma → Wazuh
+sigma-cli convert -t wazuh -o detection/wazuh-rules/local_rules.xml detection/sigma-rules/
+
+# Correr los tests de mi capa
+pytest detection/tests/ -v
+```
+
+## 5. Despliegue (⚠️ pendiente de confirmar con P4)
+
+Estos pasos requieren que P4 tenga `lab/` levantado (Vagrant + Wazuh manager). **No ejecutar contra nada que no sea el laboratorio aislado.**
+
+```bash
+# Placeholders — sustituir cuando P4 confirme el host real
+scp detection/wazuh-rules/local_rules.xml <WAZUH_MANAGER>:/var/ossec/etc/rules/
+ssh <WAZUH_MANAGER> "sudo systemctl restart wazuh-manager"
+```
+
+## 6. Validación con Atomic Red Team / Caldera
+
+Cada regla debe tener al menos un Atomic test asociado (referenciado en el comentario `# Validated by:` dentro del YAML). La ejecución real de Atomic Red Team contra `<VICTIM_LAB_IP>` depende de que el laboratorio de P4 exista — **pendiente de confirmar con P4**.
+
+## 7. Estructura
 
 ```
 detection/
-├── README.md                  # This file
-├── sigma-rules/               # Source rules (YAML, contributable upstream)
+├── README.md
+├── requirements.txt
+├── sigma-rules/
 │   ├── ransomware/
-│   │   ├── vssadmin_delete_shadows.yml          # T1490
-│   │   ├── wmic_shadow_copy_manipulation.yml    # T1490 variant (UC-03)
-│   │   ├── high_entropy_writes.yml              # T1486
-│   │   ├── ransom_note_drop.yml                 # T1486
-│   │   └── ...
+│   ├── network/
+│   ├── database/
+│   ├── webapp/
 │   ├── defense-evasion/
-│   │   ├── stop_service_wazuh_agent.yml         # T1562.001 (UC-05)
-│   │   └── ...
 │   └── discovery/
-│       └── file_enumeration_powershell.yml      # T1083 (UC-03)
-├── wazuh-rules/               # Auto-generated from sigma-rules/ via sigma-cli
-│   └── local_rules.xml
-├── mitre-mapping.yaml         # Matrix: technique → rule(s) that detect it
+├── wazuh-rules/
+│   └── local_rules.xml          # generado, no editar a mano
+├── mitre-mapping.yaml
 ├── tests/
-│   ├── test_rule_syntax.py    # All rules pass `sigma-cli check`
-│   ├── test_atomic_pairs.py   # Each rule has ≥1 Atomic Red Team test
-│   └── fixtures/              # Sample events for unit testing
-└── upstream-prs/              # Documentation of accepted/rejected upstream PRs
-    ├── 001-vssadmin-evasion-variants.md
-    └── ...
+│   ├── test_rule_syntax.py
+│   ├── test_atomic_pairs.py
+│   ├── test_mitre_mapping.py
+│   └── fixtures/
+└── upstream-prs/
 ```
 
----
+## 8. Nota sobre `pyproject.toml`
 
-## Contracts (`argos_contracts`)
+El `testpaths` actual de `[tool.pytest.ini_options]` **no incluye `detection/tests`**. Para que `pytest` desde la raíz del repo recoja estos tests automáticamente, hace falta agregar `"detection/tests"` a esa lista.
 
-This layer does **not** import `argos_contracts` directly — it produces Wazuh alerts (raw JSON) that the Decision Engine (`soar/`) wraps as `WazuhAlert` and normalizes to `NormalizedAlert`.
-
-What this layer **commits to** for downstream consumers:
-
-| Field on Wazuh alert | Meaning for `NormalizedAlert` mapping |
-|---------------------|---------------------------------------|
-| `rule.mitre.id` | Becomes `NormalizedAlert.technique_mitre` — **must be a valid MITRE ATT&CK ID** present in `argos_contracts.MITRE_WHITELIST` |
-| `rule.level` (0-15) | Decision Engine maps to `Severity` enum: 0-5 LOW, 6-9 MEDIUM, 10-12 HIGH, 13-15 CRITICAL |
-| `rule.description` | Becomes part of `NormalizedAlert.triggering_rule` |
-| `agent.id` / `agent.name` | Becomes `host_id` / used for `Criticality` lookup |
-
-**Discipline:** any new rule that doesn't map to a MITRE technique is rejected at PR review. No "miscellaneous" rules.
-
----
-
-## Target MITRE techniques (per SAD §5.1)
-
-| Technique | Name | UC coverage |
-|-----------|------|-------------|
-| T1486 | Data Encrypted for Impact | UC-01, UC-02, UC-03 |
-| T1490 | Inhibit System Recovery | UC-01, UC-03, UC-04 |
-| T1083 | File and Directory Discovery | UC-01, UC-02, UC-03 |
-| T1562.001 | Disable or Modify Tools | UC-05 |
-| T1021 | Remote Services (lateral movement) | UC-04 |
-| T1071 | Application Layer Protocol (C2) | UC-01 |
-
----
-
-## How to run
-
-```bash
-cd detection/
-pip install -r requirements.txt    # sigma-cli + pytest
-
-# Validate all rule syntax
-sigma-cli check sigma-rules/
-
-# Convert to Wazuh format
-sigma-cli convert -t wazuh -o wazuh-rules/local_rules.xml sigma-rules/
-
-# Run tests
-pytest tests/ -v
-
-# Deploy to local lab manager (requires lab/ up)
-scp wazuh-rules/local_rules.xml wazuh-mgr:/var/ossec/etc/rules/
-vagrant ssh wazuh-mgr -c "sudo systemctl restart wazuh-manager"
-```
-
----
-
-## Tests
-
-| Type | What it validates |
-|------|-------------------|
-| `test_rule_syntax.py` | Every rule passes `sigma-cli check` (YAML + Sigma schema valid) |
-| `test_atomic_pairs.py` | Every rule has at least one Atomic Red Team test it should fire on |
-| `test_mitre_mapping.py` | Every `rule.tags` includes a valid MITRE technique ID in `MITRE_WHITELIST` |
-| Integration | Apply rules to manager, run Atomic Red Team against victim, assert alert fires within 5s |
-
-Target coverage: **≥50% line coverage** for converter logic (per SAD §13.5 tiered targets).
-
----
-
-## Milestones by Gate
-
-| Gate | Week | Deliverable |
-|------|:----:|-------------|
-| **Gate 1** | 5 | 10+ rules covering all 6 target techniques, all UC-01 detections fire end-to-end |
-| **Gate 2** | 7 | UC-05 stop-service rule + rule 502 heartbeat coverage; FP rate <2% on 24h benign baseline |
-| **Gate 3** | 9 | UC-03 variant detection rules (deliberately not matching → ML must catch); experimental T3 rules tagged separately |
-| **Week 8-11** | — | **PR #1, #2, #3, #4 to SigmaHQ/sigma** (one per team member ideally) |
-
----
-
-## Discipline / conventions
-
-- **One rule per file.** Easier to PR upstream.
-- **Each rule MUST include:** `id` (UUID), `title`, `description`, `references`, `tags` (MITRE), `logsource`, `detection`, `falsepositives`, `level`.
-- **Branch naming:** `feature/p3/sigma-<technique>-<short-name>`.
-- **Atomic Red Team pair**: name the Atomic test file in the rule comment (`# Validated by: T1490.001/T1490.001.md`).
-- **FP rate ledger:** track per-rule FP rate weekly during Gate 2-3 (`tests/fp-ledger.md`).
-
----
-
-## References
-
-- SAD §5.1 (Layer 1 spec).
-- USE_CASES §3 (rules required per scenario).
-- THREAT_MODEL.md §4.4 (F-030 false negative, F-031 false positive).
-- SigmaHQ contribution guide: https://github.com/SigmaHQ/sigma/wiki
+➡️ **Esto es un cambio al archivo compartido — opcional, coordinar con el equipo antes de tocarlo.** Mientras tanto, corre los tests apuntando directamente a la carpeta: `pytest detection/tests/ -v`.

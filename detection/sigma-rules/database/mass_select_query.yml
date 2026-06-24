@@ -1,0 +1,32 @@
+title: Consultas SELECT masivas sobre base de datos (posible exfiltración o FP benigno)
+id: 1d4f7a9c-5e2b-4c8d-a3f1-9b6e7d2c8f4a
+status: experimental
+description: |
+    Detecta un volumen anómalo de consultas SELECT ejecutadas por un
+    mismo usuario/sesión en un periodo corto, patrón que puede indicar
+    exfiltración de datos (T1213) o un job analítico legítimo masivo
+    (caso UC-07, falso positivo benigno usado para demostrar
+    intervención humana / cancelación de contención).
+    Requiere que pgAudit (o equivalente) esté habilitado en la instancia
+    de PostgreSQL del laboratorio — pendiente de confirmar con P4 si
+    PostgreSQL expone logs en este formato.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1213/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1213/T1213.md (Atomic Red Team, escenario equivalente)
+logsource:
+    product: postgresql
+    service: pgaudit
+detection:
+    selection:
+        statement|contains: 'SELECT'
+        database|cidr: '<POSTGRES_LAB_HOST>'
+    timeframe: 5m
+    condition: selection | count() by user > 100
+falsepositives:
+    - Reportes analíticos o ETL programados (este es el caso de uso esperado de UC-07: FP legítimo que el humano debe poder descartar)
+level: medium
+tags:
+    - attack.t1213
+    - attack.collection

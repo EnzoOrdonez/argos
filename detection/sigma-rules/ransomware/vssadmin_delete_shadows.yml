@@ -1,0 +1,29 @@
+title: Eliminación de Shadow Copies con vssadmin
+id: 7f2c9a1e-3b4d-4e8a-9c1f-1a2b3c4d5e6f
+status: experimental
+description: |
+    Detecta el uso de vssadmin.exe para eliminar copias de seguridad
+    (shadow copies) de Windows, una técnica común de ransomware para
+    impedir la recuperación del sistema antes de cifrar archivos.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1490/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1490.001/T1490.001.md (Atomic Red Team)
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\vssadmin.exe'
+        CommandLine|contains|all:
+            - 'delete'
+            - 'shadows'
+    condition: selection
+falsepositives:
+    - Tareas administrativas legítimas de limpieza de shadow copies (raras en producción)
+    - Scripts de mantenimiento autorizados, si existen, deben ser whitelisteados por host
+level: critical
+tags:
+    - attack.t1490
+    - attack.impact
