@@ -1,0 +1,6 @@
+# deception/requirements.txt
+# Dependencias específicas de la capa de deception/canary (P3 — Angeles Castillo).
+# NO incluye extras de ml/, soar/, llm/, ui/.
+
+pyyaml>=6.0
+openpyxl>=3.1   # para generar contenido dummy de financials_Q4_2025.xlsx en runtime

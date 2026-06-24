@@ -1,0 +1,33 @@
+title: Patrón de DoS de red mediante hping3
+id: 3f9e7c1a-2b8d-4e5f-9a1c-6d8e3f7a2b9c
+status: experimental
+description: |
+    Detecta una tasa anómala de paquetes SYN/flood originados por
+    hping3 contra un host objetivo, patrón característico de un
+    ataque de denegación de servicio controlado (UC-06). Pensado para
+    el entorno de laboratorio: el origen y destino deben restringirse
+    a hosts del lab (<VICTIM_LAB_IP>).
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1498/
+    - https://attack.mitre.org/techniques/T1499/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1498/T1498.md (Atomic Red Team)
+logsource:
+    category: network_connection
+    product: linux  # también aplica a captura de red genérica vía Zeek/Suricata si P4 lo integra
+detection:
+    selection:
+        dst_ip: '<VICTIM_LAB_IP>'
+        proto: 'tcp'
+        flags: 'S'  # SYN flood
+    timeframe: 10s
+    condition: selection | count() by src_ip > 500
+falsepositives:
+    - Pruebas de carga legítimas autorizadas en el mismo rango horario
+    - Escaneos de puertos masivos no maliciosos (ajustar threshold según baseline)
+level: high
+tags:
+    - attack.t1498
+    - attack.t1499
+    - attack.impact

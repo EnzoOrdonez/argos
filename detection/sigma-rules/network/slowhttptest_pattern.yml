@@ -1,0 +1,28 @@
+title: Patrón de ataque Slow HTTP (slowhttptest)
+id: 6a2c8e4d-3f9b-4d1e-8c5a-7b9e2f1d4a6c
+status: experimental
+description: |
+    Detecta múltiples conexiones HTTP simultáneas de larga duración
+    con tasa de envío de datos extremadamente baja desde el mismo
+    origen, patrón típico de slowloris / slowhttptest contra un
+    servidor web del laboratorio (UC-06).
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1499/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1499/T1499.md (Atomic Red Team)
+logsource:
+    category: webserver  # logs de Apache/Nginx del webapp vulnerable del lab
+detection:
+    selection:
+        c_ip: '*'
+        connection_duration_seconds|gte: 60
+        bytes_sent|lte: 10
+    timeframe: 30s
+    condition: selection | count() by c_ip > 50
+falsepositives:
+    - Clientes con conexiones lentas legítimas (red móvil, IoT) — ajustar threshold por baseline del lab
+level: high
+tags:
+    - attack.t1499
+    - attack.impact

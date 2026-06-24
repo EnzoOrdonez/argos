@@ -1,0 +1,74 @@
+<!--
+  deception/wazuh-rules/canary_rules.xml
+
+  Layer 3 — Cualquier lectura, modificación, rename o delete sobre un
+  canary file dispara una alerta crítica de severidad 12+ (zero-FP por
+  diseño). El Decision Engine (soar/) espera severity_score >= 0.95 /
+  rule.level en rango CRITICAL (13-15 según su mapeo, o >=12 aquí en
+  escala Wazuh nativa 0-15 — ver detection/README.md tabla de mapeo).
+
+  group="argos_canary,argos_layer3," se usa como identificador de
+  source_layer para que el Decision Engine pueda reconocer esta capa sin
+  ambigüedad (equivalente textual a Layer.LAYER_3 en argos_contracts).
+
+  ⚠️ El group ID base (100100) es un placeholder dentro del rango de
+  "local rules" de Wazuh (100000-119999). Si P1/P4 ya reservaron un rango
+  de IDs para evitar colisiones entre capas del proyecto, hay que
+  ajustarlo — PENDIENTE DE CONFIRMAR CON P1/P4.
+-->
+<group name="syscheck,argos_canary,argos_layer3,">
+
+  <rule id="100100" level="12">
+    <if_group>syscheck</if_group>
+    <field name="file" type="pcre2">(?i)(financials_Q4_2025\.xlsx|passwords\.txt|db_backup\.sql|accounts_admin\.csv)$</field>
+    <description>ARGOS Layer 3: Canary file tocado — $(file) por usuario $(audit.effective_user.name) (proceso PID $(audit.process.id), parent PID $(audit.process.ppid))</description>
+    <mitre>
+      <id>T1083</id>
+    </mitre>
+    <options>no_full_log</options>
+    <group>argos_canary,argos_layer3,gdpr_II_5.1.1,</group>
+  </rule>
+
+  <rule id="100101" level="12">
+    <if_sid>100100</if_sid>
+    <field name="event" type="pcre2">(?i)(added|modified)</field>
+    <description>ARGOS Layer 3 CRÍTICO: Canary file MODIFICADO — posible actividad de ransomware/exfiltración en curso. Ruta: $(file). Usuario: $(audit.effective_user.name). Comando: $(audit.process.command_line).</description>
+    <mitre>
+      <id>T1486</id>
+    </mitre>
+    <group>argos_canary,argos_layer3,</group>
+  </rule>
+
+  <rule id="100102" level="13">
+    <if_sid>100100</if_sid>
+    <field name="event" type="pcre2">(?i)deleted</field>
+    <description>ARGOS Layer 3 CRÍTICO: Canary file ELIMINADO — indicador de máxima confianza de actividad maliciosa. Ruta: $(file). Usuario: $(audit.effective_user.name).</description>
+    <mitre>
+      <id>T1485</id>
+    </mitre>
+    <group>argos_canary,argos_layer3,</group>
+  </rule>
+
+</group>
+
+<!--
+  Campos que el Decision Engine (soar/) debe poder extraer de esta alerta
+  para construir NormalizedAlert (contrato documentado en deception/README.md):
+
+    - syscheck.path               -> canary path (verbatim)
+    - audit.effective_user.name   -> usuario
+    - audit.process.name          -> proceso
+    - audit.process.id            -> PID
+    - audit.process.ppid          -> parent PID
+    - audit.process.command_line  -> command line
+    - group "argos_layer3"        -> source_layer = Layer.LAYER_3
+    - rule.level (12 o 13)        -> mapear a severity_score >= 0.95 en
+                                      soar/ — PENDIENTE DE CONFIRMAR CON P1
+                                      la fórmula exacta de conversión
+                                      level -> severity_score.
+
+  Estos campos asumen que whodata/auditd está correctamente configurado
+  (ver fim-configs/). Si el agente no tiene whodata habilitado, los
+  campos audit.* pueden venir vacíos — esto se valida en
+  deception/tests/test_fim_config.py.
+-->

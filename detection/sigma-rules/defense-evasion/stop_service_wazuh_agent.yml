@@ -1,0 +1,36 @@
+title: Intento de detener o deshabilitar el agente Wazuh
+id: 8c1a3e5f-6d9b-4a2c-be4f-3a7c9e1d2b5a
+status: experimental
+description: |
+    Detecta intentos de detener, deshabilitar o desinstalar el servicio
+    del agente Wazuh, técnica de evasión de defensas usada para cegar
+    la telemetría antes de continuar con la cadena de ataque (UC-05).
+    Esta regla debe complementarse con la regla Wazuh nativa 502
+    (heartbeat del agente) para detectar caídas silenciosas.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1562/001/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1562.001/T1562.001.md (Atomic Red Team)
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_sc:
+        Image|endswith: '\sc.exe'
+        CommandLine|contains:
+            - 'stop'
+            - 'config'
+        CommandLine|contains: 'wazuh'
+    selection_net:
+        Image|endswith: '\net.exe'
+        CommandLine|contains|all:
+            - 'stop'
+            - 'wazuh'
+    condition: 1 of selection_*
+falsepositives:
+    - Mantenimiento programado del agente por el equipo de infraestructura (debe coordinarse y whitelistearse por ventana de cambio)
+level: critical
+tags:
+    - attack.t1562.001
+    - attack.defense_evasion

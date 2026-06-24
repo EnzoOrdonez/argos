@@ -1,137 +1,115 @@
 # deception/ — Layer 3 (Canary Files + FIM whodata)
 
-| Field | Value |
-|-------|-------|
-| Owner | **P3 · Angeles Castillo** (Detection Engineer — same as `detection/`) |
-| Status | 📅 Planned · Weeks 4-7 (Gate 2 functional) |
-| Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §5.3, [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) UC-02 |
+**Owner: P3 · Angeles Castillo**
+
+Esta es la capa de "honeypot files": archivos cebo colocados en rutas que un
+usuario legítimo nunca tocaría. El primer acceso/modificación dispara una
+**alerta crítica de máxima confianza** (zero-FP por diseño).
+
+No modifica `lab/`, Vagrant, OpenSearch, Redis ni infraestructura base
+(eso es P4). Los pasos de despliegue real están marcados como pendientes.
 
 ---
 
-## Purpose
+## 1. Qué me corresponde aquí
 
-Layer 3 of the defense-in-depth stack. Honeypot files placed in paths a legitimate user would never touch — first access/modification fires a **critical alert with maximum confidence (zero-FP by design)**.
+- Generador de canaries (`canary-generator/generator.py` + `config.yaml`).
+- Configuración FIM whodata (Windows) / auditd (Linux) (`fim-configs/`).
+- Regla Wazuh de severidad crítica para cualquier toque de canary (`wazuh-rules/canary_rules.xml`).
+- Script de verificación de integridad de canaries (`integrity-check/verify_canaries.sh`).
+- Tests del generador y de la cobertura FIM.
 
-**Trade-off:** ultra-early detection, but a sophisticated attacker who knows the canaries can avoid them. That's why Layer 3 **complements**, not replaces, Layers 1+2.
+## 2. Qué NO toco aquí
 
-This layer is the **only one that fires in UC-02** — and it stops the attack before a single real file is encrypted.
+- No despliego `lab/`, Vagrant ni el Wazuh manager real — eso es P4.
+- No modifico `argos_contracts/` (solo referencia de campos esperados para `NormalizedAlert`, `source_layer = Layer.LAYER_3`).
+- No implemento el Decision Engine ni el ruteo a auto-isolation — eso es `soar/` (P1).
 
----
+## 3. Instalación
 
-## Stack
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pip install -r deception/requirements.txt
+```
 
-| Tool | Role |
-|------|------|
-| Python 3.11+ | Canary generator (filenames, realistic dummy content, timestamps) |
-| Wazuh FIM (`syscheck`) | File integrity monitoring with `whodata` (Windows) / auditd (Linux) |
-| Sysmon (Windows) | EventID 11 (file create), EventID 23 (file delete) — supplements FIM |
-| auditd (Linux) | Watch rules on canary paths capturing offending process |
-| pytest | Generator + Wazuh rule unit tests |
+## 4. Comandos de trabajo diario
 
----
+```bash
+# Generar canaries en una ruta sandbox local (NO en producción ni fuera del lab)
+python deception/canary-generator/generator.py --config deception/canary-generator/config.yaml --host victim-windows-01
 
-## What lives here (planned)
+# Verificar integridad de canaries
+bash deception/integrity-check/verify_canaries.sh
+
+# Correr tests
+pytest deception/tests/ -v
+```
+
+## 5. Despliegue (⚠️ pendiente de confirmar con P4)
+
+```bash
+# Placeholders — requieren que P4 tenga el host/lab levantado
+scp deception/fim-configs/ossec-windows.conf <WAZUH_MANAGER>:/var/ossec/etc/agents/victim-windows-01/
+scp deception/wazuh-rules/canary_rules.xml <WAZUH_MANAGER>:/var/ossec/etc/rules/
+ssh <WAZUH_MANAGER> "sudo /var/ossec/bin/wazuh-control restart"
+```
+
+## 6. Disciplina de diseño de canaries (del manual)
+
+| Regla | Por qué |
+|---|---|
+| Rutas absolutas, nunca wildcards | Evita que el atacante esquive el canary creando archivos con el mismo nombre en otra ruta |
+| Contenido realista, no vacío | Evita la señal obvia de que es un archivo cebo |
+| Timestamps realistas (60-180 días atrás) | Hace que el archivo parezca legítimo y antiguo |
+| Nombres que un atacante priorizaría | `financials_Q4_2025.xlsx`, `passwords.txt`, `db_backup.sql`, `accounts_admin.csv` |
+
+## 7. Contrato con downstream (`argos_contracts`, vía `soar/`)
+
+Esta capa no importa `argos_contracts` directamente, pero cada alerta de
+canary que llega al Decision Engine **debe** incluir:
+
+- Ruta del canary (verbatim del evento FIM).
+- Árbol de proceso: PID, parent PID, command line (capturado por whodata/auditd).
+- `source_layer = Layer.LAYER_3` (o equivalente en grupo/descripción de la regla Wazuh).
+- `severity_score >= 0.95` (zero-FP por diseño, según ADR-0003).
+
+Esto se refleja en `wazuh-rules/canary_rules.xml` — ver comentarios en el archivo.
+
+## 8. Estructura
 
 ```
 deception/
-├── README.md                # This file
+├── README.md
+├── requirements.txt
 ├── canary-generator/
-│   ├── generator.py         # Creates canaries with realistic names + content
-│   ├── templates/           # Word/Excel/PDF dummy file templates
-│   │   ├── financials.xlsx
-│   │   ├── passwords.txt
-│   │   └── db_backup.sql
-│   └── config.yaml          # Per-host canary placement strategy
+│   ├── generator.py
+│   ├── config.yaml
+│   └── templates/
+│       ├── financials.xlsx   (placeholder de texto, ver nota abajo)
+│       ├── passwords.txt
+│       └── db_backup.sql
 ├── fim-configs/
-│   ├── ossec-windows.conf   # syscheck block for canary paths + whodata
-│   └── ossec-linux.conf     # syscheck + auditd rules
+│   ├── ossec-windows.conf
+│   └── ossec-linux.conf
 ├── wazuh-rules/
-│   └── canary_rules.xml     # Severity 12 (critical) on any canary touch
+│   └── canary_rules.xml
 ├── integrity-check/
-│   └── verify_canaries.sh   # Hourly cron — recreate missing canaries (F-040)
+│   └── verify_canaries.sh
 └── tests/
     ├── test_generator.py
     └── test_fim_config.py
 ```
 
----
+> **Nota sobre `templates/financials.xlsx`:** un `.xlsx` real es un ZIP
+> binario; este repo no genera binarios "a mano". El generador
+> (`generator.py`) crea el contenido dummy de forma programática usando
+> `openpyxl` (declarado en `requirements.txt`) en tiempo de ejecución —
+> no se versiona un `.xlsx` binario en el repo. La carpeta `templates/`
+> contiene plantillas de texto/CSV reutilizables para los formatos
+> basados en texto (`.txt`, `.sql`, `.csv`).
 
-## Contracts (`argos_contracts`)
+## 9. Casos de uso cubiertos por esta capa
 
-Same pattern as `detection/`: this layer does **not** directly import `argos_contracts`. It produces Wazuh alerts that the Decision Engine wraps as `WazuhAlert` → `NormalizedAlert` with `source_layer = Layer.LAYER_3`.
-
-**Critical commitment** — every canary-triggered alert MUST carry:
-- The offending **process tree** (PID, parent PID, command line) captured by whodata/auditd.
-- The **canary path** that was touched (verbatim from FIM event).
-- A `severity_score` ≥ **0.95** — by design, Layer 3 alerts qualify for **Tier T0** alone (zero-FP property, per ADR-0003).
-
-The Decision Engine relies on this guarantee to route Layer 3 directly to auto-isolation without corroboration.
-
----
-
-## Canary design discipline
-
-| Rule | Why |
-|------|-----|
-| **Absolute paths only.** No relative or wildcard patterns. | Prevents the attacker from matching the canary by creating same-name files elsewhere (T-004 in THREAT_MODEL.md §3.1) |
-| **Realistic content (not empty / lorem ipsum).** | Avoids the obvious tell that the file is bait |
-| **Realistic timestamps and ACLs.** | Modification time set to plausible past dates (e.g., 60-180 days ago) |
-| **Names that match what an attacker would prioritize.** | `financials_Q4_2025.xlsx`, `passwords.txt`, `db_backup.sql`, `accounts_admin.csv` |
-| **Per-host placement randomized** (production deployment future work). | Mitigates T-031 (repo leakage of canary paths) — for the academic demo we accept public paths and document it |
-
----
-
-## How to run
-
-```bash
-cd deception/
-pip install -r requirements.txt
-
-# Generate canaries on a target host (requires SSH or local exec)
-python -m deception.canary_generator.generator --config config.yaml --host victim-windows-01
-
-# Deploy FIM rules (requires lab/ up)
-scp fim-configs/ossec-windows.conf wazuh-mgr:/var/ossec/etc/agents/victim-windows-01/
-vagrant ssh wazuh-mgr -c "sudo /var/ossec/bin/wazuh-control restart"
-
-# Run integrity check manually (cron will do this hourly in prod)
-bash integrity-check/verify_canaries.sh
-```
-
----
-
-## Tests
-
-| Type | What it validates |
-|------|-------------------|
-| `test_generator.py` | Generated files have realistic content + size + timestamp distribution |
-| `test_fim_config.py` | FIM config blocks all reference paths in `config.yaml`; rules emit severity 12 on touch |
-| Integration (manual / CI) | Touch a canary on victim → alert appears in Wazuh manager within 2s with full whodata payload |
-| Adversarial | Touch a non-canary file in the same directory → no alert (negative test) |
-
----
-
-## Milestones by Gate
-
-| Gate | Week | Deliverable |
-|------|:----:|-------------|
-| **Gate 1** | 5 | Generator skeleton + 5 canaries on Windows victim (no FIM yet) |
-| **Gate 2** | 7 | FIM whodata + rules deployed; UC-02 scenario fires end-to-end with full whodata payload (PID + parent + command line) |
-| **Gate 3** | 9 | Integrity check cron running; FP rate measured (target: 0 on 48h baseline); EV-01 (zero-FP) validated |
-
----
-
-## Risks specific to this layer
-
-- **F-040 (canary deleted by legitimate cleanup script):** mitigated by hourly integrity check + auto-recreation.
-- **F-041 (FIM whodata service stops):** monitored by Wazuh rule 502 on `wazuh-agent` itself — `cu05/UC-05` covers this.
-- **T-031 (canary path leakage via repo):** accepted for academic demo; for production, paths driven by env vars + per-host random subset.
-
----
-
-## References
-
-- SAD §5.3 (Layer 3 spec).
-- USE_CASES UC-02 (canary deception demo, target: zero real files encrypted).
-- THREAT_MODEL.md §3.1 (T-004), §3.4 (T-031), §4.5 (F-040, F-041).
-- ADR-0003 §"Esquema de tiers" — canary alone = T0 with confidence 1.0.
+- **UC-02 (Canary path):** caso principal — único caso donde Layer 3 dispara sola.

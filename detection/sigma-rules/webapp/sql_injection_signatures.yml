@@ -1,0 +1,31 @@
+title: Firmas de SQL Injection en peticiones HTTP
+id: 7e9c1f3a-4b8d-4a2e-9c5f-1d3b6e8a2f7c
+status: experimental
+description: |
+    Detecta patrones comunes de SQL Injection (UNION SELECT, comentarios
+    SQL, tautologías OR 1=1, etc.) en parámetros de peticiones HTTP
+    dirigidas a la aplicación web vulnerable del laboratorio (UC-08).
+    Se valida con sqlmap controlado únicamente contra la app vulnerable
+    del lab — nunca contra sistemas reales.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1190/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1190/T1190.md (Atomic Red Team, escenario equivalente)
+logsource:
+    category: webserver
+detection:
+    selection:
+        request|contains:
+            - 'UNION SELECT'
+            - "' OR '1'='1"
+            - '-- '
+            - 'SLEEP('
+            - 'information_schema'
+    condition: selection
+falsepositives:
+    - Escaneos de seguridad autorizados (DAST) contra el propio lab — whitelistear IP del scanner
+level: high
+tags:
+    - attack.t1190
+    - attack.initial_access

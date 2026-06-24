@@ -1,0 +1,7 @@
+# detection/requirements.txt
+# Dependencias específicas de la capa de detección (P3 — Angeles Castillo).
+# NO incluye extras de ml/, soar/, llm/, ui/.
+# Las dependencias de dev (pytest, ruff) ya están en pyproject.toml -> [project.optional-dependencies].dev
+
+sigma-cli>=1.0.0
+pyyaml>=6.0

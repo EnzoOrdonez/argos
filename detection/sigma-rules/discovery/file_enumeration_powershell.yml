@@ -1,0 +1,30 @@
+title: Enumeración masiva de archivos y directorios vía PowerShell
+id: 5e7d9b3a-1c4f-4d8e-9a2b-7f1e3d5c9a8b
+status: experimental
+description: |
+    Detecta el uso de cmdlets de PowerShell (Get-ChildItem -Recurse,
+    dir /s equivalente) para enumerar de forma masiva el sistema de
+    archivos, comportamiento previo común antes de cifrado o exfiltración.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1083/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1083/T1083.md (Atomic Red Team)
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains|all:
+            - 'Get-ChildItem'
+            - '-Recurse'
+    condition: selection
+falsepositives:
+    - Scripts de inventario o auditoría legítimos de administradores de sistema
+level: medium
+tags:
+    - attack.t1083
+    - attack.discovery

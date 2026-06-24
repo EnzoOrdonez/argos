@@ -1,0 +1,29 @@
+title: Manipulación de Shadow Copies vía WMIC
+id: 4d8e6a2b-7c1f-4a9d-8e3b-2f5a6c7d8e9f
+status: experimental
+description: |
+    Detecta el uso de wmic.exe para eliminar shadow copies como variante
+    de la técnica vssadmin. Cubierto como variante deliberada de UC-03
+    para evaluar si Layer 2 (ML) detecta lo que Layer 1 no captura
+    exactamente igual.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
+references:
+    - https://attack.mitre.org/techniques/T1490/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1490.001/T1490.001.md (Atomic Red Team)
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\wmic.exe'
+        CommandLine|contains|all:
+            - 'shadowcopy'
+            - 'delete'
+    condition: selection
+falsepositives:
+    - Administración legítima de almacenamiento (poco común, debe revisarse caso por caso)
+level: critical
+tags:
+    - attack.t1490
+    - attack.impact
