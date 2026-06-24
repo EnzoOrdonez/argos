@@ -117,7 +117,7 @@ ignore = ["S101"]  # pytest assert OK
 "**/tests/**" = ["S", "B"]
 
 [tool.pytest.ini_options]
-testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests"]
+testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "deception/tests"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
 

@@ -1,16 +1,7 @@
-# ARGOS · detection/ · Layer 1 dependencies
-# P3 Angeles Castillo · Universidad de Lima 2026-1
+# detection/requirements.txt
+# Dependencias específicas de la capa de detección (P3 — Angeles Castillo).
+# NO incluye extras de ml/, soar/, llm/, ui/.
+# Las dependencias de dev (pytest, ruff) ya están en pyproject.toml -> [project.optional-dependencies].dev
 
-# Sigma rule converter y validator
-sigma-cli>=0.9.0
-
-# Plugin de destino Wazuh para sigma-cli
-# Instalar con: sigma plugin install wazuh
-# (no se instala vía pip, sino via sigma-cli plugin manager)
-
-# Testing
-pytest>=7.4.0
-pytest-html>=4.0.0       # Reporte HTML de tests para entrega Gate 1
-
-# Parsing YAML en tests
-pyyaml>=6.0.1
+sigma-cli>=1.0.0
+pyyaml>=6.0

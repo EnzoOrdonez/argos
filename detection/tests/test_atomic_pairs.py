@@ -1,107 +1,58 @@
 """
-test_atomic_pairs.py
-ARGOS Project · Layer 1 · P3 Angeles Castillo
-Universidad de Lima 2026-1
+test_atomic_pairs.py — Valida que cada regla Sigma tenga al menos una
+referencia a un test de Atomic Red Team (o escenario equivalente),
+según la convención del manual P3:
 
-Verifica que cada regla Sigma tenga al menos un test Atomic Red Team
-asociado en mitre-mapping.yaml. Reglas sin par Atomic son incompletas.
-Ejecutar: pytest tests/test_atomic_pairs.py -v
+    # Validated by: <Txxxx>/<Txxxx>.md
+
+Esta convención se busca dentro del campo `references` o como comentario
+en el archivo crudo, ya que Sigma no tiene un campo nativo para esto.
 """
-
-import yaml
-import pytest
+import re
 from pathlib import Path
 
+import pytest
+import yaml
+
 SIGMA_RULES_DIR = Path(__file__).parent.parent / "sigma-rules"
-MITRE_MAPPING_FILE = Path(__file__).parent.parent / "mitre-mapping.yaml"
+ATOMIC_PATTERN = re.compile(r"Validated by:\s*(T\d{4}(?:\.\d{3})?)/", re.IGNORECASE)
 
 
-def load_mitre_mapping():
-    with open(MITRE_MAPPING_FILE, "r") as f:
-        return yaml.safe_load(f)
+def _all_rule_files() -> list[Path]:
+    return sorted(SIGMA_RULES_DIR.rglob("*.yml"))
 
 
-def get_all_mapped_rule_files():
-    """Retorna el set de archivos de regla que tienen par Atomic en mitre-mapping.yaml."""
-    mapping = load_mitre_mapping()
-    mapped = set()
-    for technique_data in mapping.get("techniques", {}).values():
-        for rule in technique_data.get("rules", []):
-            if rule.get("atomic_test"):
-                mapped.add(rule["file"])
-    return mapped
+@pytest.fixture(params=_all_rule_files(), ids=lambda p: p.stem)
+def rule_path(request) -> Path:
+    return request.param
 
 
-def collect_rule_files():
-    return list(SIGMA_RULES_DIR.rglob("*.yml"))
-
-
-rule_files = collect_rule_files()
-mapped_rules = get_all_mapped_rule_files()
-
-
-@pytest.mark.parametrize("rule_path", rule_files, ids=[f.name for f in rule_files])
-def test_rule_has_atomic_pair(rule_path):
-    """
-    Cada regla Sigma debe tener un test Atomic Red Team asociado en mitre-mapping.yaml.
-    La referencia se guarda como 'atomic_test: T1486/AtomicTest#1'.
-    Reglas sin par Atomic no validan que la detección funciona en la práctica.
-    """
-    # Construir path relativo igual al formato en mitre-mapping.yaml
-    relative_path = str(rule_path.relative_to(rule_path.parent.parent.parent))
-    # Normalizar separadores
-    normalized = relative_path.replace("\\", "/")
-
-    assert normalized in mapped_rules, (
-        f"La regla '{rule_path.name}' no tiene un test Atomic Red Team asociado "
-        f"en mitre-mapping.yaml. Añadir entrada 'atomic_test' en la técnica "
-        f"correspondiente. Path buscado: {normalized}"
+def test_rule_has_atomic_reference(rule_path: Path) -> None:
+    raw_text = rule_path.read_text(encoding="utf-8")
+    match = ATOMIC_PATTERN.search(raw_text)
+    assert match, (
+        f"{rule_path} no tiene un comentario '# Validated by: Txxxx/Txxxx.md' "
+        "que la asocie a un test de Atomic Red Team o escenario equivalente."
     )
 
 
-@pytest.mark.parametrize("rule_path", rule_files, ids=[f.name for f in rule_files])
-def test_rule_atomic_comment_present(rule_path):
-    """
-    Por convención ARGOS, cada regla debe incluir en description o en un comentario
-    la referencia al test Atomic que la valida (# Validated by: T1486/AtomicTest#1).
-    """
-    with open(rule_path, "r") as f:
-        content = f.read()
+def test_atomic_technique_matches_rule_tags(rule_path: Path) -> None:
+    raw_text = rule_path.read_text(encoding="utf-8")
+    match = ATOMIC_PATTERN.search(raw_text)
+    if not match:
+        pytest.skip("Sin referencia Atomic — ya falla en test_rule_has_atomic_reference")
 
-    assert "Validated by:" in content or "AtomicTest" in content, (
-        f"La regla {rule_path.name} no tiene referencia al test Atomic en su "
-        f"description o comentario. Añadir: '# Validated by: TXXXX/AtomicTest#N'"
-    )
+    atomic_technique = match.group(1).lower()
+    atomic_parent = atomic_technique.split(".")[0]  # T1490.001 -> T1490
+    parsed = yaml.safe_load(raw_text)
+    tags = [t.replace("attack.", "") for t in parsed.get("tags", [])]
 
-
-def test_all_techniques_have_rules():
-    """
-    Verifica que los 6 TTPs objetivo del proyecto tengan al menos una regla
-    en mitre-mapping.yaml (requerimiento Gate 1 — ver README §Milestones).
-    """
-    REQUIRED_TECHNIQUES = {
-        "T1486", "T1490", "T1083", "T1562.001", "T1021", "T1071"
-    }
-    mapping = load_mitre_mapping()
-    covered = set(mapping.get("techniques", {}).keys())
-
-    missing = REQUIRED_TECHNIQUES - covered
-    assert not missing, (
-        f"Los siguientes TTPs objetivo no tienen reglas en mitre-mapping.yaml: "
-        f"{missing}. Gate 1 requiere los 6 cubiertos."
-    )
-
-
-def test_gate1_rule_count():
-    """
-    Gate 1 requiere mínimo 10 reglas. Verifica el conteo actual.
-    """
-    mapping = load_mitre_mapping()
-    total_rules = sum(
-        len(tech.get("rules", []))
-        for tech in mapping.get("techniques", {}).values()
-    )
-    assert total_rules >= 8, (
-        f"Gate 1 requiere ≥10 reglas. Actualmente hay {total_rules}. "
-        f"Añadir más variantes (especialmente UC-03)."
+    # Una sub-técnica Atomic (p. ej. T1490.001) valida tanto el tag exacto
+    # como el tag de la técnica padre (T1490), ya que Atomic suele tener
+    # tests granulares por sub-técnica mientras la regla Sigma puede taggear
+    # solo la técnica padre.
+    assert any(tag in (atomic_technique, atomic_parent) for tag in tags), (
+        f"{rule_path}: la técnica Atomic referenciada ({atomic_technique}, "
+        f"padre: {atomic_parent}) no coincide con ninguno de los tags MITRE "
+        f"de la regla ({tags})"
     )

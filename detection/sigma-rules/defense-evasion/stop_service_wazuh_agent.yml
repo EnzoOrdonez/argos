@@ -1,76 +1,36 @@
-title: Defense Evasion - Security Agent Stop or Disable (UC-05)
-id: a1b2c3d4-e5f6-7890-abcd-ef1234560006
+title: Intento de detener o deshabilitar el agente Wazuh
+id: 8c1a3e5f-6d9b-4a2c-be4f-3a7c9e1d2b5a
 status: experimental
-description: >
-  Detecta intentos de detener o deshabilitar herramientas de seguridad del host,
-  especialmente el agente Wazuh, auditd y firewall. Técnica usada en UC-05 para
-  cegar la detección antes del cifrado. Dispara T2 inmediato por criticidad.
-  # Validated by: T1562.001/AtomicTest#1 — Stop Wazuh agent via systemctl
+description: |
+    Detecta intentos de detener, deshabilitar o desinstalar el servicio
+    del agente Wazuh, técnica de evasión de defensas usada para cegar
+    la telemetría antes de continuar con la cadena de ataque (UC-05).
+    Esta regla debe complementarse con la regla Wazuh nativa 502
+    (heartbeat del agente) para detectar caídas silenciosas.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
 references:
-  - https://attack.mitre.org/techniques/T1562/001/
-  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1562.001/T1562.001.md
-author: Angeles Castillo — ARGOS Project P3, Universidad de Lima 2026-1
-date: 2026-05-24
-modified: 2026-05-24
-tags:
-  - attack.defense_evasion
-  - attack.t1562.001
+    - https://attack.mitre.org/techniques/T1562/001/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1562.001/T1562.001.md (Atomic Red Team)
 logsource:
-  category: process_creation
-  product: linux
+    category: process_creation
+    product: windows
 detection:
-  selection_stop_security_service:
-    Image|endswith:
-      - 'systemctl'
-      - 'service'
-    CommandLine|contains:
-      - 'wazuh-agent'
-      - 'wazuh-manager'
-      - 'ossec'
-      - 'auditd'
-      - 'apparmor'
-      - 'fail2ban'
-      - 'ufw'
-    CommandLine|contains:
-      - 'stop'
-      - 'disable'
-      - 'mask'
-  selection_kill_security_process:
-    Image|endswith:
-      - 'kill'
-      - 'pkill'
-      - 'killall'
-    CommandLine|contains:
-      - 'wazuh'
-      - 'ossec'
-      - 'auditd'
-      - 'syslog'
-  selection_audit_rules_flush:
-    Image|endswith: 'auditctl'
-    CommandLine|contains:
-      - '-D'
-      - '--delete'
-  selection_log_tampering:
-    Image|endswith:
-      - 'bash'
-      - 'sh'
-      - 'rm'
-    CommandLine|contains:
-      - '/var/ossec/logs'
-      - '/var/log/audit'
-      - '> /var/log/syslog'
-      - 'truncate -s 0'
-  condition: >
-    selection_stop_security_service or selection_kill_security_process or
-    selection_audit_rules_flush or selection_log_tampering
+    selection_sc:
+        Image|endswith: '\sc.exe'
+        CommandLine|contains:
+            - 'stop'
+            - 'config'
+        CommandLine|contains: 'wazuh'
+    selection_net:
+        Image|endswith: '\net.exe'
+        CommandLine|contains|all:
+            - 'stop'
+            - 'wazuh'
+    condition: 1 of selection_*
 falsepositives:
-  - Actualizaciones legítimas del agente Wazuh por administrador
-  - Mantenimiento programado documentado en change management
-level: high
-# Wazuh level mapping → 12 (HIGH → T2 Decision Engine)
-fields:
-  - Image
-  - CommandLine
-  - User
-  - ParentImage
-  - ProcessId
+    - Mantenimiento programado del agente por el equipo de infraestructura (debe coordinarse y whitelistearse por ventana de cambio)
+level: critical
+tags:
+    - attack.t1562.001
+    - attack.defense_evasion

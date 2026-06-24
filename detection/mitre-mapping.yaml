@@ -1,10 +1,65 @@
-T1486:
-  - ransomware/ransom_note_drop.yml
-  - ransomware/high_entropy_writes.yml
-T1490:
-  - ransomware/vssadmin_delete_shadows.yml
-  - ransomware/wmic_shadow_copy_manipulation.yml
-T1083:
-  - discovery/file_enumeration_powershell.yml
-T1562.001:
-  - defense-evasion/stop_service_wazuh_agent.yml
+# detection/mitre-mapping.yaml
+# Matriz: técnica MITRE ATT&CK -> reglas Sigma que la detectan.
+# Owner: P3 — Angeles Castillo
+#
+# Cada technique_id debe existir en argos_contracts.MITRE_WHITELIST
+# (solo lectura de argos_contracts/, no se modifica).
+
+mitre_mapping:
+  - technique_id: T1486
+    technique_name: "Data Encrypted for Impact"
+    rules:
+      - detection/sigma-rules/ransomware/high_entropy_writes.yml
+      - detection/sigma-rules/ransomware/ransom_note_drop.yml
+    use_cases: [UC-01, UC-02, UC-03]
+
+  - technique_id: T1490
+    technique_name: "Inhibit System Recovery"
+    rules:
+      - detection/sigma-rules/ransomware/vssadmin_delete_shadows.yml
+      - detection/sigma-rules/ransomware/wmic_shadow_copy_manipulation.yml
+    use_cases: [UC-01, UC-03, UC-04]
+
+  - technique_id: T1083
+    technique_name: "File and Directory Discovery"
+    rules:
+      - detection/sigma-rules/discovery/file_enumeration_powershell.yml
+    use_cases: [UC-01, UC-02, UC-03]
+
+  - technique_id: T1562.001
+    technique_name: "Disable or Modify Tools"
+    rules:
+      - detection/sigma-rules/defense-evasion/stop_service_wazuh_agent.yml
+    use_cases: [UC-05]
+
+  - technique_id: T1498
+    technique_name: "Network Denial of Service - Direct"
+    rules:
+      - detection/sigma-rules/network/ddos_hping3_rate.yml
+    use_cases: [UC-06]
+
+  - technique_id: T1499
+    technique_name: "Endpoint Denial of Service"
+    rules:
+      - detection/sigma-rules/network/slowhttptest_pattern.yml
+    use_cases: [UC-06]
+
+  - technique_id: T1213
+    technique_name: "Data from Information Repositories"
+    rules:
+      - detection/sigma-rules/database/mass_select_query.yml
+    use_cases: [UC-07]
+
+  - technique_id: T1190
+    technique_name: "Exploit Public-Facing Application"
+    rules:
+      - detection/sigma-rules/webapp/sql_injection_signatures.yml
+    use_cases: [UC-08]
+
+  # T1021 (Remote Services / lateral movement) y T1071 (Application Layer
+  # Protocol / C2) están en el alcance original del manual, pero el README
+  # de detection/ solo lista T1486, T1490, T1083, T1562.001, T1021, T1071
+  # como "target techniques" sin especificar la fuente de log exacta para
+  # lateral movement o C2 (depende de cómo P4 instrumente la red del lab).
+  # pendiente de confirmar con P1/P4: log source y carpeta (lateral/ o
+  # network/) antes de escribir estas dos reglas.

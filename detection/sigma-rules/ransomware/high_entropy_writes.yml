@@ -1,58 +1,35 @@
-title: Ransomware - High Entropy File Writes (Data Encrypted for Impact)
-id: a1b2c3d4-e5f6-7890-abcd-ef1234560001
+title: Escrituras masivas de archivos con alta entropía (posible cifrado)
+id: 9b3e1c7a-5d2f-4b8e-a1c3-6f7e8d9c0a1b
 status: experimental
-description: >
-  Detecta escritura masiva de archivos con extensiones típicas de ransomware o
-  patrones de renombrado secuencial. Cubre cifrado AES desde scripts Python
-  (simulador ARGOS) y herramientas genéricas de cifrado de archivos en masa.
-  # Validated by: T1486/AtomicTest#1 — Encrypt files using Python AES
+description: |
+    Detecta un volumen anómalo de escrituras de archivo con extensión
+    cambiada y contenido de alta entropía en un corto periodo de tiempo,
+    patrón característico de ransomware cifrando archivos masivamente.
+    Esta regla espera un decoder/campo de entropía calculado upstream
+    (p. ej. por Sysmon + script auxiliar o por el agente Wazuh); el
+    nombre exacto del campo depende de cómo P4/infra instrumente el
+    cálculo de entropía — pendiente de confirmar con P4.
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
 references:
-  - https://attack.mitre.org/techniques/T1486/
-  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1486/T1486.md
-author: Angeles Castillo — ARGOS Project P3, Universidad de Lima 2026-1
-date: 2026-05-24
-modified: 2026-05-24
-tags:
-  - attack.impact
-  - attack.t1486
+    - https://attack.mitre.org/techniques/T1486/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1486/T1486.md (Atomic Red Team)
 logsource:
-  category: file_event
-  product: linux
+    category: file_event
+    product: windows
 detection:
-  selection_encrypted_extension:
-    EventType:
-      - RenameFile
-      - CreateFile
-    TargetFilename|endswith:
-      - '.encrypted'
-      - '.locked'
-      - '.enc'
-      - '.crypto'
-      - '.rnsmwr'
-      - '.wncry'
-      - '.zepto'
-      - '.cerber'
-      - '.argos_test'
-  selection_python_aes:
-    Image|endswith:
-      - 'python3'
-      - 'python'
-    CommandLine|contains:
-      - 'AES'
-      - 'Fernet'
-      - 'encrypt'
-      - 'cipher'
-      - 'cryptography'
-  condition: selection_encrypted_extension or selection_python_aes
+    selection:
+        EventID: 11  # Sysmon FileCreate
+        TargetFilename|contains:
+            - '.locked'
+            - '.encrypted'
+            - '.crypt'
+    timeframe: 1m
+    condition: selection | count() by Image > 20
 falsepositives:
-  - Herramientas legítimas de backup con cifrado (verificar proceso padre)
-  - Scripts de compresión con extensiones personalizadas
-level: critical
-# Wazuh level mapping → 13 (CRITICAL → T2 Decision Engine)
-fields:
-  - Image
-  - CommandLine
-  - TargetFilename
-  - User
-  - ProcessId
-  - ParentImage
+    - Compresión o respaldo masivo legítimo de archivos
+    - Sincronización de carpetas (OneDrive, Dropbox) en primer arranque
+level: high
+tags:
+    - attack.t1486
+    - attack.impact

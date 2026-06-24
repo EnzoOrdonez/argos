@@ -1,53 +1,30 @@
-title: Ransomware - Ransom Note File Drop
-id: a1b2c3d4-e5f6-7890-abcd-ef1234560002
+title: Creación de nota de rescate (ransom note) en disco
+id: 2a6c8e4f-9b1d-4f7a-bc3e-5d8f1a2b3c4d
 status: experimental
-description: >
-  Detecta la creación de archivos típicos de nota de rescate en directorios
-  de usuario o raíz. El simulador ARGOS genera una nota tras el cifrado;
-  esta regla la detecta por nombre de archivo y contenido típico.
-  # Validated by: T1486/AtomicTest#2 — Create ransom note
+description: |
+    Detecta la creación de archivos cuyo nombre coincide con patrones
+    típicos de notas de rescate dejadas por ransomware tras cifrar
+    archivos (READ_ME, HOW_TO_DECRYPT, RESTORE_FILES, etc).
+author: ARGOS / Angeles Castillo
+date: 2026-06-24
 references:
-  - https://attack.mitre.org/techniques/T1486/
-  - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1486/T1486.md
-author: Angeles Castillo — ARGOS Project P3, Universidad de Lima 2026-1
-date: 2026-05-24
-modified: 2026-05-24
-tags:
-  - attack.impact
-  - attack.t1486
+    - https://attack.mitre.org/techniques/T1486/
+    - https://github.com/SigmaHQ/sigma  # Validated by: T1486/T1486.md (Atomic Red Team)
 logsource:
-  category: file_event
-  product: linux
+    category: file_event
+    product: windows
 detection:
-  selection_ransom_note_name:
-    EventType: CreateFile
-    TargetFilename|contains:
-      - 'README_DECRYPT'
-      - 'HOW_TO_DECRYPT'
-      - 'YOUR_FILES_ARE_ENCRYPTED'
-      - 'RECOVER_FILES'
-      - 'RANSOM_NOTE'
-      - 'READ_ME'
-      - 'DECRYPT_INSTRUCTIONS'
-      - '!!!IMPORTANT!!!'
-  selection_ransom_note_extension:
-    EventType: CreateFile
-    TargetFilename|endswith:
-      - '.txt'
-      - '.html'
-      - '.hta'
-    TargetFilename|contains:
-      - 'decrypt'
-      - 'ransom'
-      - 'recover'
-      - 'restore'
-  condition: selection_ransom_note_name or selection_ransom_note_extension
+    selection:
+        EventID: 11  # Sysmon FileCreate
+        TargetFilename|contains:
+            - 'README'
+            - 'HOW_TO_DECRYPT'
+            - 'RESTORE_FILES'
+            - 'DECRYPT_INSTRUCTIONS'
+    condition: selection
 falsepositives:
-  - Archivos README legítimos en directorios de proyectos
+    - Documentación legítima de proyecto con nombres similares (raro, revisar contenido)
 level: critical
-# Wazuh level mapping → 13 (CRITICAL → T2 Decision Engine)
-fields:
-  - TargetFilename
-  - Image
-  - User
-  - ProcessId
+tags:
+    - attack.t1486
+    - attack.impact

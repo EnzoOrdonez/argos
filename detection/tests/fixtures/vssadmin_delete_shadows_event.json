@@ -1,0 +1,10 @@
+{
+  "_comment": "Evento de ejemplo (sintético, NO de un sistema real) para validar manualmente la regla vssadmin_delete_shadows.yml contra un evento Sysmon típico. Usar con sigma-cli analyze o herramientas equivalentes de testing local.",
+  "EventID": 1,
+  "Image": "C:\\Windows\\System32\\vssadmin.exe",
+  "CommandLine": "vssadmin.exe delete shadows /all /quiet",
+  "User": "LAB\\victim-user",
+  "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+  "ParentCommandLine": "cmd.exe",
+  "Hostname": "<VICTIM_LAB_IP>"
+}
