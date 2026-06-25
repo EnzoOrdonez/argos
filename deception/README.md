@@ -65,10 +65,12 @@ ssh <WAZUH_MANAGER> "sudo /var/ossec/bin/wazuh-control restart"
 | Timestamps realistas (60-180 días atrás) | Hace que el archivo parezca legítimo y antiguo |
 | Nombres que un atacante priorizaría | `financials_Q4_2025.xlsx`, `passwords.txt`, `db_backup.sql`, `accounts_admin.csv` |
 
-## 7. Contrato con downstream (`argos_contracts`, vía `soar/`)
+## 7. Contrato con downstream (`argos_contracts`, vía el normalizador/bridge — ADR-0014)
 
-Esta capa no importa `argos_contracts` directamente, pero cada alerta de
-canary que llega al Decision Engine **debe** incluir:
+Esta capa no importa `argos_contracts` directamente. El **normalizador/bridge**
+(ADR-0014, dueño P2/P4 — NO el SOAR, que solo consume per ADR-0013 §3) lee la
+alerta Wazuh de canary y construye el `NormalizedAlert` que publica en
+`events:normalized` (campo `payload`). Ese `NormalizedAlert` **debe** incluir:
 
 - Ruta del canary (verbatim del evento FIM).
 - Árbol de proceso: PID, parent PID, command line (capturado por whodata/auditd).
