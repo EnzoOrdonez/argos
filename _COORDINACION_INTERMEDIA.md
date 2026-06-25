@@ -6,6 +6,36 @@
 
 ---
 
+## Actualización 2026-06-24 — post-merge (ML L2 + P3) y auditoría
+
+Ya entraron a `main` (además de P1): la capa **ML / Layer-2** (`ml/`, branch `yohamin`) y la
+**detección + decepción** de P3 (`detection/`, `deception/`, branch `NicoleMain`), más un módulo
+forense en `soar/response/forensics/`. El contrato v1.1.0 sigue **intacto** y el `soar/` de P1 no
+se tocó (sus 250 tests siguen válidos por construcción; no importa nada de lo nuevo).
+
+**Bloqueante #1 (ADR-0014):** ninguna de esas capas **publica** un `NormalizedAlert` en
+`events:normalized`. El ML lo arma (`ml/soar_adapter.py`) pero no lo publica; detección/decepción
+solo entregan reglas Wazuh. Falta el **normalizador/bridge** (dueño **P2/P4**, no P1 ni el
+integrante nuevo) que lea Wazuh (L1/L3) y publique el score ML (L2). Hoy solo
+`scripts/demo_injector.py` alimenta el pipeline.
+
+**Campo del entry = `payload`** (no `data`): `XADD events:normalized * payload <NormalizedAlert.model_dump_json()>`.
+El consumer lee `fields["payload"]`. El snippet con `data` del manual de P2 está mal y rompe el
+consumer con `KeyError: 'payload'`.
+
+**Otros pendientes cross-team:** los comandos Wazuh active-response
+(`argos-throttle/-snapshot/-isolate/-kill`, que invoca `soar/playbooks/wazuh.py`) **no existen**
+aún (son de P3, ADR-0012 §3); sin ellos solo corre el `SimulatedExecutor`. `lab/` y
+`attack-simulation/` son solo README: las VMs víctima viven en el código de P3 únicamente como
+placeholders (`<VICTIM_LAB_IP>`, `victim-windows-01`, `<POSTGRES_LAB_HOST>`); el lab real es de P4.
+
+**Fixes aplicados en esta auditoría:** `T1213`→`T1005` en `detection/mitre-mapping.yaml` (no estaba
+en `MITRE_WHITELIST` → test roto, ahora verde); `detection/tests` cableado en `testpaths`; doc de
+canary/decepción alineada con ADR-0013 §3. **Pendiente:** definir dueño de `soar/response/forensics/`
+(módulo ajeno en el namespace de P1) y alinear su `datetime.UTC`→`timezone.utc`.
+
+---
+
 ## Si sos una IA (o persona) que recién abre este repo
 
 La parte de **P1 (SOAR / HITL)** está **completa y testeada**, y ya está en `main`.

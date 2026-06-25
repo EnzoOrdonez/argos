@@ -8,8 +8,10 @@
   escala Wazuh nativa 0-15 — ver detection/README.md tabla de mapeo).
 
   group="argos_canary,argos_layer3," se usa como identificador de
-  source_layer para que el Decision Engine pueda reconocer esta capa sin
-  ambigüedad (equivalente textual a Layer.LAYER_3 en argos_contracts).
+  source_layer para que el NORMALIZADOR / bridge Wazuh -> events:normalized
+  (ADR-0014, dueño P2/P4) construya el NormalizedAlert con
+  source_layer = Layer.LAYER_3. El SOAR (P1) NO normaliza crudo (ADR-0013 §3):
+  solo consume el NormalizedAlert ya armado del stream.
 
   ⚠️ El group ID base (100100) es un placeholder dentro del rango de
   "local rules" de Wazuh (100000-119999). Si P1/P4 ya reservaron un rango
@@ -52,8 +54,9 @@
 </group>
 
 <!--
-  Campos que el Decision Engine (soar/) debe poder extraer de esta alerta
-  para construir NormalizedAlert (contrato documentado en deception/README.md):
+  Campos que el NORMALIZADOR / bridge (ADR-0014, dueño P2/P4 — NO el SOAR, que
+  solo consume per ADR-0013 §3) debe extraer de esta alerta Wazuh para construir
+  el NormalizedAlert (contrato documentado en deception/README.md):
 
     - syscheck.path               -> canary path (verbatim)
     - audit.effective_user.name   -> usuario

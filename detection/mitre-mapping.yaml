@@ -44,8 +44,17 @@ mitre_mapping:
       - detection/sigma-rules/network/slowhttptest_pattern.yml
     use_cases: [UC-06]
 
-  - technique_id: T1213
-    technique_name: "Data from Information Repositories"
+  # FIX coherencia 2026-06-24 (auditoria P1): la tecnica ATT&CK nativa de esta
+  # regla es T1213 "Data from Information Repositories" (una BD ES un information
+  # repository), pero T1213 NO esta en argos_contracts.MITRE_WHITELIST v1.1.0
+  # (contrato congelado, regla #2 del HANDOFF: no se toca). El mapeo contract-facing
+  # usa la tecnica de Collection mas cercana que SI esta en el whitelist,
+  # T1005 "Data from Local System", para que el NormalizedAlert valide downstream
+  # (TriageResponse valida technique_mitre contra el whitelist). Si un bump de
+  # contrato (v1.2) agrega T1213, revertir aqui. El tag attack.t1213 del .yml de
+  # la regla se conserva como referencia ATT&CK documental.
+  - technique_id: T1005
+    technique_name: "Data from Local System"
     rules:
       - detection/sigma-rules/database/mass_select_query.yml
     use_cases: [UC-07]

@@ -75,6 +75,8 @@ dev = [
     "mypy>=1.9",
     "ruff>=0.4",
     "coverage>=7.4",
+    "pyyaml>=6.0",          # detection/deception tests parsean Sigma/canary YAML
+    "openpyxl>=3.1",        # deception generator crea xlsx canary dummy
 ]
 
 [project.urls]
@@ -116,8 +118,13 @@ ignore = ["S101"]  # pytest assert OK
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S", "B"]
 
+# ml/tests corre aparte (deps pesadas sklearn/scipy, evita error de coleccion en envs sin [ml]):
+#   pip install -e ".[ml]" && pytest ml/tests
+# detection/deception SI van en testpaths (deps livianas: pyyaml/openpyxl en [dev]).
+# soar/response/forensics/tests: PENDIENTE definir dueño (modulo forense ajeno en namespace soar/)
+#   + alinear datetime.UTC->timezone.utc (rompe en <3.11). Ver auditoria 2026-06-24.
 [tool.pytest.ini_options]
-testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "deception/tests"]
+testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "detection/tests", "deception/tests"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
 
