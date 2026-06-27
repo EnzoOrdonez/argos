@@ -6,8 +6,9 @@ in v2 as the fallback because it offers something no external API can:
 drops, or an air-gap deployment is required, ARGOS keeps producing
 analyses without any byte of telemetry leaving the lab.
 
-Quality is lower than GPT-4o-mini but sufficient to produce a valid
-structured `TriageResponse` for the four detection layers in scope.
+Quality is lower than the cloud primary (NVIDIA NIM, ADR-0001 v3) but
+sufficient to produce a valid structured `TriageResponse`. Status: deferred
+(Fase 4 only wired the NVIDIA backend; this stays stub until air-gap is needed).
 
 References:
     - ADR-0001 v2 §Decisión (fallback backend rationale).

@@ -11,8 +11,8 @@ tenacity>=8.2
 jinja2>=3.1
 python-dotenv>=1.0
 
-# LLM backends (ADR-0001 v2)
-openai>=1.0          # primario — GPT-4o-mini
+# LLM backends (ADR-0001 v3): SDK OpenAI apuntado a NVIDIA NIM
+openai>=1.0          # primario deepseek-ai/deepseek-v4-pro, fallback moonshotai/kimi-k2.6 (vía NVIDIA)
 
 # RAG pipeline (ver llm_triage/rag/README.md)
 rank-bm25>=0.2.2

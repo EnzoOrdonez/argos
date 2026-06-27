@@ -1,6 +1,6 @@
 # prompts/ — Jinja2 templates for the triage LLM
 
-Versioned, reviewable prompt templates rendered with Jinja2 and fed to the active `LLMClient`. Keeping prompts as files (not inline strings) makes them diffable in PRs, swappable per backend (OpenAI GPT-4o-mini follows strict JSON-mode; Llama 3.1 local may need more explicit format prompts per ADR-0001 v2), and easy to A/B test against the labelled dataset built in Q5.
+Versioned, reviewable prompt templates rendered with Jinja2 and fed to the active `LLMClient`. Keeping prompts as files (not inline strings) makes them diffable in PRs, swappable per backend (el primario NVIDIA usa `response_format=json_object`; el fallback Ollama, diferido, necesita prompts de formato más explícitos — ADR-0001 v3), and easy to A/B test against the labelled dataset built in Q5.
 
 ## Planned templates
 
@@ -10,7 +10,9 @@ Versioned, reviewable prompt templates rendered with Jinja2 and fed to the activ
 
 ## Status
 
-**Placeholder.** Implementation alongside the LLMClient backends.
+**Implementado (Fase 4):** `system_triage.j2` + `user_triage.j2` los renderiza `prompts/__init__.py` y los usa
+`OpenAIClient`. `injection_guard.j2` no se materializó como template: la defensa anti-inyección vive en
+`llm_triage/sanitizer.py` (T-030) + las reglas del system prompt.
 
 ## References
 

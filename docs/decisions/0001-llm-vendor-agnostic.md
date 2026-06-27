@@ -1,8 +1,8 @@
 # ADR-0001: LLM vendor-agnostic via LLMClient interface
 
 **Estado:** Aceptado
-**Versión:** 2.0 (proveedor primario reasignado por soberanía de datos)
-**Fecha:** Semana 1 (v1) · 2026-05-23 (v2)
+**Versión:** 3.0 (primario open-weights vía NVIDIA NIM, jurisdicción US — reconcilia la implementación de Fase 4)
+**Fecha:** Semana 1 (v1) · 2026-05-23 (v2) · 2026-06-27 (v3)
 **Autores:** P1 (Enzo Ordoñez Flores)
 **Revisores:** Equipo completo
 
@@ -37,6 +37,34 @@ La v1 elegía DeepSeek-V3 (primario) + Qwen2.5-72B (fallback) basándose puramen
 **2. Calidad para razonamiento de ciberseguridad.** DeepSeek-V3 y Qwen son modelos generales optimizados a costo. Para razonamiento estructurado de seguridad específicamente (identificar técnicas MITRE, escribir runbooks NIST coherentes, validar IoCs), GPT-4o-mini y Claude Haiku consistentemente puntúan más alto en benchmarks públicos (SecEval, HELM cybersecurity subset). El costo por millón de tokens de GPT-4o-mini (~$0.15 input / $0.60 output) es prácticamente equivalente al de DeepSeek a este volumen.
 
 **3. Fallback con propiedad demostrable.** Llama 3.1 8B local sustituye a Qwen como fallback porque ofrece algo que ningún API externo puede: **inferencia zero-egress**. Si el cliente exige air-gap, si el primario se cae, o si la conexión a internet del lab falla en demo, ARGOS sigue produciendo análisis LLM sin que un byte salga de la máquina. Eso es un argumento de defensa más fuerte que "tenemos dos APIs externas redundantes". Llama 3.1 8B corre en cualquier laptop moderno (8 GB RAM) y aunque su calidad es menor que GPT-4o-mini, es suficiente para producir un análisis estructurado válido en el formato Pydantic esperado.
+
+### Cambio v2 → v3 (2026-06-27) — reconciliación con la implementación real (Fase 4)
+
+La Fase 4 implementó el cliente apuntando a modelos **open-weights servidos por NVIDIA NIM**
+(`https://integrate.api.nvidia.com/v1`): primario `deepseek-ai/deepseek-v4-pro` (con `thinking:false` para
+salida estructurada), fallback `moonshotai/kimi-k2.6`. Esto **aparenta** contradecir la v2 (que descartó
+DeepSeek/Qwen), pero NO lo hace; se documenta acá para no violar la convención de ADRs inmutables.
+
+**La objeción de v2 era la jurisdicción del DATO, no la procedencia del MODELO.** v2 rechazó enviar telemetría
+a *proveedores* chinos (DeepSeek/Qwen API) porque la PRC Data Security Law los obliga a entregar esos datos. En
+v3 el dato viaja a **NVIDIA (jurisdicción US)**, no a servidores de DeepSeek ni Moonshot. Los modelos son
+**open-weights corriendo en infraestructura NVIDIA**: la **procedencia del modelo (China) ≠ la jurisdicción del
+dato (US)**. Un peso open-weights no "llama a casa"; quien recibe la telemetría es NVIDIA, bajo el mismo marco
+legal US que justificó GPT-4o-mini en v2.
+
+**Defensa en profundidad sobre el dato (el invariante R-2 no cambia):**
+1. **Data sintética** en el demo: la PII real solo existe en el lab; lo que cruza son escenarios simulados.
+2. **Sanitizer T-030 obligatorio** antes de la nube (`llm_triage/sanitizer.py`, implementado en Fase 4): redacta
+   credenciales, IPs internas, usuarios y emails (`docs/data-handling.md §2`).
+3. **Ollama (`llama_local`, diferido) = zero-egress real** para la PII de producción cuando se exija air-gap.
+
+**Motivo del cambio:** créditos NVIDIA gratuitos (costo ~0 para el demo) + benchmark fuerte de deepseek-v4-pro /
+kimi-k2.6 para triage estructurado en JSON. La arquitectura sigue vendor-agnostic: el swap es por `LLM_BACKEND` +
+`OPENAI_BASE_URL`/`OPENAI_MODEL`/`OPENAI_FALLBACK_MODEL`, sin tocar el resto del sistema. Verificado con llamada
+real (2026-06-27): ambos modelos devuelven `TriageResponse` válido.
+
+> Nota: `argos_contracts/triage.py` (inmutable) cita `gpt-4o-mini | llama-3.1-8b-local` como ejemplo en la
+> descripción de `llm_backend`; es ilustrativo. El campo ahora lleva el id del modelo NVIDIA usado.
 
 ## Alternativas consideradas
 
@@ -159,3 +187,4 @@ A re-evaluar en Gate 2. Si calidad de output de Llama local no es aceptable, con
 |---------|-------|--------|-------|
 | 1.0 | Semana 1 | Decisión original: DeepSeek-V3 primario + Qwen2.5-72B fallback. Optimizado puramente a costo. | P1 |
 | 2.0 | 2026-05-23 | Re-evaluación por soberanía de datos: en un proyecto de ciberseguridad enviar telemetría a proveedores chinos contradice el caso de uso. Primario reasignado a GPT-4o-mini (US-based, costo equivalente, mejor en benchmarks de seguridad). Fallback reasignado a Llama 3.1 8B local (zero-egress, propiedad demostrable de air-gap). | P1 |
+| 3.0 | 2026-06-27 | Reconciliación con Fase 4: primario open-weights vía **NVIDIA NIM** (`deepseek-v4-pro` + `kimi-k2.6` fallback). NO contradice v2 — el dato va a NVIDIA (US), no a proveedores PRC; procedencia del modelo ≠ jurisdicción del dato. Defensa: data sintética + sanitizer T-030 + Ollama zero-egress (diferido). Motivo: créditos NVIDIA + benchmark de triage estructurado. Verificado con llamada real. | P1 + Claude |
