@@ -1,0 +1,8 @@
+# Dependencias del bridge de normalización (P2/P4).
+#
+# Camino A (Wazuh -> events:normalized) es liviano: solo redis + el contrato.
+# Camino B (publisher ML) además necesita el stack ML: pip install -e ".[ml]".
+#
+# Correr:  python -m bridge --alerts-path <alerts.json> --redis-url <url>
+# Tests:   python -m pytest bridge/tests
+redis>=5.0
