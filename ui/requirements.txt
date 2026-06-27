@@ -1,0 +1,10 @@
+# Dependencias de la Approval Console (P4). Espejo del grupo [ui] de pyproject.toml.
+#
+# Preferido (desde la raíz del repo):   pip install -e ".[ui]"
+# Con tests:                            pip install -e ".[ui,dev]"
+# Correr la consola:                    streamlit run ui/streamlit_app/app.py
+# Correr los tests:                     pytest ui/tests        (fuera de testpaths)
+streamlit>=1.30
+streamlit-autorefresh>=1.0
+redis>=5.0
+plotly>=5.19
