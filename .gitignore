@@ -248,3 +248,10 @@ evaluation/temp/
 
 # ARGOS forensic evidence bundles
 evidence/
+
+# Local lab configuration
+config/velociraptor_hosts.json
+config/api.config.yaml
+
+# ARGOS forensic evidence bundles
+evidence/

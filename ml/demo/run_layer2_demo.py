@@ -16,6 +16,7 @@ Run from project root:
 from __future__ import annotations
 
 from soar.response.forensics.collector import collect_forensic_bundle
+from soar.response.forensics.velociraptor_collector import collect_with_velociraptor
 
 from argos_contracts.ml_score import MLFeatures
 
@@ -137,6 +138,29 @@ def main() -> None:
     print(f"    Evidence directory : {forensic_result.evidence_dir}")
     print(f"    Evidence ID        : {forensic_result.manifest.evidence_id}")
     print(f"    Artifacts captured : {len(forensic_result.manifest.artifacts)}")
+
+    print("\n[5.2] Preparing Velociraptor forensic collection request...")
+
+    try:
+        velociraptor_result = collect_with_velociraptor(
+    incident_id="INC-DEMO-L2-001",
+    host_id=ml_score.host_id,
+    host_map_path="config/velociraptor_hosts.json",
+    api_config_path="config/api.config.yaml",
+    velociraptor_binary="C:/Velociraptor/velociraptor.exe",
+    output_root="evidence",
+    artifacts=["Generic.Client.Info"],
+    dry_run=False,
+)
+
+        print(f"    Velociraptor client ID : {velociraptor_result.client_id}")
+        print(f"    Collection status      : {velociraptor_result.status}")
+        print(f"    Artifacts requested    : {len(velociraptor_result.artifacts)}")
+        print(f"    Output directory       : {velociraptor_result.output_dir}")
+
+    except Exception as error:
+        print("    Velociraptor collection request was skipped.")
+        print(f"    Reason: {error}")
 
     print("\n[6] Synthetic detection metrics...")
     y_true = [0, 0, 0, 1, 1]
