@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARGOS · Manual maestro del equipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e16; --panel:#121826; --panel2:#0f1420; --border:#1f2937;
+    --text:#e7edf5; --muted:#5f6b7d; --accent:#f0a338;
+    --t0:#e5484d; --t1:#f76808; --t2:#f0a338; --t3:#3b82f6; --ok:#30a46c; --rej:#e5484d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;
+    font-size:15px;line-height:1.6}
+  code,.mono{font-family:'IBM Plex Mono',monospace;font-size:.9em}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px 80px}
+  header.top{background:var(--panel2);border-bottom:1px solid var(--border);padding:22px 0;margin-bottom:28px}
+  header.top .wrap{display:flex;align-items:center;gap:16px}
+  .logo{width:46px;height:46px;flex:0 0 auto}
+  .brand strong{font-size:22px;letter-spacing:5px;display:block}
+  .brand span{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--muted)}
+  .sub{margin-left:auto;text-align:right;font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+  h2{font-size:21px;margin:38px 0 4px;padding-top:14px;border-top:1px solid var(--border);letter-spacing:.3px}
+  h2 .n{color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-right:10px}
+  h3{font-size:16px;margin:22px 0 8px;color:#cdd6e3}
+  p,li{margin:8px 0}
+  ul,ol{padding-left:22px}
+  .lead{color:#c2ccda}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .toc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 22px;margin-bottom:10px}
+  .toc h4{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .toc ol{columns:2;column-gap:32px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;
+    letter-spacing:1px;padding:8px;border-bottom:1px solid var(--border)}
+  td{padding:9px 8px;border-bottom:1px solid var(--panel2);vertical-align:top}
+  .badge{display:inline-block;padding:1px 9px;border-radius:6px;font-size:11px;font-weight:600;color:#0a0e16}
+  .b-ok{background:var(--ok)} .b-sim{background:var(--t2)} .b-lab{background:var(--t3)}
+  .tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);
+    border:1px solid var(--border);border-radius:5px;padding:1px 7px;margin:2px 4px 0 0}
+  pre{background:#070a11;border:1px solid var(--border);border-radius:10px;padding:14px 16px;overflow-x:auto;
+    margin:12px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.55;color:#d7e0ec}
+  pre .c{color:var(--muted)}
+  .warn{border-left:3px solid var(--accent);background:rgba(240,163,56,.08);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+  .danger{border-left:3px solid var(--rej);background:rgba(229,72,77,.09);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+  .pill{display:inline-block;padding:1px 8px;border-radius:5px;font-size:11px;font-weight:600;color:#0a0e16}
+  .t0{background:var(--t0)}.t1{background:var(--t1)}.t2{background:var(--t2)}.t3{background:var(--t3)}
+  strong.k{color:var(--accent)}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+    <rect width="34" height="34" rx="9" transform="translate(24 24) rotate(45) translate(-17 -17)" fill="#f0a338" opacity="0.16"></rect>
+    <circle cx="24" cy="24" r="15" fill="none" stroke="#f0a338" stroke-width="3"></circle>
+    <circle cx="24" cy="24" r="4.5" fill="#f0a338"></circle>
+  </svg>
+  <div class="brand"><strong>ARGOS</strong><span>ADAPTIVE RESPONSE GUARD</span></div>
+  <div class="sub">Manual maestro del equipo · documento único de verdad<br>Actualizado 2026-06-26 · prototipo F1–F6</div>
+</div></header>
+
+<div class="wrap">
+
+<p class="lead">Este es <strong>el</strong> documento de referencia del equipo para correr, demostrar y entender ARGOS.
+Si algo acá choca con un manual viejo o un PDF generado, <strong class="k">gana este documento + los ADRs</strong>
+(ver §H, trampas de integración). Pensado para que cualquiera del equipo levante su parte sin romper la coherencia.</p>
+
+<nav class="toc">
+  <h4>Contenido</h4>
+  <ol>
+    <li><a href="#a">Qué es ARGOS + estado por parte (P1–P4)</a></li>
+    <li><a href="#b">Cambios y decisiones por fase (1–6) + ADRs</a></li>
+    <li><a href="#c">Prerrequisitos + qué levanta cada máquina</a></li>
+    <li><a href="#d">Comandos exactos: simulado y live</a></li>
+    <li><a href="#e">Guion de la demo → 5 HUs</a></li>
+    <li><a href="#f">Troubleshooting</a></li>
+    <li><a href="#g">Quién hace qué en el prototipo real</a></li>
+    <li><a href="#h">Trampas de integración (no romper la coherencia)</a></li>
+  </ol>
+</nav>
+
+<!-- ============ A ============ -->
+<h2 id="a"><span class="n">A.</span>Qué es ARGOS + estado por parte</h2>
+<p>ARGOS es un <strong>XDR multivector</strong> que defiende la base de datos del banco ficticio <strong>IntiBank</strong>.
+Combina <strong>4 capas de detección</strong> — Sigma (L1), ML (L2), canarios (L3) y triage por LLM (L4, Capa 4) — con un
+<strong>orquestador SOAR + aprobación humana (HITL)</strong>. Las acciones destructivas (aislar un host) pasan por
+<strong>tiers</strong> (T0 auto-ejecuta sub-segundo; T1–T3 esperan votos) con <strong>two-person rule</strong> y
+<strong>conservative-wins</strong>. Invariante <strong class="k">R-2</strong>: el LLM <em>nunca</em> bloquea la contención
+(si falla, degrada a <code>None</code> y el flujo sigue).</p>
+
+<table>
+<thead><tr><th>Parte</th><th>Responsable</th><th>Alcance</th><th>Estado</th></tr></thead>
+<tbody>
+<tr><td><strong>P1</strong></td><td>Enzo Ordóñez<br><span class="mono" style="color:var(--muted)">SOAR / HITL</span></td>
+  <td>Decision engine, tiers, two-person, ventana de consolidación, notificaciones (Telegram/Discord/Twilio/email),
+  audit, Approval API, contención (executor).</td>
+  <td><span class="badge b-ok">hecho</span> ~250 tests · <span class="badge b-sim">simulado</span> SimulatedExecutor (default)
+  · <span class="badge b-lab">pendiente-lab</span> swap a WazuhActiveResponseExecutor</td></tr>
+<tr><td><strong>P2</strong></td><td>Sebastián Montenegro<br><span class="mono" style="color:var(--muted)">ML / bridge</span></td>
+  <td>Capa 2 ML (scoring por <code>rule.mitre.id</code> + whitelist + override), bridge Wazuh→Redis
+  (<code>events:normalized</code>, campo <code>payload</code>).</td>
+  <td><span class="badge b-ok">hecho</span> · <span class="badge b-lab">pendiente-lab</span> bridge tailea el <code>alerts.json</code> real</td></tr>
+<tr><td><strong>P3</strong></td><td>Ángeles Castillo<br><span class="mono" style="color:var(--muted)">detección / AR</span></td>
+  <td>Reglas Sigma (L1), canarios (L3, auditd), scripts active-response para los 2 OS
+  (<code>argos-isolate/throttle/snapshot/kill</code>).</td>
+  <td><span class="badge b-ok">hecho</span> scripts + simuladores · <span class="badge b-lab">pendiente-lab</span>
+  instalar agente Wazuh + AR en las víctimas y atacar</td></tr>
+<tr><td><strong>P4</strong></td><td>Diego Jara<br><span class="mono" style="color:var(--muted)">lab / infra</span></td>
+  <td>Las 3 VMs, Wazuh manager en la VM core, PostgreSQL <code>app_prod</code> (IntiBank) en la víctima,
+  ejecución del ataque.</td>
+  <td><span class="badge b-ok">hecho</span> schema <code>argos_audit</code> + manual · <span class="badge b-lab">pendiente-lab</span>
+  levantar las 3 VMs y correr el ataque</td></tr>
+</tbody>
+</table>
+<p><span class="badge b-ok">hecho</span> = construido y testeado en el repo &nbsp;·&nbsp;
+<span class="badge b-sim">simulado</span> = corre demo-safe sin lab &nbsp;·&nbsp;
+<span class="badge b-lab">pendiente-lab</span> = necesita las VMs reales.</p>
+
+<!-- ============ B ============ -->
+<h2 id="b"><span class="n">B.</span>Cambios y decisiones por fase (1–6) + ADRs</h2>
+<p>El prototipo funcional se construyó por fases, <strong>sin tocar <code>argos_contracts/</code> (inmutable v1.1.0)
+ni <code>soar/</code> (ya cerrado)</strong>, conmutando solo los <em>bordes</em> (feeder y executor) por entorno.</p>
+
+<table>
+<thead><tr><th>Fase</th><th>Qué se construyó</th><th>ADR / nota</th></tr></thead>
+<tbody>
+<tr><td><strong>F1 — Modo en vivo</strong></td>
+  <td><code>demo_injector --live</code> (deja el incidente en <code>AWAITING_APPROVAL</code>, la ventana de 60s
+  arranca con el 1er voto) + <code>live_approve.py</code> (trigger local sin internet) + Telegram real vía ngrok.</td>
+  <td>Camino A del bridge realiza <strong>ADR-0014</strong> (<code>events:normalized</code>).</td></tr>
+<tr><td><strong>F2 — Capa 2 ML</strong></td>
+  <td>Scoring de la alerta normalizada por <code>rule.mitre.id</code> + <strong>whitelist</strong> de técnicas +
+  <strong>override</strong> conservador. Publica al mismo stream que el bridge.</td>
+  <td>Anti-alucinación / validación coherente con el contrato.</td></tr>
+<tr><td><strong>F3 — Active-response</strong></td>
+  <td>Scripts para los <strong>2 OS del lab</strong>: bash (<code>iptables/kill/tar/renice</code>) en las víctimas
+  Linux, PowerShell (<code>netsh/Stop-Process/Copy-Item</code>) en la Windows. Whitelist del manager (1514/1515)
+  antes del block-all.</td>
+  <td><strong>ADR-0015 §2.3</strong> (enmienda 2026-06-26: Win <em>y</em> Linux).</td></tr>
+<tr><td><strong>F4 — Triage LLM (Capa 4)</strong></td>
+  <td>Cliente OpenAI apuntado a <strong>NVIDIA NIM</strong> (<code>deepseek-v4-pro</code> primario,
+  <code>kimi-k2.6</code> fallback), <code>POST /triage</code>, fail-soft a <code>None</code> (R-2), sanitizer
+  <strong>T-030</strong> antes de la nube, validación MITRE whitelist (R-6).</td>
+  <td><strong>ADR-0001 v3</strong> (reconcilia soberanía — ver abajo).</td></tr>
+<tr><td><strong>F5 — docker-compose</strong></td>
+  <td>Servicios core en la VM Linux core (redis, postgres <code>argos_audit</code>, soar, console, llm-triage) +
+  perfiles <code>real</code> (bridge) y <code>fallback</code> (streamlit). Default <code>ARGOS_EXECUTOR=simulated</code>.</td>
+  <td><strong>ADR-0015</strong> (enmienda 2026-06-26b: Perfil A).</td></tr>
+<tr><td><strong>F6 — Consola web</strong></td>
+  <td>Consola read-only (<code>:8080</code>) que refleja el HITL en vivo (incidente, matriz de aprobadores, reloj,
+  banner de decisión/split-brain, panel LLM). La Streamlit (<code>:8501</code>) queda de fallback.</td>
+  <td>Lee <code>incident:{id}</code> de Redis; no toca el SOAR.</td></tr>
+</tbody>
+</table>
+
+<h3>Reconciliaciones clave (decisiones que parecían contradecirse y se documentaron honesto)</h3>
+<div class="card">
+<ul>
+<li><strong class="k">ADR-0001 v3 — soberanía del LLM.</strong> v2 descartó DeepSeek por jurisdicción PRC. v3 usa
+<code>deepseek-v4-pro</code>/<code>kimi-k2.6</code> <em>vía NVIDIA NIM</em>: el dato va a <strong>NVIDIA (US)</strong>,
+no a servidores PRC; <strong>procedencia del modelo ≠ jurisdicción del dato</strong>. Defensa: data sintética +
+sanitizer T-030 + Ollama zero-egress (diferido).</li>
+<li><strong class="k">ADR-0011 — contrato &gt; manual.</strong> Emitir <code>payload</code> (NO <code>data</code>);
+outcomes reales del contrato (<code>EXECUTE_ISOLATION</code>/<code>NO_ACTION</code>, no "execute"/"block" del manual viejo).</li>
+<li><strong class="k">ADR-0010 §4.5 — Postgres 17.5-bookworm</strong> (no el 15 del manual; no-negociable).</li>
+<li><strong class="k">ADR-0015 — topología.</strong> 3 VMs; AR Win+Linux; Perfil A <strong>manager-only</strong>
+(sin OpenSearch); Wazuh <strong>instalado en la VM core</strong> (no servicio docker); <code>argos_audit</code> en el
+compose core, <strong>separado</strong> del <code>app_prod</code> de la víctima; <code>ml</code> es librería, no servicio.</li>
+</ul>
+</div>
+
+<!-- ============ C ============ -->
+<h2 id="c"><span class="n">C.</span>Prerrequisitos + qué levanta cada máquina</h2>
+<h3>Software</h3>
+<ul>
+<li><strong>Python 3.11</strong> (canónico; <code>pydantic-core</code> no compila en 3.14).</li>
+<li><strong>Docker</strong> + docker compose v2 (para el core / Redis). Sin Docker: Memurai o Redis en WSL.</li>
+<li><strong>ngrok</strong> (solo para aprobar por Telegram en vivo, en la máquina del Approval API).</li>
+<li><strong>Key NVIDIA</strong> en <code>.env</code> como <code>OPENAI_API_KEY</code> (para la Capa 4 real). <span class="mono">Sin ella, el triage degrada a None — el demo igual corre.</span></li>
+<li><strong>Bot de Telegram</strong> (token + chat id) — opcional, para notificaciones reales.</li>
+</ul>
+<h3>Lab real — 3 VMs (subred <code>192.168.56.0/24</code>)</h3>
+<table>
+<thead><tr><th>VM</th><th>IP</th><th>Qué levanta</th></tr></thead>
+<tbody>
+<tr><td><strong>Core</strong> (Linux)</td><td><code>192.168.56.10</code></td>
+  <td>Wazuh manager (systemd) + <code>docker compose up</code> (redis, postgres <code>argos_audit</code>, soar,
+  console, llm-triage) + <code>--profile real</code> (bridge).</td></tr>
+<tr><td><strong>Víctima endpoint</strong> (Windows 10)</td><td><code>192.168.56.20</code></td>
+  <td>Agente Wazuh + scripts AR PowerShell. Escenarios: ransomware (UC-01), canary (UC-02), agent-kill (UC-05).</td></tr>
+<tr><td><strong>Víctima crítica</strong> (Linux Debian)</td><td><code>192.168.56.21</code></td>
+  <td>PostgreSQL <code>app_prod</code> (IntiBank) + agente Wazuh + auditd + scripts AR bash. Escenarios: ataque DB
+  (UC-04), SELECT masivo (UC-07), SQLi (UC-08).</td></tr>
+</tbody>
+</table>
+<div class="warn"><strong>Fixtures vs lab:</strong> los tests usan IPs <code>10.0.0.x</code>; el <strong>lab real es
+<code>192.168.56.0/24</code></strong>. No confundir.</div>
+
+<!-- ============ D ============ -->
+<h2 id="d"><span class="n">D.</span>Comandos exactos (en orden)</h2>
+
+<h3>Camino simulado — el del video, garantizado (una sola PC, sin lab)</h3>
+<p>Opción A — <strong>docker-compose</strong> (todo el core junto):</p>
+<pre><span class="c"># raíz del repo. .env con POSTGRES_PASSWORD (+ OPENAI_API_KEY si querés el LLM real).</span>
+docker compose up -d                 <span class="c"># redis, postgres, soar, console, llm-triage</span>
+docker compose ps                    <span class="c"># esperar (healthy)</span>
+python scripts\demo_injector.py uc04 --redis-url redis://localhost:6379/0
+<span class="c"># consola web -> http://localhost:8080</span></pre>
+<p>Opción B — <strong>manual</strong> (3 terminales, sin Docker para los servicios):</p>
+<pre><span class="c"># T1 — Redis</span>
+docker run --rm -p 6379:6379 redis:7
+<span class="c"># T2 — consola (Streamlit fallback)</span>
+$env:REDIS_URL = "redis://localhost:6379/0" ; streamlit run ui\streamlit_app\app.py   <span class="c"># :8501</span>
+<span class="c"># T3 — inyectar (NO --in-process: usa el Redis real)</span>
+.\.venv\Scripts\python.exe scripts\demo_injector.py uc01 --redis-url redis://localhost:6379/0</pre>
+
+<h3>Camino live — teatro en vivo (reloj de 60s + aprobar en el momento)</h3>
+<p><strong>Trigger local</strong> (sin internet, la red de seguridad):</p>
+<pre><span class="c"># 1. inyectar dejando el incidente EN ESPERA</span>
+.\.venv\Scripts\python.exe scripts\demo_injector.py uc04 --live --redis-url redis://localhost:6379/0
+<span class="c">#    -> imprime el incident_id (INC-AAAA-MM-DD-NNN)</span>
+<span class="c"># 2. votar (two-person: 2 approves DISTINTOS ejecutan; 1 reject cancela)</span>
+.\.venv\Scripts\python.exe scripts\live_approve.py --latest --decision approve --email telegram:soc-lead
+.\.venv\Scripts\python.exe scripts\live_approve.py --latest --decision approve --email telegram:dba
+<span class="c">#    rechazar:  --decision reject --email telegram:compliance</span></pre>
+<p><strong>Telegram + ngrok</strong> (una vez, en la máquina del Approval API):</p>
+<pre>$env:REDIS_URL = "redis://localhost:6379/0"
+.\.venv\Scripts\python.exe -m uvicorn soar.approval_api.main:app --port 8003
+ngrok http 8003          <span class="c"># copiar la URL https://XXXX.ngrok-free.app</span>
+<span class="c"># registrar el webhook (navegador):</span>
+<span class="c"># https://api.telegram.org/bot&lt;TOKEN&gt;/setWebhook?url=https://XXXX.ngrok-free.app/telegram/callback</span></pre>
+<div class="warn"><strong>ngrok cambia de URL en cada reinicio</strong> → repetir el <code>setWebhook</code> con la URL nueva.
+Para el camino Telegram, correr el Approval API <strong>sin</strong> <code>ARGOS_JWT_SECRET</code> (Fase 1 = modo legacy
+sin token firmado) y agregar <code>--no-wait</code> al <code>live_approve</code> (el API es dueño del reloj).</div>
+<p>Swap simulado↔real de la contención: <code>$env:ARGOS_EXECUTOR = "wazuh"</code> (degrada a <code>simulated</code> si
+faltan las <code>WAZUH_API_*</code>). Con compose: <code>--profile real</code> suma el <code>bridge</code>.</p>
+
+<!-- ============ E ============ -->
+<h2 id="e"><span class="n">E.</span>Guion de la demo → 5 HUs</h2>
+<table>
+<thead><tr><th>#</th><th>UC</th><th>Escenario</th><th>Host</th><th>Desenlace</th><th>Política</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>uc01</code></td><td>Ransomware en 3 capas casi simultáneas (T1486)</td><td>WIN-VICTIM-01</td>
+  <td><span class="pill t0">EXECUTE_ISOLATION</span> (T0 auto, sub-seg)</td><td>auto-execute</td></tr>
+<tr><td>2</td><td><code>uc02</code></td><td>Canary sola (Capa 3), zero-FP</td><td>WIN-VICTIM-01</td>
+  <td><span class="pill t0">EXECUTE_ISOLATION</span> (T0 auto)</td><td>auto-execute</td></tr>
+<tr><td>3</td><td><code>uc04</code></td><td>Ataque a la DB del banco (L1+L2)</td><td>LIN-VICTIM-01 (prod-critical)</td>
+  <td><span class="pill t2">EXECUTE_ISOLATION</span></td><td><strong>two-person-rule</strong></td></tr>
+<tr><td>4</td><td><code>uc06</code></td><td>DDoS volumétrico (T1498), fast-path</td><td>EDGE-FW-01</td>
+  <td><span class="pill t0">EXECUTE_ISOLATION</span> (T0 auto)</td><td>auto-execute</td></tr>
+<tr><td>5</td><td><code>uc07</code></td><td>SELECT masivo legítimo (<strong>falso positivo</strong>)</td><td>LIN-VICTIM-01</td>
+  <td><span class="pill" style="background:var(--ok)">NO_ACTION</span> (el humano rechaza)</td><td>two-person-rule</td></tr>
+</tbody>
+</table>
+<p><strong>Narrativa sugerida (≈90s):</strong> (1) intro: ARGOS = XDR multivector que defiende a IntiBank, 4 capas + SOAR
+con aprobación humana. (2) <code>uc01</code> → T0 auto-aislamiento sub-segundo (fast-path). (3) <code>uc04</code> →
+two-person rule, 2 aprueban; mostrar la <strong>matriz de decisión</strong> en la consola. (4) <code>uc07</code> → el
+humano <strong>rechaza</strong> → <code>NO_ACTION</code> (el HITL atrapa un falso positivo). (5) cierre: el audit trail +
+aclarar que es la corrida <strong>demo-safe</strong> (SimulatedExecutor, ADR-0010) y que el real corre sobre VMs (ADR-0015).</p>
+
+<!-- ============ F ============ -->
+<h2 id="f"><span class="n">F.</span>Troubleshooting</h2>
+<table>
+<thead><tr><th>Síntoma</th><th>Causa / fix</th></tr></thead>
+<tbody>
+<tr><td><code>UnicodeEncodeError: charmap</code></td><td>Solo en los simuladores de P3. <code>$env:PYTHONUTF8 = "1"</code>
+  antes de correr (los 2 tests <code>uc06/uc08 CLI default mode</code> que fallan son por esto, no por lógica).</td></tr>
+<tr><td>Consola vacía</td><td>El inyector tiene que correr con <code>--redis-url</code> (NO <code>--in-process</code>,
+  que usa un fakeredis aislado) apuntando al <strong>mismo</strong> <code>REDIS_URL</code> que la consola.</td></tr>
+<tr><td>Puerto 6379 ocupado</td><td>Hay otro Redis/contenedor (p. ej. un <code>docker run --rm redis</code> viejo). Pararlo
+  o usar el del compose.</td></tr>
+<tr><td><code>BUSYGROUP ... already exists</code></td><td>Inofensivo. Reset: <code>redis-cli XGROUP DESTROY events:normalized soar-router</code>
+  + <code>XGROUP CREATE events:normalized soar-router 0 MKSTREAM</code>.</td></tr>
+<tr><td>ngrok no recibe el click</td><td>La URL cambió al reiniciar → repetir el <code>setWebhook</code>. El webhook es
+  excluyente con <code>getUpdates</code>.</td></tr>
+<tr><td>Triage LLM no responde</td><td>La key real está en <code>.env</code> bajo <code>DeepSeek_V4_PRO_API_KEY</code>/<code>Kimi2_6_API_KEY</code>;
+  copiala a <code>OPENAI_API_KEY</code>. Igual es fail-soft (None) — no bloquea la contención.</td></tr>
+<tr><td><code>ModuleNotFoundError: openpyxl</code></td><td>Falta el extra; <code>pip install -e ".[soar,llm,dev,ui]"</code>.</td></tr>
+<tr><td>Docker no instalado</td><td>Memurai / Redis en WSL, o <code>--in-process</code> (pero la consola no lo verá).</td></tr>
+</tbody>
+</table>
+
+<!-- ============ G ============ -->
+<h2 id="g"><span class="n">G.</span>Quién hace qué en el prototipo real</h2>
+<div class="card">
+<p><strong>Una frase:</strong> un bot, un ngrok, un Approval API; los demás solo aprueban o levantan su parte de infra.</p>
+<ul>
+<li><strong>P4 (Diego) — el lab.</strong> Hostea las 3 VMs, instala el Wazuh manager en la core, provisiona
+<code>app_prod</code> + <code>argos_audit</code> (postgres 17.5), instala los agentes Wazuh + scripts AR en las víctimas,
+y <strong>ejecuta el ataque</strong>.</li>
+<li><strong>P1 (Enzo) — el SOAR.</strong> Crea el bot de Telegram <strong>una vez</strong>; corre el Approval API + ngrok
+en <strong>una sola</strong> máquina.</li>
+<li><strong>P2 (Sebastián) — ML/bridge.</strong> El bridge tailea el <code>alerts.json</code> del manager; el scorer ML
+publica al stream.</li>
+<li><strong>P3 (Ángeles) — detección/AR.</strong> Reglas Sigma + canarios desplegados en el manager; scripts AR en las víctimas.</li>
+<li><strong>Los que solo aprueban:</strong> estar en el chat de Telegram y tocar el botón. No instalan ni configuran nada.</li>
+</ul>
+</div>
+
+<!-- ============ H ============ -->
+<h2 id="h"><span class="n">H.</span>Trampas de integración (no romper la coherencia)</h2>
+<div class="danger">
+<ul>
+<li><strong class="k">Emitir <code>payload</code>, NO <code>data</code></strong> — el campo del mensaje en <code>events:normalized</code>
+es <code>payload</code> (<code>NormalizedAlert.model_dump_json()</code>). Es el error de integración #1.</li>
+<li><strong class="k">Seguir los ADRs, no los manuales viejos</strong> — si un manual/PDF dice algo distinto (outcomes
+"execute"/"block", postgres 15, OpenSearch en Perfil A), <strong>gana el ADR / este documento</strong>.</li>
+<li><strong class="k">Postgres 17.5-bookworm</strong> (ADR-0010 §4.5), no el 15 del manual.</li>
+<li><strong class="k">Perfil A = manager-only</strong> — sin OpenSearch/Dashboards (eso es Perfil B). Wazuh manager
+<strong>instalado en la VM core</strong>, no como servicio del compose.</li>
+<li><strong class="k"><code>argos_audit</code> ≠ víctima</strong> — el log de ARGOS corre en la core, separado del
+<code>app_prod</code> que defiende (no en la caja comprometible).</li>
+<li><strong class="k">No tocar <code>argos_contracts/</code> ni <code>soar/</code></strong> — son inmutables/cerrados; conmutar
+solo los bordes (<code>ARGOS_EXECUTOR</code>, feeder <code>demo_injector</code> ↔ <code>bridge</code>).</li>
+<li><strong class="k">R-2</strong> — el LLM nunca bloquea la contención (fail-soft a None).</li>
+</ul>
+</div>
+
+<footer>
+<p><strong>F7 (Kubernetes, Perfil B)</strong> queda <strong>diferido</strong> como artefacto futuro: stack distribuido con
+wazuh-indexer + OpenSearch Dashboards (los 3 dashboards SOC) + k8s, pendiente de <strong>ADR-0016</strong>. No es parte del
+prototipo F1–F6.</p>
+<p>ARGOS · Adaptive Response Guard · manual maestro · 2026-06-26. Fuente de verdad operativa del equipo; ante conflicto,
+manda este documento + los ADRs en <code>docs/decisions/</code>.</p>
+</footer>
+
+</div>
+</body>
+</html>
