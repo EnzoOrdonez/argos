@@ -17,6 +17,12 @@ Un comando por UC:
 - Si hay credenciales en el entorno (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID,
   DISCORD_WEBHOOK_URL), las notificaciones salen de verdad; si no, se omiten.
 
+Modo `--live` (Fase 1, HITL real): inyecta la(s) alerta(s) y NO castea los votos
+del escenario; deja el incidente para que un humano apruebe/rechace por
+`scripts/live_approve.py` (trigger local) o por Telegram real. El executor pasa a
+elegirse por `ARGOS_EXECUTOR` (default simulated). Sin `--live`, el comportamiento
+del demo simulado es idéntico.
+
 Escenarios (capas per matriz ADR-0009 §2.6):
   uc01  ransomware 3 capas casi simultáneas (T1486) en WIN-VICTIM-01 -> T0 auto
   uc02  canary sola (Capa 3) -> T0 auto, cero archivos reales tocados
@@ -24,7 +30,8 @@ Escenarios (capas per matriz ADR-0009 §2.6):
   uc06  DDoS T1498 fast-path -> T0 auto
   uc07  L1+L2 en host crítico, el humano rechaza -> NO_ACTION two-person
 
-Sale con código 0 si el desenlace coincide con el esperado del UC.
+Sale con código 0 si el desenlace coincide con el esperado del UC (o, en --live,
+si el incidente quedó creado a la espera de aprobación).
 """
 
 from __future__ import annotations
@@ -35,6 +42,8 @@ import os
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+
+from _runtime import make_executor
 
 from argos_contracts.alert import NormalizedAlert
 from argos_contracts.enums import Layer, NotificationChannelType, Severity
@@ -174,20 +183,12 @@ def _build_notifier() -> NotificationService:
     return NotificationService(channels)
 
 
-async def run_scenario(uc: str, redis_url: str, in_process: bool) -> int:
-    scenario = _scenarios()[uc]
-    if in_process:
-        from fakeredis import FakeAsyncRedis
-
-        r = FakeAsyncRedis(decode_responses=True)
-    else:
-        import redis.asyncio as redis
-
-        r = redis.from_url(redis_url, decode_responses=True)
-
+def build_runtime(r: object, *, live: bool):  # devuelve la tupla de colaboradores P1
+    """Arma el pipeline P1 (consumer + colaboradores). En --live el executor lo
+    elige `ARGOS_EXECUTOR`; en el demo simulado es siempre `SimulatedExecutor`."""
     memory = MemorySink()
     audit = AuditLogger([memory])
-    executor = SimulatedExecutor()
+    executor = make_executor() if live else SimulatedExecutor()
     notifier = _build_notifier()
     scheduler = WindowScheduler(r, notifier=notifier, audit=audit)
     triage = TriageClient(audit=audit)  # apunta al stub si esta corriendo
@@ -199,42 +200,61 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool) -> int:
         audit=audit,
         triage=triage,
     )
+    return consumer, executor, scheduler, audit, memory
 
-    print(f"== {uc.upper()}: {scenario.description}")
-    incident_id: str | None = None
+
+async def inject_scenario(r: object, scenario: Scenario, consumer: SOARConsumer) -> str:
+    """Publica las alertas, corre el consumer y devuelve el incident_id creado."""
     for alert in scenario.alerts:
         await r.xadd(STREAM, {"payload": alert.model_dump_json()})
         await consumer.run(once=True, block_ms=50)
         await asyncio.sleep(0.3)  # capas "casi simultaneas" dentro de la rafaga de 5s
-    # El incidente del escenario es el ultimo creado hoy.
     today = _now().strftime("%Y-%m-%d")
     sequence = int(await r.get(f"incident:counter:{today}") or 0)
-    incident_id = f"INC-{today}-{sequence:03d}"
+    return f"INC-{today}-{sequence:03d}"
 
-    for email, decision in scenario.votes:
-        print(f"   voto HITL: {email} -> {decision}")
-        await record_approval_response(
-            r,
-            incident_id,
-            email=email,
-            role="approver",
-            decision=decision,  # type: ignore[arg-type]
-            channel=NotificationChannelType.TELEGRAM,
-        )
-        audit.emit("approval_response", incident_id, email=email, decision=decision)
-        incident = await build_final_decision_if_ready(r, incident_id)
-        await scheduler.ensure_consolidation_started(incident_id)
-        if (
-            incident.final_decision is not None
-            and incident.final_decision.execution_status is None
-        ):
-            audit.emit(
-                "decision_final",
+
+async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = False) -> int:
+    scenario = _scenarios()[uc]
+    if in_process:
+        from fakeredis import FakeAsyncRedis
+
+        r = FakeAsyncRedis(decode_responses=True)
+    else:
+        import redis.asyncio as redis
+
+        r = redis.from_url(redis_url, decode_responses=True)
+
+    consumer, executor, scheduler, audit, memory = build_runtime(r, live=live)
+
+    print(f"== {uc.upper()}: {scenario.description}{' [LIVE]' if live else ''}")
+    incident_id = await inject_scenario(r, scenario, consumer)
+
+    if not live:
+        for email, decision in scenario.votes:
+            print(f"   voto HITL: {email} -> {decision}")
+            await record_approval_response(
+                r,
                 incident_id,
-                outcome=incident.final_decision.outcome,
-                policy=incident.final_decision.policy_applied,
+                email=email,
+                role="approver",
+                decision=decision,  # type: ignore[arg-type]
+                channel=NotificationChannelType.TELEGRAM,
             )
-            await apply_decision(r, incident_id, executor=executor, audit=audit)
+            audit.emit("approval_response", incident_id, email=email, decision=decision)
+            incident = await build_final_decision_if_ready(r, incident_id)
+            await scheduler.ensure_consolidation_started(incident_id)
+            if (
+                incident.final_decision is not None
+                and incident.final_decision.execution_status is None
+            ):
+                audit.emit(
+                    "decision_final",
+                    incident_id,
+                    outcome=incident.final_decision.outcome,
+                    policy=incident.final_decision.policy_applied,
+                )
+                await apply_decision(r, incident_id, executor=executor, audit=audit)
 
     incident = await load_incident(r, incident_id)
     for task in list(scheduler._tasks):  # relojes pendientes: el proceso termina
@@ -247,13 +267,30 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool) -> int:
         d = incident.final_decision
         print(f"   decision: {d.outcome} / {d.policy_applied} "
               f"[exec={d.execution_status}]  rationale: {d.rationale}")
-    print(f"   acciones simuladas: "
-          f"{[f'{op}:{aid}:{st}' for op, aid, st in executor.history]}")
-    print(f"   llm_analysis: "
-          f"{'poblado (' + incident.llm_analysis.llm_backend + ')' if incident.llm_analysis else 'None'}")
+    history = getattr(executor, "history", [])
+    print(f"   acciones simuladas: {[f'{op}:{aid}:{st}' for op, aid, st in history]}")
+    backend = (
+        f"poblado ({incident.llm_analysis.llm_backend})" if incident.llm_analysis else "None"
+    )
+    print(f"   llm_analysis: {backend}")
     print("   audit:")
     for event in memory.events:
         print(f"     - {event.ts.strftime('%H:%M:%S')} {event.kind:22s} {event.payload}")
+
+    if live:
+        if incident.final_decision is None:
+            print("   >> MODO LIVE: el incidente espera aprobación humana.")
+            print(f"      aprobar:  python scripts/live_approve.py --incident {incident_id} "
+                  f"--decision approve --email telegram:tu-id")
+            print(f"      rechazar: python scripts/live_approve.py --incident {incident_id} "
+                  f"--decision reject --email telegram:tu-id")
+            print("      (o por Telegram real con el Approval API + ngrok)")
+        else:
+            print(f"   >> MODO LIVE: el incidente se auto-resolvió "
+                  f"({incident.final_decision.outcome}); sin HITL (T0/T1 auto).")
+        if not in_process:
+            await r.aclose()
+        return 0
 
     ok = incident.state.value == scenario.expected_state
     if scenario.expected_outcome:
@@ -276,8 +313,13 @@ def main() -> int:
         action="store_true",
         help="usa fakeredis: smoke sin Redis instalado",
     )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="HITL real: no castea los votos, deja el incidente para aprobación humana",
+    )
     args = parser.parse_args()
-    return asyncio.run(run_scenario(args.uc, args.redis_url, args.in_process))
+    return asyncio.run(run_scenario(args.uc, args.redis_url, args.in_process, args.live))
 
 
 if __name__ == "__main__":
