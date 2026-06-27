@@ -253,5 +253,12 @@ evidence/
 config/velociraptor_hosts.json
 config/api.config.yaml
 
-# ARGOS forensic evidence bundles
-evidence/
+# ----------- Tooling/scaffolding interno (NO entregables; quedan en disco) -----------
+# Coordinación interna + prompts de trabajo + aids personales. Fuera del repo entregable.
+/_COORDINACION_INTERMEDIA.md
+/docs/HANDOFF.md
+/PROMPT_CLAUDE_CODE_ARGOS.md
+/PROMPT_CC_PROTOTIPO_FUNCIONAL.md
+/GUIA_VIDEO_DEMO.html
+/GUIA_VIDEO_DEMO.pdf
+/ARGOS Console.html

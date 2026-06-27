@@ -63,7 +63,7 @@
     <circle cx="24" cy="24" r="4.5" fill="#f0a338"></circle>
   </svg>
   <div class="brand"><strong>ARGOS</strong><span>ADAPTIVE RESPONSE GUARD</span></div>
-  <div class="sub">Manual maestro del equipo · documento único de verdad<br>Actualizado 2026-06-26 · prototipo F1–F6</div>
+  <div class="sub">Manual maestro del equipo · documento único de verdad<br>Actualizado 2026-06-27 · prototipo F1–F6</div>
 </div></header>
 
 <div class="wrap">
@@ -98,16 +98,17 @@ Combina <strong>4 capas de detección</strong> — Sigma (L1), ML (L2), canarios
 <table>
 <thead><tr><th>Parte</th><th>Responsable</th><th>Alcance</th><th>Estado</th></tr></thead>
 <tbody>
-<tr><td><strong>P1</strong></td><td>Enzo Ordóñez<br><span class="mono" style="color:var(--muted)">SOAR / HITL</span></td>
+<tr><td><strong>P1</strong></td><td>Enzo Ordoñez<br><span class="mono" style="color:var(--muted)">SOAR / HITL</span></td>
   <td>Decision engine, tiers, two-person, ventana de consolidación, notificaciones (Telegram/Discord/Twilio/email),
   audit, Approval API, contención (executor).</td>
   <td><span class="badge b-ok">hecho</span> ~250 tests · <span class="badge b-sim">simulado</span> SimulatedExecutor (default)
   · <span class="badge b-lab">pendiente-lab</span> swap a WazuhActiveResponseExecutor</td></tr>
-<tr><td><strong>P2</strong></td><td>Sebastián Montenegro<br><span class="mono" style="color:var(--muted)">ML / bridge</span></td>
-  <td>Capa 2 ML (scoring por <code>rule.mitre.id</code> + whitelist + override), bridge Wazuh→Redis
-  (<code>events:normalized</code>, campo <code>payload</code>).</td>
-  <td><span class="badge b-ok">hecho</span> · <span class="badge b-lab">pendiente-lab</span> bridge tailea el <code>alerts.json</code> real</td></tr>
-<tr><td><strong>P3</strong></td><td>Ángeles Castillo<br><span class="mono" style="color:var(--muted)">detección / AR</span></td>
+<tr><td><strong>P2</strong></td><td>Sebastian Montenegro<br><span class="mono" style="color:var(--muted)">ML / bridge</span></td>
+  <td>Bridge Wazuh→Redis (<code>events:normalized</code>, campo <code>payload</code>) + el primitivo de publicación
+  del score ML (Camino B). El scorer ML Capa 2 en vivo (Isolation Forest + OC-SVM) queda aparte.</td>
+  <td><span class="badge b-ok">hecho</span> bridge · <span class="badge b-lab">pendiente</span> scorer ML en vivo +
+  bridge tailea el <code>alerts.json</code> real</td></tr>
+<tr><td><strong>P3</strong></td><td>Nicole Castillo<br><span class="mono" style="color:var(--muted)">detección / AR</span></td>
   <td>Reglas Sigma (L1), canarios (L3, auditd), scripts active-response para los 2 OS
   (<code>argos-isolate/throttle/snapshot/kill</code>).</td>
   <td><span class="badge b-ok">hecho</span> scripts + simuladores · <span class="badge b-lab">pendiente-lab</span>
@@ -117,6 +118,11 @@ Combina <strong>4 capas de detección</strong> — Sigma (L1), ML (L2), canarios
   ejecución del ataque.</td>
   <td><span class="badge b-ok">hecho</span> schema <code>argos_audit</code> + manual · <span class="badge b-lab">pendiente-lab</span>
   levantar las 3 VMs y correr el ataque</td></tr>
+<tr><td><strong>Apoyo</strong></td><td>Yohamin Pimentel<br><span class="mono" style="color:var(--muted)">apoyo P2 / forense</span></td>
+  <td>Integración forense con <strong>Velociraptor</strong> (<code>soar/response/forensics/</code>): recolección
+  post-incidente, mapeo host→client. Apoyo a la Capa 2.</td>
+  <td><span class="badge b-ok">hecho</span> primitivo (dry-run) · <span class="badge b-lab">pendiente-lab</span>
+  servidor Velociraptor + colección real</td></tr>
 </tbody>
 </table>
 <p><span class="badge b-ok">hecho</span> = construido y testeado en el repo &nbsp;·&nbsp;
@@ -134,11 +140,13 @@ ni <code>soar/</code> (ya cerrado)</strong>, conmutando solo los <em>bordes</em>
 <tr><td><strong>F1 — Modo en vivo</strong></td>
   <td><code>demo_injector --live</code> (deja el incidente en <code>AWAITING_APPROVAL</code>, la ventana de 60s
   arranca con el 1er voto) + <code>live_approve.py</code> (trigger local sin internet) + Telegram real vía ngrok.</td>
-  <td>Camino A del bridge realiza <strong>ADR-0014</strong> (<code>events:normalized</code>).</td></tr>
-<tr><td><strong>F2 — Capa 2 ML</strong></td>
-  <td>Scoring de la alerta normalizada por <code>rule.mitre.id</code> + <strong>whitelist</strong> de técnicas +
-  <strong>override</strong> conservador. Publica al mismo stream que el bridge.</td>
-  <td>Anti-alucinación / validación coherente con el contrato.</td></tr>
+  <td>Tooling sobre el SOAR existente (sin ADR nuevo).</td></tr>
+<tr><td><strong>F2 — Bridge de normalización</strong></td>
+  <td><strong>Camino A:</strong> tailea el <code>alerts.json</code> del Wazuh manager → <code>NormalizedAlert</code>
+  → publica al stream <code>events:normalized</code> (campo <strong><code>payload</code></strong>).
+  <strong>Camino B:</strong> publisher del score ML al mismo stream. <em>El scorer ML en vivo sigue pendiente (P2)
+  — lo hecho es el primitivo de publicación.</em></td>
+  <td><strong>ADR-0014</strong> (<code>events:normalized</code>, campo <code>payload</code>).</td></tr>
 <tr><td><strong>F3 — Active-response</strong></td>
   <td>Scripts para los <strong>2 OS del lab</strong>: bash (<code>iptables/kill/tar/renice</code>) en las víctimas
   Linux, PowerShell (<code>netsh/Stop-Process/Copy-Item</code>) en la Windows. Whitelist del manager (1514/1515)
@@ -211,7 +219,7 @@ compose core, <strong>separado</strong> del <code>app_prod</code> de la víctima
 <pre><span class="c"># raíz del repo. .env con POSTGRES_PASSWORD (+ OPENAI_API_KEY si querés el LLM real).</span>
 docker compose up -d                 <span class="c"># redis, postgres, soar, console, llm-triage</span>
 docker compose ps                    <span class="c"># esperar (healthy)</span>
-python scripts\demo_injector.py uc04 --redis-url redis://localhost:6379/0
+.\.venv\Scripts\python.exe scripts\demo_injector.py uc04 --redis-url redis://localhost:6379/0
 <span class="c"># consola web -> http://localhost:8080</span></pre>
 <p>Opción B — <strong>manual</strong> (3 terminales, sin Docker para los servicios):</p>
 <pre><span class="c"># T1 — Redis</span>
@@ -297,9 +305,10 @@ aclarar que es la corrida <strong>demo-safe</strong> (SimulatedExecutor, ADR-001
 y <strong>ejecuta el ataque</strong>.</li>
 <li><strong>P1 (Enzo) — el SOAR.</strong> Crea el bot de Telegram <strong>una vez</strong>; corre el Approval API + ngrok
 en <strong>una sola</strong> máquina.</li>
-<li><strong>P2 (Sebastián) — ML/bridge.</strong> El bridge tailea el <code>alerts.json</code> del manager; el scorer ML
-publica al stream.</li>
-<li><strong>P3 (Ángeles) — detección/AR.</strong> Reglas Sigma + canarios desplegados en el manager; scripts AR en las víctimas.</li>
+<li><strong>P2 (Sebastian) — ML/bridge.</strong> El bridge tailea el <code>alerts.json</code> del manager; el scorer ML
+(pendiente) publicará al stream.</li>
+<li><strong>P3 (Nicole) — detección/AR.</strong> Reglas Sigma + canarios desplegados en el manager; scripts AR en las víctimas.</li>
+<li><strong>Yohamin (apoyo P2) — forense.</strong> Velociraptor para la recolección post-incidente (server + colección = pendiente-lab).</li>
 <li><strong>Los que solo aprueban:</strong> estar en el chat de Telegram y tocar el botón. No instalan ni configuran nada.</li>
 </ul>
 </div>
@@ -327,7 +336,7 @@ solo los bordes (<code>ARGOS_EXECUTOR</code>, feeder <code>demo_injector</code> 
 <p><strong>F7 (Kubernetes, Perfil B)</strong> queda <strong>diferido</strong> como artefacto futuro: stack distribuido con
 wazuh-indexer + OpenSearch Dashboards (los 3 dashboards SOC) + k8s, pendiente de <strong>ADR-0016</strong>. No es parte del
 prototipo F1–F6.</p>
-<p>ARGOS · Adaptive Response Guard · manual maestro · 2026-06-26. Fuente de verdad operativa del equipo; ante conflicto,
+<p>ARGOS · Adaptive Response Guard · manual maestro · 2026-06-27. Fuente de verdad operativa del equipo; ante conflicto,
 manda este documento + los ADRs en <code>docs/decisions/</code>.</p>
 </footer>
 

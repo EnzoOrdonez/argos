@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Enzo Ordoñez Flores", email = "enzizoordonezflores@gmail.com" },
+    { name = "Enzo Ordoñez", email = "enzizoordonezflores@gmail.com" },
 ]
 keywords = ["ransomware", "edr", "siem", "wazuh", "sigma", "soar", "llm", "ciberseguridad"]
 classifiers = [
