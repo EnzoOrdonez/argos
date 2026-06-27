@@ -32,9 +32,10 @@ Servicio nuevo que **tailea `alerts.json` del Wazuh manager** y por cada alerta 
 - **+ publisher ML:** `ml.soar_adapter` ya arma el `NormalizedAlert`; solo se le suma el `XADD`.
 
 ### 2.3 Active-response
-Scripts `argos-{isolate,throttle,snapshot,kill}` en el agente + bloques `<command>`/`<active-response>` en el `ossec.conf` del manager. El `WazuhActiveResponseExecutor` ya los invoca por nombre (`soar/playbooks/wazuh.py`).
-- Windows (la VM): PowerShell/batch — `netsh advfirewall` para aislar, `Stop-Process` para kill, copia del dir para snapshot.
-- **REGLA CRÍTICA:** `argos-isolate` **debe whitelistear la IP del manager (puertos 1514/1515)**; si corta TODA la red, mata el canal agente↔manager y el manager no puede revertir ni confirmar (auto-brick).
+Scripts `argos-{isolate,throttle,snapshot,kill}` (+ reverts `argos-{unisolate,unthrottle}`) en el agente + bloques `<command>`/`<active-response>` en el `ossec.conf` del manager. El `WazuhActiveResponseExecutor` ya los invoca por nombre (`soar/playbooks/wazuh.py`). Implementados en `active-response/` para los **dos OS del lab** (Windows + Linux; ver Enmienda 2026-06-26 al pie):
+- **Linux (víctimas Debian — bash):** `iptables -I/-D` para aislar, `kill -9`/`pkill` para kill, `tar` para snapshot, `renice`+`ionice`+`cpulimit` para throttle. FIM/whodata vía `auditd`.
+- **Windows (endpoint — PowerShell):** `netsh advfirewall` para aislar, `Stop-Process` para kill, `Copy-Item` para snapshot, `PriorityClass` para throttle.
+- **REGLA CRÍTICA (ambos OS):** `argos-isolate` **debe whitelistear la IP del manager (puertos 1514/1515) ANTES del block-all**; si corta TODA la red, mata el canal agente↔manager y el manager no puede revertir ni confirmar (auto-brick). Si falta la IP del manager, el script **aborta** en vez de aislar a ciegas.
 
 ### 2.4 Topología — dos perfiles de despliegue
 
@@ -77,3 +78,25 @@ Copia/tar del dir del canary, **no** VSS real (ADR-0012).
 
 - **Fase A:** el stack simulado corre end-to-end y el video queda grabado.
 - **Fase B:** la VM Windows enrolada al manager; un ataque real dispara alerta → bridge → SOAR → aprobación (Telegram real) → `argos-isolate` aísla la VM **sin perder el agente** → audit lo registra. El swap simulado↔real queda documentado en el runbook.
+
+---
+
+## Enmienda (2026-06-26) — OS y topología del lab confirmados
+
+El equipo confirmó el lab real: **3 VMs corriendo a la vez** (Diego las hostea y ejecuta el ataque),
+con **dos sistemas operativos**. Esto enmienda §2.3 y §2.4 (Status sigue **Accepted**):
+
+- **§2.3 — active-response es Windows *y* Linux** (no solo Windows). Los scripts viven en
+  `active-response/{linux,windows}/`: bash (`iptables`/`kill`/`tar`/`renice`) para las víctimas Linux,
+  PowerShell (`netsh`/`Stop-Process`/`Copy-Item`/`PriorityClass`) para la víctima Windows. La regla
+  crítica del whitelist del manager (1514/1515 antes del block-all) aplica a los dos.
+- **§2.4 — topología de 3 VMs** (en vez de "una laptop de 16 GB + 1 VM Windows"):
+  1. **Core** — 1 VM **Linux**: Wazuh manager + los servicios ARGOS (`redis`, `soar`, `bridge`, `ml`,
+     `llm-triage`, `console`).
+  2. **Víctima endpoint** — 1 VM **Windows**: ransomware (UC-01), canary (UC-02), agent-kill (UC-05).
+  3. **Víctima crítica** — 1 VM **Linux Debian + PostgreSQL** (production-critical): ataque a la DB
+     (UC-04), SELECT masivo (UC-07), SQLi (UC-08).
+
+  Sigue siendo el Perfil A (manager-only por RAM); el indexer/dashboard (Perfil B) quedan para el
+  prototipo final distribuido. Coherente con la canary (`deception/wazuh-rules/canary_rules.xml`, auditd
+  + rutas `/canary/...`) y el victim production-critical Debian de §2.5.
