@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARGOS · Approval Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- IBM Plex (mismo del bundle de diseño). Para air-gap: self-hostear los woff2 y cambiar este link. -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+        <rect width="34" height="34" rx="9" transform="translate(24 24) rotate(45) translate(-17 -17)" fill="#f0a338" opacity="0.16"></rect>
+        <circle cx="24" cy="24" r="15" fill="none" stroke="#f0a338" stroke-width="3"></circle>
+        <circle cx="24" cy="24" r="4.5" fill="#f0a338"></circle>
+      </svg>
+      <div class="brand-text">
+        <strong>ARGOS</strong>
+        <span>ADAPTIVE RESPONSE GUARD</span>
+      </div>
+    </div>
+    <div class="status" id="status"><span class="dot"></span> SISTEMA ACTIVO</div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <h2 class="panel-title">Incidentes</h2>
+      <ul id="incident-list" class="incident-list"></ul>
+    </aside>
+    <section class="detail" id="detail">
+      <div class="empty" id="empty">Esperando incidentes… arrancá el demo con
+        <code>python scripts/demo_injector.py uc04 --redis-url &lt;REDIS_URL&gt;</code>.</div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

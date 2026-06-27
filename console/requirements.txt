@@ -1,0 +1,6 @@
+# Consola web ARGOS (P4) — FastAPI read-only que sirve el SPA estático.
+# Correr:  REDIS_URL=redis://localhost:6379/0 uvicorn console.api.main:app --port 8080
+# Tests:   python -m pytest console/tests
+fastapi>=0.110
+uvicorn[standard]>=0.27
+redis>=5.0

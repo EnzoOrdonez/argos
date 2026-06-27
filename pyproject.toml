@@ -124,7 +124,7 @@ ignore = ["S101"]  # pytest assert OK
 # soar/response/forensics/tests: PENDIENTE definir dueño (modulo forense ajeno en namespace soar/)
 #   + alinear datetime.UTC->timezone.utc (rompe en <3.11). Ver auditoria 2026-06-24.
 [tool.pytest.ini_options]
-testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "detection/tests", "deception/tests", "scripts/tests", "bridge/tests", "active-response/tests"]
+testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "detection/tests", "deception/tests", "scripts/tests", "bridge/tests", "active-response/tests", "console/tests"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
 
