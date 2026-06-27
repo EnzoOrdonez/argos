@@ -75,6 +75,19 @@ Camino real (Wazuh instalado en la VM core): `ARGOS_EXECUTOR=wazuh docker compos
 (suma el `bridge`, que tailea `/var/ossec/logs/alerts`). Swap simulado↔real = `ARGOS_EXECUTOR` + el perfil
 `real`. La consola web (Fase 6, `:8080`) reemplaza a la Streamlit; ambas leen el mismo Redis.
 
+## 2-ter. Reset — empezar de cero
+
+Antes de cada toma, limpiá el estado de demo del Redis para que la consola quede vacía y la próxima inyección
+—incluida `--live`— cree un incidente **fresco**. Si no, re-inyectar el mismo host **enriquece** el incidente
+anterior (la correlación por host vive 600s; en `--live` queda sin resolver). El grupo del stream se recrea solo.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\demo_reset.py --redis-url redis://localhost:6379/0
+# o, sin script (compose):  docker compose exec redis redis-cli FLUSHALL
+```
+
+> **Correlación por host (ADR-0013):** inyectar los 5 UCs seguidos deja **3 incidentes**, no 5 — `uc01`+`uc02` (WIN), `uc04`+`uc07` (LIN) y `uc06` (EDGE) se agrupan por host. Es un **feature** (correlación = menos fatiga de alertas). Para mostrar cada UC **aislado**, reseteá entre inyecciones.
+
 ## 3. Qué muestra cada UC
 
 | UC | Escenario | Host | Desenlace | Política |
@@ -167,3 +180,5 @@ El prototipo real conmuta los **bordes** por entorno, sin tocar `soar/` ni el co
 - **Consola vacía** → confirmá que el inyector corrió con `--redis-url` (NO `--in-process`) apuntando al **mismo** `REDIS_URL` que la consola.
 - **`BUSYGROUP ... already exists`** en logs → inofensivo; o resetear: `redis-cli XGROUP DESTROY events:normalized soar-router ; redis-cli XGROUP CREATE events:normalized soar-router 0 MKSTREAM`.
 - **`UnicodeEncodeError: charmap`** (en simuladores de P3, no en `demo_injector`) → `$env:PYTHONUTF8 = "1"`.
+- **Re-inyectar el mismo UC no crea incidente nuevo** → es la correlación por host (`corr:open:{host}`, 600s, ADR-0013). Corré el **reset** (`scripts/demo_reset.py`, §2-ter) antes de cada toma.
+- **Panel LLM vacío** → el hook del SOAR corta el triage a los **5s** (hardcoded en `soar/`) y deepseek-v4-pro tarda más (fail-soft R-2, no es bug). Para grabar con panel lleno: `docker compose stop llm-triage` + `.\.venv\Scripts\python.exe scripts\triage_stub.py` (:8002, canned). Probar el NVIDIA real aparte: `.\.venv\Scripts\python.exe scripts\triage_probe.py` (sin el cap de 5s).

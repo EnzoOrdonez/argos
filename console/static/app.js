@@ -125,10 +125,12 @@ function clockBody(inc) {
   const w = inc.consolidation_window;
   if (!w) return '<div class="muted">Sin ventana todavía (arranca con el primer voto).</div>';
   const dur = w.duration_seconds;
-  const remaining = Math.max(0, (Date.parse(w.started_at) + dur * 1000 - Date.now()) / 1000);
-  const frac = dur > 0 ? Math.min(1, 1 - remaining / dur) : 1;
+  // cerrada si la ventana terminó O el incidente ya tiene decisión final (executed/no_action)
+  const closed = !!(w.ended_at || inc.final_decision);
+  const remaining = closed ? 0 : Math.max(0, (Date.parse(w.started_at) + dur * 1000 - Date.now()) / 1000);
+  const frac = closed ? 1 : (dur > 0 ? Math.min(1, 1 - remaining / dur) : 1);
   return `<div class="clock">${mmss(remaining)} <span class="muted" style="font-size:14px">/ ${mmss(dur)}</span></div>
-    <div class="muted" style="font-size:12px">${w.ended_at ? 'cerrada' : 'en curso'}</div>
+    <div class="muted" style="font-size:12px">${closed ? 'cerrada' : 'en curso'}</div>
     <div class="bar"><span style="width:${(frac * 100).toFixed(1)}%"></span></div>`;
 }
 function tickClock() {
