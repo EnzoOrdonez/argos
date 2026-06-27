@@ -100,3 +100,22 @@ con **dos sistemas operativos**. Esto enmienda §2.3 y §2.4 (Status sigue **Acc
   Sigue siendo el Perfil A (manager-only por RAM); el indexer/dashboard (Perfil B) quedan para el
   prototipo final distribuido. Coherente con la canary (`deception/wazuh-rules/canary_rules.xml`, auditd
   + rutas `/canary/...`) y el victim production-critical Debian de §2.5.
+
+## Enmienda (2026-06-26b) — docker-compose Perfil A (Fase 5)
+
+Al implementar el `docker-compose.yml` (raíz) se reconcilia §2.4 con la realidad de despliegue
+(Status sigue **Accepted**):
+
+- **Wazuh manager: instalado en la VM core (systemd), NO servicio del compose.** El listado de §2.4
+  lo ponía entre los servicios Docker; se corrige. La imagen oficial `wazuh/wazuh-manager` espera el
+  indexer y es pesada para Perfil A; instalarlo en el host es como Wazuh se despliega de verdad. El
+  contenedor `bridge` lee el `alerts.json` montando `/var/ossec/logs/alerts:ro` del host.
+- **Servicios Docker reales:** `redis`, `postgres`, `soar`, `console`, `llm-triage` (core) + `bridge`
+  (perfil `real`) + `streamlit` (perfil `fallback`). Default `ARGOS_EXECUTOR=simulated`.
+- **`ml` no es servicio** — es librería (sin entrypoint); vive en la imagen para el bridge Camino B.
+- **`postgres:17.5-bookworm` para `argos_audit` EN el compose core**, separado del `app_prod` de la
+  víctima Debian. Resuelve el smell de tener el log de ARGOS en la caja que defiende. Hoy el SOAR usa
+  `MemorySink` (`soar/approval_api/main.py`), así que la provisión del schema es **forward-looking**
+  (queda listo para cuando se cablee un sink Postgres); no bloquea el demo.
+- **Sin OpenSearch en Perfil A** (confirmado): el runtime no escribe a OpenSearch (sink no cableado);
+  los 3 dashboards SOC quedan para Perfil B (F7). Detalle operativo en `deploy/README.md`.
