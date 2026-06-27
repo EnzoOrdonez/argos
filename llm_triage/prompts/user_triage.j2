@@ -1,0 +1,12 @@
+Incidente: {{ incident_id }}
+Host: {{ host.id }} (criticidad {{ host.criticality }}{% if host.os %}, OS {{ host.os }}{% endif %})
+Alerta: {{ alert_summary.title }}
+Técnica observada (cruda, puede ser inexacta): {{ alert_summary.technique_mitre or "ninguna" }}
+Severidad score (0-1): {{ alert_summary.severity_score }}
+Capas que dispararon: {{ alert_summary.triggering_layers | join(", ") }}
+Telemetría reciente (ya sanitizada): {{ recent_telemetry_json }}
+
+IDs MITRE permitidos (elegí el más apropiado de esta lista, no uses otros):
+{{ whitelist | join(", ") }}
+
+Devolvé ahora el JSON del triage, y solo el JSON.

@@ -1,21 +1,24 @@
-"""Factory that returns the active `LLMClient` based on `LLM_BACKEND`.
+"""Selección del backend LLM por `LLM_BACKEND` (ADR-0001: swap por env, sin tocar código).
 
-The rest of the codebase depends only on this factory + the abstract
-`LLMClient`, never on a concrete backend class. Swapping providers is a
-one-line config change (env var) with no code modifications, per
-ADR-0001 v2.
-
-References:
-    - ADR-0001 v2 §Plan de implementación (factory skeleton, env var
-      name, and acceptance criterion: "Switch entre backends en demo
-      en vivo funciona sin reinicio del servicio").
-    - SAD §13.3 (vendor portability cross-cutting concern).
-
-TODO:
-    - Implement `get_llm_client() -> LLMClient`.
-    - Read `LLM_BACKEND` env var, default `openai`.
-    - Map `openai` -> OpenAIClient, `llama_local` -> LlamaLocalClient.
-    - Raise `ValueError` for unknown backends.
-    - (Future) Add `anthropic` backend (Claude Haiku / Sonnet) as a
-      one-line addition if budget allows during evaluation phase.
+`openai` → `OpenAIClient` (endpoint OpenAI-compatible, default NVIDIA). `llama_local`
+(Ollama, air-gap) queda **diferido** en Fase 4: el factory avisa claro si se lo selecciona.
 """
+
+from __future__ import annotations
+
+import os
+
+from llm_triage.llm_client.base import LLMClient
+from llm_triage.llm_client.openai_client import OpenAIClient
+
+
+def get_llm_client(backend: str | None = None) -> LLMClient:
+    """Devuelve el cliente LLM activo según `LLM_BACKEND` (default `openai`)."""
+    backend = (backend or os.environ.get("LLM_BACKEND", "openai")).strip().lower()
+    if backend == "openai":
+        return OpenAIClient()
+    if backend == "llama_local":
+        raise NotImplementedError(
+            "backend 'llama_local' (Ollama) está diferido en Fase 4; usá LLM_BACKEND=openai"
+        )
+    raise ValueError(f"LLM_BACKEND desconocido: {backend!r} (opciones: openai | llama_local)")

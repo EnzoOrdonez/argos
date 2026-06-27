@@ -1,28 +1,39 @@
-"""Shared pytest fixtures for the llm_triage test suite.
+"""Fixtures de los tests de llm_triage."""
 
-Coverage targets for this module (per OPEN_QUESTIONS_RESOLUTION.md §Q3):
-    - LLMClient implementations and the FastAPI `/triage` endpoint count
-      as critical-path code; target >=60% line coverage.
-    - At least one happy-path and one error-path integration test per
-      LLMClient backend.
+from __future__ import annotations
 
-References:
-    - ADR-0001 v2 §Métricas de éxito ("ambos backends pasan el mismo test
-      suite de structured output validation").
-    - SAD §13.5 (Testing strategy; `respx` para mocking de OpenAI HTTP,
-      `httpx` directo o un fake Ollama para LlamaLocalClient).
-    - OPEN_QUESTIONS_RESOLUTION.md §Q3 (tiered coverage targets).
+from datetime import datetime, timezone
 
-TODO:
-    - `respx_mock` fixture preconfigured con OpenAI base URL.
-    - `mock_ollama` fixture levantando un fake server local para
-      LlamaLocalClient (puerto 11434).
-    - `sample_alert_context` fixture: representative AlertContext payload
-      drawn from UC-01 (classic ransomware) for happy-path tests.
-    - `sample_alert_context_novel` fixture: UC-03 payload (ML-only T2)
-      for the centerpiece scenario.
-    - `mitre_whitelist` fixture: subset of ATT&CK technique IDs used by
-      the validation tests (T1486, T1490, T1083, T1562, T1021, T1071).
-    - Hallucinated-technique fixture: response containing `T9999` to
-      verify the whitelist rejects it (SAD §12.1 R-06).
-"""
+import pytest
+
+from argos_contracts.enums import Criticality, Layer
+from argos_contracts.triage import AlertContext, AlertSummary, HostInfo
+
+
+@pytest.fixture
+def alert_context() -> AlertContext:
+    """AlertContext representativo de UC-04 (ataque a la DB), con datos sensibles
+    para ejercitar la sanitización."""
+    return AlertContext(
+        incident_id="INC-2026-06-27-001",
+        created_at=datetime(2026, 6, 27, 12, 0, 0, tzinfo=timezone.utc),
+        host=HostInfo(
+            id="LIN-VICTIM-01",
+            criticality=Criticality.PRODUCTION_CRITICAL,
+            ip="10.0.0.22",
+            os="Debian 12",
+        ),
+        alert_summary=AlertSummary(
+            title="SELECT masivo sospechoso en la DB del banco",
+            technique_mitre="T1190",
+            severity_score=0.85,
+            triggering_layers=[Layer.LAYER_1, Layer.LAYER_2],
+            raw_alert_id="alert-uc04",
+        ),
+        recent_telemetry={
+            "command_line": (
+                "psql -U argos_ro -h 10.0.0.22 -c 'SELECT * FROM customers' password=hunter2"
+            ),
+            "notified": "dba@intibank.local",
+        },
+    )
