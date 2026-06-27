@@ -59,6 +59,22 @@ $env:DISCORD_WEBHOOK_URL = "..."
 
 Cada inyección imprime un trace en la terminal (UC, votos HITL, tier, decisión, política, acciones simuladas, audit) y deja el incidente en Redis; la consola lo lista en el sidebar al refrescar (~1.5s).
 
+## 2-bis. Variante docker-compose (Fase 5, Perfil A)
+
+Todo el core en contenedores en vez de los 3 terminales manuales. Detalle completo en `deploy/README.md`.
+
+```powershell
+# raíz del repo; .env con POSTGRES_PASSWORD (+ OPENAI_API_KEY si querés el LLM real)
+docker compose up -d                    # redis, postgres, soar, console, llm-triage
+docker compose ps                       # esperar (healthy)
+python scripts\demo_injector.py uc04 --redis-url redis://localhost:6379/0
+# consola web: http://localhost:8080    (Streamlit fallback: docker compose --profile fallback up -d  ->  :8501)
+```
+
+Camino real (Wazuh instalado en la VM core): `ARGOS_EXECUTOR=wazuh docker compose --profile real up -d`
+(suma el `bridge`, que tailea `/var/ossec/logs/alerts`). Swap simulado↔real = `ARGOS_EXECUTOR` + el perfil
+`real`. La consola web (Fase 6, `:8080`) reemplaza a la Streamlit; ambas leen el mismo Redis.
+
 ## 3. Qué muestra cada UC
 
 | UC | Escenario | Host | Desenlace | Política |

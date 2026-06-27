@@ -1,0 +1,63 @@
+"""Tests estructurales del docker-compose Perfil A (sin levantar Docker).
+
+Verifica los servicios + healthchecks esperados y que NO haya secretos hardcodeados
+(los secretos vienen de `.env` vía `env_file`)."""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import yaml
+
+_ROOT = Path(__file__).resolve().parents[2]
+_COMPOSE = _ROOT / "docker-compose.yml"
+
+
+def _load() -> dict:
+    return yaml.safe_load(_COMPOSE.read_text(encoding="utf-8"))
+
+
+def test_compose_is_valid_yaml() -> None:
+    assert "services" in _load()
+
+
+def test_core_services_present() -> None:
+    services = _load()["services"]
+    for name in ("redis", "postgres", "soar", "console", "llm-triage"):
+        assert name in services, f"falta el servicio {name}"
+
+
+def test_bridge_and_streamlit_are_optional_profiles() -> None:
+    services = _load()["services"]
+    assert services["bridge"]["profiles"] == ["real"]
+    assert services["streamlit"]["profiles"] == ["fallback"]
+
+
+def test_postgres_pinned_to_17_5() -> None:
+    assert _load()["services"]["postgres"]["image"] == "postgres:17.5-bookworm"
+
+
+def test_argos_executor_defaults_simulated() -> None:
+    soar = _load()["services"]["soar"]
+    assert soar["environment"]["ARGOS_EXECUTOR"] == "${ARGOS_EXECUTOR:-simulated}"
+
+
+def test_core_services_have_healthchecks() -> None:
+    services = _load()["services"]
+    for name in ("redis", "postgres", "soar", "console", "llm-triage"):
+        assert "healthcheck" in services[name], f"{name} sin healthcheck"
+
+
+def test_bridge_mounts_wazuh_alerts_readonly() -> None:
+    volumes = _load()["services"]["bridge"]["volumes"]
+    assert any("/var/ossec/logs/alerts" in v and v.endswith(":ro") for v in volumes)
+
+
+def test_no_hardcoded_secrets() -> None:
+    text = _COMPOSE.read_text(encoding="utf-8")
+    assert "nvapi-" not in text
+    assert not re.search(r"sk-[A-Za-z0-9]{20,}", text)
+    # OPENAI_API_KEY nunca inline: viaja por env_file
+    assert not re.search(r"OPENAI_API_KEY\s*:\s*\S", text)
+    assert any("env_file" in service for service in _load()["services"].values())
