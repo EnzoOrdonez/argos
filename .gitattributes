@@ -1,0 +1,13 @@
+# Normalización de fin de línea (raíz). active-response/ tiene el suyo propio.
+* text=auto
+
+# Linux-críticos: SIEMPRE LF (shebang y continuaciones `\` se rompen con CRLF).
+*.sh        text eol=lf
+*.conf      text eol=lf
+Dockerfile  text eol=lf
+.dockerignore text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+# Windows PowerShell: CRLF.
+*.ps1       text eol=crlf
