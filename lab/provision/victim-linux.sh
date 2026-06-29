@@ -19,7 +19,17 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y curl gnupg apt-transport-https ca-certificates lsb-release \
   jq iptables cpulimit auditd python3-venv \
-  postgresql postgresql-contrib "postgresql-${PGVER}-pgaudit"
+  postgresql postgresql-contrib
+
+# pgAudit NO está en Debian main (vive en PGDG apt.postgresql.org). Best-effort:
+# su consumidor (reglas Sigma DB) está deferido (C17), así que NO debe bloquear el
+# provision si el paquete falta. Si está, lo activamos abajo.
+PGAUDIT_OK=0
+if apt-get install -y "postgresql-${PGVER}-pgaudit"; then
+  PGAUDIT_OK=1
+else
+  echo "[lin] WARN: pgAudit no disponible en repos (PGDG no agregado); sigo sin él (C17 deferido)"
+fi
 
 # ------------------------------------------------------------
 # 1. Wazuh agent -> manager, registrar, enable
@@ -72,7 +82,7 @@ systemctl restart auditd || true
 PGCONF="/etc/postgresql/${PGVER}/main"
 sed -i "s/^#\?listen_addresses.*/listen_addresses = '*'/" "${PGCONF}/postgresql.conf"
 # pgAudit (su consumidor -reglas DB- está deferido a P3/P1, pero la infra queda)
-if ! grep -q "shared_preload_libraries.*pgaudit" "${PGCONF}/postgresql.conf"; then
+if [ "${PGAUDIT_OK}" = 1 ] && ! grep -q "shared_preload_libraries.*pgaudit" "${PGCONF}/postgresql.conf"; then
   echo "shared_preload_libraries = 'pgaudit'" >> "${PGCONF}/postgresql.conf"
   echo "pgaudit.log = 'read,write,ddl'"        >> "${PGCONF}/postgresql.conf"
 fi
