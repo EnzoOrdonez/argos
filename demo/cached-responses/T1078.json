@@ -1,0 +1,15 @@
+{
+  "incident_id": "INC-DEMO-UC07",
+  "tecnica_mitre": "T1078",
+  "confianza": 0.85,
+  "severidad": "high",
+  "runbook_aplicable": "NIST SP 800-61 Rev. 2 - Incident Handling",
+  "accion_recomendada": "Revisar logs de autenticación, bloquear cuentas comprometidas y forzar restablecimiento de contraseñas para usuarios afectados.",
+  "indicadores_correlacionar": [
+    "login_success_multiple_accounts",
+    "login_from_unusual_geolocation",
+    "privileged_account_usage_spike"
+  ],
+  "llm_backend": "openai/gpt-oss-120b",
+  "generated_at": "2026-06-29T20:59:55.117700Z"
+}

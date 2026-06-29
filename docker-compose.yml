@@ -87,6 +87,11 @@ services:
     env_file: .env
     environment:
       LLM_BACKEND: ${LLM_BACKEND:-openai}
+    # Cache LLM a prueba de camara (DEMO_MODE): el host genera demo/cached-responses/
+    # (scripts/gen_llm_cache.py) y se monta read-only. Con DEMO_MODE=true en .env el
+    # servicio sirve desde aca (DEMO_CACHE_PATH=./demo/cached-responses -> /app/demo/...).
+    volumes:
+      - ./demo:/app/demo:ro
     ports: ["8002:8002"]
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8002/health"]

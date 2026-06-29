@@ -1,0 +1,16 @@
+{
+  "incident_id": "INC-DEMO-UC03",
+  "tecnica_mitre": "T1083",
+  "confianza": 0.74,
+  "severidad": "high",
+  "runbook_aplicable": "NIST SP 800-61 Rev. 2 Incident Handling Guide",
+  "accion_recomendada": "Aísle el host de la red, capture memoria volátil, realice una imagen forense y bloquee los indicadores de compromiso detectados.",
+  "indicadores_correlacionar": [
+    "FileHash: <hash_placeholder>",
+    "ProcessName: ransomware.exe",
+    "NetworkDomain: suspicious-c2.example.com",
+    "FilePath: C:\\Users\\*\\AppData\\Local\\Temp\\*"
+  ],
+  "llm_backend": "openai/gpt-oss-120b",
+  "generated_at": "2026-06-29T20:59:43.978816Z"
+}
