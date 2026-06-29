@@ -88,12 +88,16 @@ vagrant ssh core -c "sudo /var/ossec/bin/agent_control -l"
 ```
 
 ### G3 — DB IntiBank cargada
+**Validar con `inti_dba` (superuser, ve las 7 tablas), NO `inti_app`.**
 ```bash
-vagrant ssh linux-victim -c "psql -h 127.0.0.1 -U inti_app -d app_prod -c '\dt intibank.*'"
+vagrant ssh linux-victim -c "PGPASSWORD=inti_dba_secret_2026 psql -h 127.0.0.1 -U inti_dba -d app_prod -c '\dt intibank.*'"
 # Esperado: 7 tablas (customers, accounts, cards, transactions, transfers, internal_users, audit_log)
-vagrant ssh linux-victim -c "psql -h 127.0.0.1 -U inti_app -d app_prod -c 'SELECT count(*) FROM intibank.customers'"
+vagrant ssh linux-victim -c "PGPASSWORD=inti_dba_secret_2026 psql -h 127.0.0.1 -U inti_dba -d app_prod -c 'SELECT count(*) FROM intibank.customers'"
 # Esperado: ~10000
 ```
+> ⚠️ Con `inti_app` el `\dt` muestra **5** tablas, no 7 — `inti_app` no tiene GRANT sobre
+> `internal_users` ni `audit_log` (ADR-0009 §2.4). **No es error**, es separation of duties.
+> Para validar el schema completo usá `inti_dba`.
 
 ### G4 — Canary L3 real → events:normalized
 ```bash
@@ -149,6 +153,26 @@ vagrant destroy -f core linux-victim     # y vagrant up de nuevo
 | Canary no genera alerta | FIM whodata puede tardar; verificar `<directories ...>/opt/argos/canary</directories>` en el `ossec.conf` del agente y `systemctl restart wazuh-agent`. |
 
 ---
+
+## Boot offline / pre-generar el snapshot del seed
+
+El provision necesita internet (apt Wazuh/PostgreSQL, pip Faker). `victim-linux.sh`
+**falla ruidoso al inicio** si no hay egress (guard F4). Si la máquina de demo va a estar
+sin internet, pre-generá el snapshot del seed en una máquina CON red y commitealo:
+
+```bash
+# En una máquina con PostgreSQL + red:
+createdb app_prod
+psql -d app_prod -f lab/postgres/init.sql
+pip install faker numpy psycopg2-binary
+VICTIM_PG_HOST=127.0.0.1 VICTIM_PG_DB=app_prod \
+  VICTIM_PG_SEED_USER=inti_dba VICTIM_PG_SEED_PASSWORD=inti_dba_secret_2026 \
+  python lab/postgres/seed.py
+pg_dump --no-owner app_prod | gzip > lab/postgres/seed_snapshot.sql.gz
+```
+
+Con `seed_snapshot.sql.gz` presente, `victim-linux.sh` lo carga (no regenera). Igual
+el apt/Wazuh del provision necesita red — el snapshot solo evita regenerar el seed.
 
 ## Qué NO valida este runbook (honesto)
 "Código escrito" ≠ "lab funciona". Este runbook **no fue ejecutado end-to-end contra
