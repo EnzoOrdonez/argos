@@ -20,8 +20,9 @@ Enzo (Docker Desktop). Cualquiera del equipo puede grabar siguiendo esto sin imp
 | LLM real gpt-oss (o cache, ver §LLM) en uc03/04/07 | **uc03** conduce el cierre de ventana para *visualizar* el split-brain (la lógica de decisión es real) |
 | Alertas `NormalizedAlert` por `events:normalized` (campo `payload`) | El ataque no ocurre: el injector publica las alertas que el lab generaría |
 
-- **El LLM enriquece SOLO uc03/04/07** (T2 o two-person). uc01/02/06 NO llaman al LLM por diseño (R-2 gating, `triage_hook.should_call_triage`). No es un bug — narrarlo así.
-- **El audit se ve por el stdout del injector** (sink en memoria). El Postgres `argos_audit` del compose crea las tablas pero todavía no se escriben filas (deuda conocida; no mostrar un query a Postgres).
+- **El LLM enriquece SOLO uc03/04/07** (T2 o two-person). uc01/02/06/05/08 NO llaman al LLM por diseño (R-2 gating, `triage_hook.should_call_triage`). No es un bug — narrarlo así.
+- **El audit se ve por el stdout del injector** (sink en memoria) **y, opcionalmente, como fila real en Postgres** `argos_audit` si activás el SQL sink (ver §Audit SQL). Sin el DSN, solo stdout.
+- **8 UC inyectables:** uc01/02/03/04/05/06/07/08. Los 8 dan su desenlace por el pipeline real. La grabación de ~13 min entra cómoda con 6; uc05/uc08 son beats cortos opcionales.
 
 ---
 
@@ -96,6 +97,31 @@ docker compose exec redis redis-cli KEYS 'incident:INC-*'
 ```
 
 ---
+
+### Beats opcionales — uc05 / uc08 (si sobra tiempo)
+```bash
+# uc05 — agent-kill sigiloso: L1 stop-service + L3 canary -> T0 auto-isolate
+.venv\Scripts\python scripts\demo_injector.py uc05 --redis-url %RU%
+# uc08 — SQL injection web: L1 firmas SQLi + L2 patron -> T1 auto, block IP
+.venv\Scripts\python scripts\demo_injector.py uc08 --redis-url %RU%
+```
+Narrar uc05 = "matar el agente ES la señal: el host se aísla solo". uc08 = "OWASP #1; firma + anomalía de patrón se corroboran → T1 automático, block IP".
+
+## §Audit SQL — fila real en Postgres (opcional)
+Por defecto el audit se ve por el **stdout del injector**. Para mostrar una **fila real**
+con un query (cierra el beat de compliance), activá el SQL sink antes de inyectar:
+```bash
+# DSN al Postgres argos_audit del compose (host -> localhost:5432). PW = POSTGRES_PASSWORD del .env.
+set ARGOS_AUDIT_SQL_DSN=postgresql://argos:<POSTGRES_PASSWORD>@localhost:5432/argos_audit
+.venv\Scripts\python scripts\demo_injector.py uc04 --redis-url %RU%
+# mostrar la fila:
+docker compose exec postgres psql -U argos -d argos_audit -x -c ^
+  "SELECT incident_id,tier,state,final_outcome,final_policy,execution_status FROM argos_audit.audit_incidents;"
+docker compose exec postgres psql -U argos -d argos_audit -c ^
+  "SELECT approver_email,status,channel FROM argos_audit.audit_responses;"
+```
+Fail-soft: sin el DSN (o sin DB) el sink no-opea y el audit sigue por stdout (R-2: nunca
+bloquea). Si el rol `argos` no existe, recreá el volume: `docker compose down -v && docker compose up -d`.
 
 ## §Telegram — injector-cast (sin ngrok)
 Los votos de uc03/uc04/uc07 los **castea el injector de forma determinista** (in-proceso,
