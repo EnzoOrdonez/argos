@@ -15,6 +15,16 @@ PGVER=15                      # Debian 12 bookworm
 
 echo "[lin] === provision víctima Linux; manager=${MANAGER_IP} ==="
 
+# F4: el provision necesita salida a internet (apt Wazuh/PostgreSQL, pip Faker).
+# Fallar ruidoso y claro si no hay egress, en vez de morir 50 líneas más abajo.
+if ! curl -fsS -m 10 https://packages.wazuh.com/ >/dev/null 2>&1 \
+   && ! curl -fsS -m 10 https://deb.debian.org/ >/dev/null 2>&1; then
+  echo "[lin] FATAL: sin salida a internet en la VM — el apt/pip del provision no van." >&2
+  echo "[lin]   Opciones: habilitar NAT en la VM, o pre-generar lab/postgres/seed_snapshot.sql.gz" >&2
+  echo "[lin]   + un mirror apt local. Ver lab/RUNBOOK_BOOT_1A.md (sección offline)." >&2
+  exit 1
+fi
+
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y curl gnupg apt-transport-https ca-certificates lsb-release \
@@ -43,11 +53,33 @@ if ! dpkg -s wazuh-agent >/dev/null 2>&1; then
   apt-get update -y
   WAZUH_MANAGER="${MANAGER_IP}" WAZUH_AGENT_NAME="LIN-VICTIM-01" apt-get install -y wazuh-agent
 fi
-# Asegurar el manager en el config y registrar contra authd (1515)
+# Asegurar el manager en el config
 sed -i "s#<address>.*</address>#<address>${MANAGER_IP}</address>#" "${OSSEC}/etc/ossec.conf" || true
-"${OSSEC}/bin/agent-auth" -m "${MANAGER_IP}" -A "LIN-VICTIM-01" || true
+
+# F2: esperar a que el authd del manager (1515) escuche ANTES de enrolar (Vagrant
+# provisiona core primero, pero el authd puede tardar en levantar).
+echo "[lin] esperando authd ${MANAGER_IP}:1515 ..."
+for i in $(seq 1 60); do
+  if (echo > "/dev/tcp/${MANAGER_IP}/1515") 2>/dev/null; then echo "[lin] authd up"; break; fi
+  [ "$i" = 60 ] && { echo "[lin] FATAL: authd ${MANAGER_IP}:1515 no respondió en 120s" >&2; exit 1; }
+  sleep 2
+done
+
+# Enrolar (fail-loud, sin || true)
+"${OSSEC}/bin/agent-auth" -m "${MANAGER_IP}" -A "LIN-VICTIM-01" \
+  || { echo "[lin] FATAL: agent-auth falló contra ${MANAGER_IP}" >&2; exit 1; }
 systemctl daemon-reload
 systemctl enable --now wazuh-agent
+
+# F2: verificar la conexión real al manager (lado agente = equivalente a Active).
+echo "[lin] verificando conexión al manager ..."
+for i in $(seq 1 30); do
+  if grep -q "Connected to the server" "${OSSEC}/logs/ossec.log" 2>/dev/null; then
+    echo "[lin] agente conectado al manager (OK)"; break
+  fi
+  [ "$i" = 30 ] && { echo "[lin] FATAL: el agente no se conectó al manager en 60s (ver ${OSSEC}/logs/ossec.log)" >&2; exit 1; }
+  sleep 2
+done
 
 # ------------------------------------------------------------
 # 2. Scripts AR (nombre SIN extensión = el <executable> del manager) + anti-brick
@@ -67,10 +99,29 @@ grep -q "^MANAGER_IP=${MANAGER_IP}$" "${OSSEC}/etc/argos-ar.conf" \
   || { echo "[lin] FATAL: argos-ar.conf no quedó con MANAGER_IP" >&2; exit 1; }
 
 # ------------------------------------------------------------
-# 3. auditd: reglas básicas de actividad (ejecución + canary)
+# 3. Canary files + auditd (F1: los 4 paths canónicos = deception/canary-generator/
+#    config.yaml (victim-linux-01) = fim-configs/ossec-linux.conf = regex de
+#    canary_rules.xml id 100100, que matchea por FILENAME). Crear los archivos ANTES
+#    de cargar auditd para que los watches `-w` resuelvan el inode.
 # ------------------------------------------------------------
+id victim >/dev/null 2>&1 || useradd -m -s /bin/bash victim
+install -d -o victim -g victim /home/victim/Documents
+install -d /var/backups
+gen_canary() {  # $1=path  $2=owner
+  printf 'CONFIDENCIAL IntiBank — senuelo de laboratorio (ARGOS canary). NO tocar.\n' > "$1"
+  chown "$2":"$2" "$1" 2>/dev/null || true
+  touch -d "90 days ago" "$1"
+}
+gen_canary /home/victim/Documents/financials_Q4_2025.xlsx victim
+gen_canary /home/victim/passwords.txt                     victim
+gen_canary /home/victim/Documents/accounts_admin.csv      victim
+gen_canary /var/backups/db_backup.sql                     root
+
 cat > /etc/audit/rules.d/argos.rules <<'EOF'
--w /opt/argos/canary/ -p rwa -k argos_canary
+-w /home/victim/Documents/financials_Q4_2025.xlsx -p rwxa -k argos_canary
+-w /home/victim/passwords.txt -p rwxa -k argos_canary
+-w /var/backups/db_backup.sql -p rwxa -k argos_canary
+-w /home/victim/Documents/accounts_admin.csv -p rwxa -k argos_canary
 -a always,exit -F arch=b64 -S execve -k argos_exec
 EOF
 augenrules --load || true
@@ -124,13 +175,17 @@ mkdir -p /var/backups/postgres
 sudo -u postgres pg_dump --no-owner app_prod | gzip > /var/backups/postgres/app_prod_$(hostname).sql.gz || true
 
 # ------------------------------------------------------------
-# 6. Canary FIM whodata
+# 6. Canary FIM whodata (F1: usa el <syscheck> canónico de deception/fim-configs/
+#    ossec-linux.conf — single source of truth, los MISMOS 4 paths que auditd y la
+#    regla 100100. Es un <ossec_config> completo, se appendea como bloque.)
 # ------------------------------------------------------------
-install -d -m 0755 /opt/argos/canary
-echo "intibank-canary-do-not-touch" > /opt/argos/canary/passwords.csv
-if ! grep -q "/opt/argos/canary" "${OSSEC}/etc/ossec.conf"; then
-  sed -i "s#</syscheck>#  <directories whodata=\"yes\" report_changes=\"yes\">/opt/argos/canary</directories>\n</syscheck>#" \
-    "${OSSEC}/etc/ossec.conf" || true
+MARK_FIM="<!-- ARGOS-CANARY-FIM -->"
+if ! grep -qF "${MARK_FIM}" "${OSSEC}/etc/ossec.conf"; then
+  {
+    echo ""
+    echo "${MARK_FIM}"
+    cat "${REPO}/deception/fim-configs/ossec-linux.conf"
+  } >> "${OSSEC}/etc/ossec.conf"
 fi
 systemctl restart wazuh-agent
 
