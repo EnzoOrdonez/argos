@@ -59,6 +59,7 @@ soar = [
     "discord-webhook>=1.3",          # ADR-0007 v2 visibility
     "twilio>=9.0",                   # ADR-0007 v2 escalation
     "python-multipart>=0.0.9",       # FastAPI Form() en Approval API (§2.6)
+    "psycopg[binary]>=3.1",          # sink SQL del audit -> Postgres argos_audit (ADR-0013 §2.8)
 ]
 ui = [
     "streamlit>=1.30",
