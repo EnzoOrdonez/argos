@@ -1,0 +1,17 @@
+{
+  "incident_id": "INC-DEMO-UC04",
+  "tecnica_mitre": "T1190",
+  "confianza": 0.9,
+  "severidad": "critical",
+  "runbook_aplicable": "NIST SP 800-61 Rev.2 Incident Handling",
+  "accion_recomendada": "Aisolar el host LIN-VICTIM-01, revocar credenciales de acceso a la base, revisar logs de auditoría y bloquear cuentas sospechosas.",
+  "indicadores_correlacionar": [
+    "volumen inusual de consultas SELECT",
+    "IP origen desconocida",
+    "uso de cuentas de servicio fuera de horario",
+    "eventos de autenticación fallidos repetidos",
+    "cadenas de conexión a la base de datos en procesos no autorizados"
+  ],
+  "llm_backend": "openai/gpt-oss-120b",
+  "generated_at": "2026-06-29T20:59:51.835740Z"
+}
