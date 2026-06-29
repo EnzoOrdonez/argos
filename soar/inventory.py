@@ -5,7 +5,7 @@ el `HostInfo` completo que alimenta `requires_two_person` (ADR-0003 override).
 
 Fuente de los datos: OPEN_QUESTIONS Q2 (la VM Linux con PostgreSQL lleva el
 tag `criticality=production-critical`) y las IPs del lab en `.env.example`
-(LAB_VICTIM_LINUX_IP=10.0.0.22, LAB_VICTIM_WINDOWS_IP=10.0.0.21). El rango
+(LAB_VICTIM_LINUX_IP=192.168.56.21, LAB_VICTIM_WINDOWS_IP=192.168.56.20). El rango
 `10.10.50.x` de ADR-0009 §2.7 son servidores de aplicación de la red ficticia
 para reglas Sigma, NO el host DB: por eso la clave acá es el `host_id` (nombre
 de agente Wazuh), no la IP. `LIN-DB-01` se mantiene como alias del host DB
@@ -30,7 +30,7 @@ HOST_INVENTORY: dict[str, HostInfo] = {
     "LIN-VICTIM-01": HostInfo(
         id="LIN-VICTIM-01",
         criticality=Criticality.PRODUCTION_CRITICAL,
-        ip="10.0.0.22",
+        ip="192.168.56.21",
         os="Ubuntu Server 22.04",
     ),
     "LIN-DB-01": HostInfo(
@@ -42,13 +42,13 @@ HOST_INVENTORY: dict[str, HostInfo] = {
     "WIN-VICTIM-01": HostInfo(
         id="WIN-VICTIM-01",
         criticality=Criticality.STANDARD,
-        ip="10.0.0.21",
-        os="Windows 11",
+        ip="192.168.56.20",
+        os="Windows 10",
     ),
     "LAB-MANAGER": HostInfo(
         id="LAB-MANAGER",
         criticality=Criticality.STANDARD,
-        ip="10.0.0.10",
+        ip="192.168.56.10",
         os="Ubuntu Server 22.04",
     ),
 }
