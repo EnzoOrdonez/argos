@@ -1,8 +1,8 @@
 # ADR-0001: LLM vendor-agnostic via LLMClient interface
 
 **Estado:** Aceptado
-**Versión:** 3.0 (primario open-weights vía NVIDIA NIM, jurisdicción US — reconcilia la implementación de Fase 4)
-**Fecha:** Semana 1 (v1) · 2026-05-23 (v2) · 2026-06-27 (v3)
+**Versión:** 3.1 (primario `openai/gpt-oss-120b` por latencia; fallback `kimi-k2.6`; jurisdicción US sin cambios)
+**Fecha:** Semana 1 (v1) · 2026-05-23 (v2) · 2026-06-27 (v3) · 2026-06-29 (v3.1)
 **Autores:** P1 (Enzo Ordoñez Flores)
 **Revisores:** Equipo completo
 
@@ -65,6 +65,27 @@ real (2026-06-27): ambos modelos devuelven `TriageResponse` válido.
 
 > Nota: `argos_contracts/triage.py` (inmutable) cita `gpt-4o-mini | llama-3.1-8b-local` como ejemplo en la
 > descripción de `llm_backend`; es ilustrativo. El campo ahora lleva el id del modelo NVIDIA usado.
+
+### Cambio v3 → v3.1 (2026-06-29) — primario reasignado por latencia (C10)
+
+Probe en vivo contra NVIDIA NIM (`GET /models` + `chat/completions` con `response_format=json_object`,
+el mismo modo que usa `OpenAIClient`) midió latencias decisivas para una demo en vivo:
+
+| Modelo | HTTP | Latencia (ping/JSON-mode) | Nota |
+|--------|------|---------------------------|------|
+| `deepseek-ai/deepseek-v4-pro` | 200 | **15-21 s**, 1 timeout a 40 s en frío | thinking:false aplicado; lento y con varianza |
+| `openai/gpt-oss-120b` | 200 | **~0.9 s** | rápido y estable; JSON-mode OK |
+| `moonshotai/kimi-k2.6` | 200 | **~0.9 s** | fallback |
+
+**Decisión:** primario reasignado a **`openai/gpt-oss-120b`**, fallback se mantiene `moonshotai/kimi-k2.6`.
+Razón: deepseek-v4-pro tarda 15-21 s por llamada (un timeout a 40 s en frío), riesgo de verse "colgado" en
+vivo aunque el LLM es non-blocking (R-2). gpt-oss-120b responde en ~0.9 s y es un modelo open-weights de OpenAI
+servido por NVIDIA NIM — **la jurisdicción del dato sigue siendo US (NVIDIA), el argumento de v2/v3 no cambia.**
+
+**Gotcha operativo:** el id en NVIDIA NIM es `openai/gpt-oss-120b` **con prefijo**; sin él la API devuelve `404`.
+El `.env` tenía `OPENAI_MODEL=gpt-oss-120b` (roto). Corregido en `.env`, `.env.example` y el default del cliente
+(`openai_client.py:_DEFAULT_MODEL`). `extra_body.chat_template_kwargs.thinking` sigue enviándose solo a modelos
+deepseek (`"deepseek" in model`), así que el cambio de primario no afecta el call. Verificado JSON-mode 200.
 
 ## Alternativas consideradas
 
@@ -188,3 +209,4 @@ A re-evaluar en Gate 2. Si calidad de output de Llama local no es aceptable, con
 | 1.0 | Semana 1 | Decisión original: DeepSeek-V3 primario + Qwen2.5-72B fallback. Optimizado puramente a costo. | P1 |
 | 2.0 | 2026-05-23 | Re-evaluación por soberanía de datos: en un proyecto de ciberseguridad enviar telemetría a proveedores chinos contradice el caso de uso. Primario reasignado a GPT-4o-mini (US-based, costo equivalente, mejor en benchmarks de seguridad). Fallback reasignado a Llama 3.1 8B local (zero-egress, propiedad demostrable de air-gap). | P1 |
 | 3.0 | 2026-06-27 | Reconciliación con Fase 4: primario open-weights vía **NVIDIA NIM** (`deepseek-v4-pro` + `kimi-k2.6` fallback). NO contradice v2 — el dato va a NVIDIA (US), no a proveedores PRC; procedencia del modelo ≠ jurisdicción del dato. Defensa: data sintética + sanitizer T-030 + Ollama zero-egress (diferido). Motivo: créditos NVIDIA + benchmark de triage estructurado. Verificado con llamada real. | P1 + Claude |
+| 3.1 | 2026-06-29 | Primario reasignado a **`openai/gpt-oss-120b`** (probe en vivo: deepseek-v4-pro 15-21 s + 1 timeout vs gpt-oss ~0.9 s). Fallback sigue `kimi-k2.6`. Jurisdicción US sin cambios (gpt-oss = open-weights OpenAI sobre NVIDIA NIM). Fix gotcha: el id requiere prefijo `openai/` o da 404; corregido en `.env`/`.env.example`/`openai_client.py`. Decisión C10 (Enzo). | P1 + Claude |
