@@ -13,12 +13,27 @@ from llm_triage.llm_client.openai_client import OpenAIClient
 
 
 def get_llm_client(backend: str | None = None) -> LLMClient:
-    """Devuelve el cliente LLM activo según `LLM_BACKEND` (default `openai`)."""
+    """Devuelve el cliente LLM activo según `LLM_BACKEND` (default `openai`).
+
+    Con `DEMO_MODE=true` envuelve el backend en `CachedClient` (sirve respuestas
+    pre-generadas por técnica desde `DEMO_CACHE_PATH`; miss → backend real, R-2)."""
     backend = (backend or os.environ.get("LLM_BACKEND", "openai")).strip().lower()
     if backend == "openai":
-        return OpenAIClient()
-    if backend == "llama_local":
+        client: LLMClient = OpenAIClient()
+    elif backend == "llama_local":
         raise NotImplementedError(
             "backend 'llama_local' (Ollama) está diferido en Fase 4; usá LLM_BACKEND=openai"
         )
-    raise ValueError(f"LLM_BACKEND desconocido: {backend!r} (opciones: openai | llama_local)")
+    else:
+        raise ValueError(
+            f"LLM_BACKEND desconocido: {backend!r} (opciones: openai | llama_local)"
+        )
+
+    if os.environ.get("DEMO_MODE", "false").strip().lower() == "true":
+        from pathlib import Path
+
+        from llm_triage.llm_client.cached_client import CachedClient
+
+        cache_dir = Path(os.environ.get("DEMO_CACHE_PATH", "./demo/cached-responses"))
+        return CachedClient(client, cache_dir)
+    return client
