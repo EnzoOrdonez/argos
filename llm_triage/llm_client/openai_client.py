@@ -1,9 +1,9 @@
 """Backend de triage vía endpoint OpenAI-compatible (default NVIDIA NIM).
 
 Lee del entorno: `OPENAI_BASE_URL` (default NVIDIA), `OPENAI_API_KEY`, `OPENAI_MODEL`
-(primario), `OPENAI_FALLBACK_MODEL`. ADR-0001 / Fase 4: primario
-`deepseek-ai/deepseek-v4-pro` (con `thinking:false` para salida estructurada más
-rápida), fallback `moonshotai/kimi-k2.6`.
+(primario), `OPENAI_FALLBACK_MODEL`. ADR-0001 v3 / Fase 4 (rev. C10 2026-06-29):
+primario `openai/gpt-oss-120b` (rápido/fiable; el id requiere prefijo `openai/`),
+fallback `moonshotai/kimi-k2.6`. `thinking:false` se envía solo a modelos deepseek.
 
 Flujo: sanitizar (T-030) → render prompts → llamar al modelo (JSON mode) → si falla,
 probar el fallback → parsear y validar contra `TriageResponse` (la validación del
@@ -28,7 +28,7 @@ from llm_triage.sanitizer import sanitize
 logger = logging.getLogger(__name__)
 
 _NVIDIA_BASE = "https://integrate.api.nvidia.com/v1"
-_DEFAULT_MODEL = "deepseek-ai/deepseek-v4-pro"
+_DEFAULT_MODEL = "openai/gpt-oss-120b"
 _DEFAULT_FALLBACK = "moonshotai/kimi-k2.6"
 
 
