@@ -21,12 +21,16 @@ hosts:
     os: Debian 12 (bookworm)
     role: postgres-victim        # DB app_prod / schema intibank (ADR-0009)
     criticality: production-critical   # dispara two-person rule (UC-04)
-    use_cases: [UC-04, UC-06, UC-07, UC-08]
+    # REAL en el lab: canary L3 (FIM) + active-response. UC-04/06/07/08 NO detectan
+    # acá (Sigma no desplegada, C18) -> van por demo_injector.
+    real_in_lab: [canary, active-response]
+    via_injector: [UC-04, UC-06, UC-07, UC-08]
 
   - name: windows-victim
     host_id: WIN-VICTIM-01
     ip: 192.168.56.20
     os: Windows 10
-    role: endpoint-victim        # ransomware / canary / agent-kill (Fase 1B)
+    role: endpoint-victim        # ransomware / canary / agent-kill
     criticality: standard
+    status: DEFERIDA             # Fase 1B no se levanta; va como video (decisión 29-jun)
     use_cases: [UC-01, UC-02, UC-05]
