@@ -28,8 +28,10 @@ Escenarios (capas per matriz ADR-0009 §2.6):
   uc02  canary sola (Capa 3) -> T0 auto, cero archivos reales tocados
   uc03  variante novedosa (ML sola T2) -> split-brain 2A/1R/1timeout -> conservative-wins (CENTERPIECE)
   uc04  DB production-critical (L1 pg_mass_read + L2) -> T1 two-person, 2 approve
+  uc05  agent-kill (T1562.001): L1 stop-service + L3 canary -> T0 auto
   uc06  DDoS T1498 fast-path -> T0 auto
   uc07  L1+L2 en host crítico, el humano rechaza -> NO_ACTION two-person
+  uc08  SQLi web (T1190): L1 firmas + L2 patron -> T1 auto (block IP)
 
 Sale con código 0 si el desenlace coincide con el esperado del UC (o, en --live,
 si el incidente quedó creado a la espera de aprobación).
@@ -170,6 +172,21 @@ def _scenarios() -> dict[str, Scenario]:
             expected_outcome="EXECUTE_ISOLATION",
             expected_policy="two-person-rule",
         ),
+        "uc05": Scenario(
+            description="Agent-kill sigiloso (T1562.001): L1 stop-service + L3 canary -> T0 auto",
+            alerts=[
+                # "1 + 3 + heartbeat" (USE_CASES): L1 Sigma stop-service + L3 canary.
+                # La capa 3 (canary) enruta a T0 (zero-FP) -> auto-aislar sin HITL.
+                _alert(Layer.LAYER_1, "WIN-VICTIM-01", score=0.88,
+                       severity=Severity.HIGH, technique="T1562.001",
+                       alert_id="uc05-sigma", rule="stop_service_wazuh_agent"),
+                _alert(Layer.LAYER_3, "WIN-VICTIM-01", score=0.99,
+                       severity=Severity.CRITICAL, technique=None,
+                       alert_id="uc05-canary", rule="canary-fim-whodata"),
+            ],
+            expected_outcome="EXECUTE_ISOLATION",
+            expected_policy="auto-execute",
+        ),
         "uc06": Scenario(
             description="DDoS volumetrico (T1498): fast-path a T0",
             alerts=[
@@ -194,6 +211,21 @@ def _scenarios() -> dict[str, Scenario]:
             expected_outcome="NO_ACTION",
             expected_policy="two-person-rule",
             expected_state="rejected",
+        ),
+        "uc08": Scenario(
+            description="SQL injection web (T1190): L1 firmas SQLi + L2 patron -> T1 auto, block IP",
+            alerts=[
+                # "1 + 2" (USE_CASES): L1 Sigma SQLi + L2 anomalia de patron de request.
+                # Corroboracion L1+L2 alta -> T1. Host STANDARD -> auto-execute (sin two-person).
+                _alert(Layer.LAYER_1, "WIN-WEB-01", score=0.88,
+                       severity=Severity.HIGH, technique="T1190",
+                       alert_id="uc08-sigma", rule="sql_injection_signatures"),
+                _alert(Layer.LAYER_2, "WIN-WEB-01", score=0.91,
+                       severity=Severity.HIGH, technique="T1190",
+                       alert_id="uc08-ml", rule="request-pattern-anomaly"),
+            ],
+            expected_outcome="EXECUTE_ISOLATION",
+            expected_policy="auto-execute",
         ),
     }
 
@@ -220,7 +252,15 @@ def build_runtime(r: object, *, live: bool, fast_window: bool = False):
     (uc03 en --in-process/tests). Con Redis real la ventana la fija el env
     APPROVAL_CONSOLIDATION_WINDOW_SECONDS (ej. 5s para que el countdown se vea)."""
     memory = MemorySink()
-    audit = AuditLogger([memory])
+    sinks = [memory]
+    # Sink SQL opcional: si ARGOS_AUDIT_SQL_DSN está, persiste a Postgres argos_audit
+    # (para mostrar una fila real en la grabación). Fail-soft: sin DB no-opea.
+    dsn = os.environ.get("ARGOS_AUDIT_SQL_DSN")
+    if dsn:
+        from soar.audit.postgres import PostgresSink
+
+        sinks.append(PostgresSink(dsn))
+    audit = AuditLogger(sinks)
     executor = make_executor() if live else SimulatedExecutor()
     notifier = _build_notifier()
     scheduler = WindowScheduler(r, notifier=notifier, audit=audit)
