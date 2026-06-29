@@ -31,7 +31,7 @@ HOST_INVENTORY: dict[str, HostInfo] = {
         id="LIN-VICTIM-01",
         criticality=Criticality.PRODUCTION_CRITICAL,
         ip="192.168.56.21",
-        os="Ubuntu Server 22.04",
+        os="Debian 12",
     ),
     "LIN-DB-01": HostInfo(
         id="LIN-DB-01",

@@ -27,6 +27,7 @@ def test_windows_victim_ip_and_os() -> None:
 def test_linux_victim_ip_and_criticality() -> None:
     host = resolve_host("LIN-VICTIM-01")
     assert host.ip == "192.168.56.21"
+    assert host.os == "Debian 12"  # la VM es debian/bookworm64, no Ubuntu
     assert host.criticality is Criticality.PRODUCTION_CRITICAL
 
 
