@@ -88,7 +88,7 @@ def test_uc06_cli_default_mode_does_not_execute(monkeypatch) -> None:
     result = subprocess.run(
         [sys.executable, str(SIMULATORS_DIR / "uc06_ddos_controlled.py"),
          "--target", "victim-web-01", "--mode", "hping3", "--rate-pps", "50"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True, text=True, encoding="utf-8", timeout=10,
     )
     assert result.returncode == 0
     assert "Modo 'solo mostrar'" in result.stdout
@@ -99,7 +99,7 @@ def test_uc06_rejects_excessive_rate() -> None:
     result = subprocess.run(
         [sys.executable, str(SIMULATORS_DIR / "uc06_ddos_controlled.py"),
          "--target", "victim-web-01", "--mode", "hping3", "--rate-pps", "500"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True, text=True, encoding="utf-8", timeout=10,
     )
     assert result.returncode != 0
 
@@ -140,7 +140,7 @@ def test_uc08_cli_default_mode_does_not_execute() -> None:
     result = subprocess.run(
         [sys.executable, str(SIMULATORS_DIR / "uc08_sqli_controlled.py"),
          "--target-url", "http://victim-webapp-01/login.php?id=1"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True, text=True, encoding="utf-8", timeout=10,
     )
     assert result.returncode == 0
     assert "Modo 'solo mostrar'" in result.stdout
