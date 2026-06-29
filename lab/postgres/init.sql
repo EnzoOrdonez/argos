@@ -13,7 +13,7 @@ SET search_path TO intibank, public;
 -- ------------------------------------------------------------
 
 -- Clientes del banco
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id              bigserial PRIMARY KEY,
     dni             varchar(8)  UNIQUE NOT NULL,
     full_name       varchar(120) NOT NULL,
@@ -25,10 +25,10 @@ CREATE TABLE customers (
     pep_flag        boolean DEFAULT false,  -- Persona Expuesta Políticamente
     created_at      timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_customers_dni ON customers(dni);
+CREATE INDEX IF NOT EXISTS idx_customers_dni ON customers(dni);
 
 -- Cuentas (ahorros, corrientes, plazo)
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
     id              bigserial PRIMARY KEY,
     customer_id     bigint NOT NULL REFERENCES customers(id),
     account_number  varchar(20) UNIQUE NOT NULL,
@@ -38,10 +38,10 @@ CREATE TABLE accounts (
     status          varchar(20) CHECK (status IN ('active','frozen','closed')) DEFAULT 'active',
     opened_at       timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_accounts_customer ON accounts(customer_id);
+CREATE INDEX IF NOT EXISTS idx_accounts_customer ON accounts(customer_id);
 
 -- Tarjetas (débito y crédito)
-CREATE TABLE cards (
+CREATE TABLE IF NOT EXISTS cards (
     id              bigserial PRIMARY KEY,
     customer_id     bigint NOT NULL REFERENCES customers(id),
     card_type       varchar(20) CHECK (card_type IN ('debit','credit')),
@@ -54,7 +54,7 @@ CREATE TABLE cards (
 );
 
 -- Transacciones (movimientos de cuenta)
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id              bigserial PRIMARY KEY,
     account_id      bigint NOT NULL REFERENCES accounts(id),
     type            varchar(20) CHECK (type IN ('deposit','withdrawal','fee','interest','transfer_in','transfer_out')),
@@ -65,10 +65,10 @@ CREATE TABLE transactions (
     status          varchar(20) CHECK (status IN ('pending','completed','reversed','flagged')) DEFAULT 'completed',
     created_at      timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_tx_account_date ON transactions(account_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tx_account_date ON transactions(account_id, created_at DESC);
 
 -- Transferencias (incluye internacionales)
-CREATE TABLE transfers (
+CREATE TABLE IF NOT EXISTS transfers (
     id              bigserial PRIMARY KEY,
     source_account_id   bigint NOT NULL REFERENCES accounts(id),
     dest_account_number varchar(34) NOT NULL,  -- IBAN si internacional
@@ -80,10 +80,10 @@ CREATE TABLE transfers (
     hold_reason         varchar(120),
     created_at          timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_transfers_dest_country ON transfers(dest_country);
+CREATE INDEX IF NOT EXISTS idx_transfers_dest_country ON transfers(dest_country);
 
 -- Empleados/usuarios internos del banco
-CREATE TABLE internal_users (
+CREATE TABLE IF NOT EXISTS internal_users (
     id              bigserial PRIMARY KEY,
     employee_dni    varchar(8) UNIQUE NOT NULL,
     username        varchar(40) UNIQUE NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE internal_users (
 );
 
 -- Audit log inmutable (append-only, no UPDATE/DELETE permitidos)
-CREATE TABLE audit_log (
+CREATE TABLE IF NOT EXISTS audit_log (
     id              bigserial PRIMARY KEY,
     user_name       varchar(40) NOT NULL,        -- conector de la sesión PG
     action          varchar(40) NOT NULL,        -- SELECT, INSERT, UPDATE, DELETE, DDL, LOGIN
@@ -106,7 +106,7 @@ CREATE TABLE audit_log (
     user_agent      varchar(200),
     ts              timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_audit_user_ts ON audit_log(user_name, ts DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_user_ts ON audit_log(user_name, ts DESC);
 
 -- Constraint: nunca borrar ni actualizar audit_log
 REVOKE UPDATE, DELETE ON audit_log FROM PUBLIC;
