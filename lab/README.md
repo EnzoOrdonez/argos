@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Owner | **P4 · Diego Jara** (Infra · UI · Eval) |
-| Status | 📅 Planned · Weeks 2-3 |
+| Status | 🟡 Fase 1A escrita (`vagrant validate` OK) · boot real PENDIENTE (bloqueo Hyper-V, ver `RUNBOOK_BOOT_1A.md`) · Fase 1B (Windows) **diferida → video** |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §3 (Block 02 — Victim Lab), [`docs/decisions/0002-heartbeat-default-60s.md`](../docs/decisions/0002-heartbeat-default-60s.md) |
 
 ---
@@ -13,6 +13,8 @@
 Isolated virtualized environment that receives attacks and produces telemetry. Reproducible from zero in <30 minutes via Infrastructure as Code, per the reproducibility property in SAD §13.2.
 
 The lab is the **substrate** that every other layer assumes exists. Without it, no use case can run.
+
+> **Qué es real en el lab hoy (Fase 1A, honesto — C18):** **canary L3 (FIM) + active-response** sobre la víctima Linux. La capa **Sigma (L1) NO está desplegada** (los 10 `.yml` no están convertidos a Wazuh; `wazuh-manager.sh` solo despliega `canary_rules.xml`). Por eso **UC-02** es el único end-to-end totalmente real; **UC-01** dispara por canary (no por Sigma); **UC-04/06/07/08** van por `demo_injector` (pipeline real, detección simulada). Boot real bloqueado por Hyper-V en la máquina de Enzo → ver `RUNBOOK_BOOT_1A.md`. Fase 1B (Windows) diferida a video.
 
 ---
 
