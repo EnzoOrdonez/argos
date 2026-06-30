@@ -3,7 +3,9 @@
 Lee del entorno: `OPENAI_BASE_URL` (default NVIDIA), `OPENAI_API_KEY`, `OPENAI_MODEL`
 (primario), `OPENAI_FALLBACK_MODEL`. ADR-0001 v3 / Fase 4 (rev. C10 2026-06-29):
 primario `openai/gpt-oss-120b` (rápido/fiable; el id requiere prefijo `openai/`),
-fallback `moonshotai/kimi-k2.6`. `thinking:false` se envía solo a modelos deepseek.
+fallback `moonshotai/kimi-k2.6`. Se desactiva el "thinking" del modelo (deepseek:
+`thinking:false`; gemma: `enable_thinking:false`) para acelerar la salida estructurada.
+Timeout del request = `LLM_REQUEST_TIMEOUT_SECONDS` (default 120s).
 
 Flujo: sanitizar (T-030) → render prompts → llamar al modelo (JSON mode) → si falla,
 probar el fallback → parsear y validar contra `TriageResponse` (la validación del
@@ -57,7 +59,7 @@ class OpenAIClient(LLMClient):
         self._fallback = fallback_model or os.environ.get(
             "OPENAI_FALLBACK_MODEL", _DEFAULT_FALLBACK
         )
-        timeout = timeout or float(os.environ.get("LLM_REQUEST_TIMEOUT_SECONDS", "30"))
+        timeout = timeout or float(os.environ.get("LLM_REQUEST_TIMEOUT_SECONDS", "120"))
         # max_retries=0: el fallback de modelo es nuestra resiliencia, no el retry del SDK.
         self._client = client or AsyncOpenAI(
             api_key=api_key or os.environ.get("OPENAI_API_KEY") or "missing",
@@ -90,8 +92,15 @@ class OpenAIClient(LLMClient):
     async def _call_model(
         self, model: str, context: AlertContext, messages: list[dict[str, str]]
     ) -> TriageResponse:
-        # DeepSeek en NVIDIA: thinking:false acelera y limpia la salida estructurada.
-        extra_body = {"chat_template_kwargs": {"thinking": False}} if "deepseek" in model else {}
+        # Desactivar el "thinking" del modelo acelera y limpia la salida estructurada.
+        # deepseek usa la key `thinking`; gemma usa `enable_thinking` (sin esto,
+        # google/gemma-4-31b-it se cuelga en el endpoint gratis de NVIDIA -> timeout).
+        if "deepseek" in model:
+            extra_body = {"chat_template_kwargs": {"thinking": False}}
+        elif "gemma" in model:
+            extra_body = {"chat_template_kwargs": {"enable_thinking": False}}
+        else:
+            extra_body = {}
         completion = await self._client.chat.completions.create(
             model=model,
             messages=messages,  # type: ignore[arg-type]
