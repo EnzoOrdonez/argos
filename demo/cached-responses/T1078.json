@@ -1,15 +1,16 @@
 {
   "incident_id": "INC-DEMO-UC07",
   "tecnica_mitre": "T1078",
-  "confianza": 0.85,
+  "confianza": 0.7,
   "severidad": "high",
-  "runbook_aplicable": "NIST SP 800-61 Rev. 2 - Incident Handling",
-  "accion_recomendada": "Revisar logs de autenticación, bloquear cuentas comprometidas y forzar restablecimiento de contraseñas para usuarios afectados.",
+  "runbook_aplicable": "NIST SP 800-61 Rev. 2 - Incident Handling Guide",
+  "accion_recomendada": "Validar con el usuario si la consulta masiva fue autorizada y revisar logs de acceso para descartar compromiso de credenciales.",
   "indicadores_correlacionar": [
-    "login_success_multiple_accounts",
-    "login_from_unusual_geolocation",
-    "privileged_account_usage_spike"
+    "user_id",
+    "source_ip",
+    "query_volume_baseline",
+    "access_timestamp"
   ],
-  "llm_backend": "openai/gpt-oss-120b",
-  "generated_at": "2026-06-29T20:59:55.117700Z"
+  "llm_backend": "google/gemma-4-31b-it",
+  "generated_at": "2026-06-30T04:45:06.597478Z"
 }
