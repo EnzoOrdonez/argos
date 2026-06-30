@@ -3,14 +3,14 @@
   "tecnica_mitre": "T1083",
   "confianza": 0.74,
   "severidad": "high",
-  "runbook_aplicable": "NIST SP 800-61 Rev. 2 Incident Handling Guide",
-  "accion_recomendada": "Aísle el host de la red, capture memoria volátil, realice una imagen forense y bloquee los indicadores de compromiso detectados.",
+  "runbook_aplicable": "NIST SP 800-61 Rev. 2 - Incident Handling Guide",
+  "accion_recomendada": "Aislar inmediatamente el host WIN-WS-07 de la red y realizar un volcado de memoria para análisis de ransomware.",
   "indicadores_correlacionar": [
-    "FileHash: <hash_placeholder>",
-    "ProcessName: ransomware.exe",
-    "NetworkDomain: suspicious-c2.example.com",
-    "FilePath: C:\\Users\\*\\AppData\\Local\\Temp\\*"
+    "procesos_desconocidos_escritura_masiva",
+    "extensiones_archivo_inusuales",
+    "intentos_de_borrado_shadow_copies",
+    "conexiones_C2_externas"
   ],
-  "llm_backend": "openai/gpt-oss-120b",
-  "generated_at": "2026-06-29T20:59:43.978816Z"
+  "llm_backend": "google/gemma-4-31b-it",
+  "generated_at": "2026-06-30T04:28:08.558227Z"
 }
