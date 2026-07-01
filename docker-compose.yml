@@ -31,15 +31,17 @@ services:
     image: postgres:17.5-bookworm
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-argos_audit}
-      POSTGRES_USER: ${POSTGRES_USER:-argos}
+      # C11 (2026-06-29): DB/USER fijados literales para que el audit-DB NUNCA herede
+      # los POSTGRES_* del .env (que antes traian valores de la VM victima). Ver .env.
+      POSTGRES_DB: argos_audit
+      POSTGRES_USER: argos
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     ports: ["5432:5432"]
     volumes:
       - argos-pgdata:/var/lib/postgresql/data
       - ./soar/audit/schema.sql:/docker-entrypoint-initdb.d/01-argos-audit.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-argos} -d ${POSTGRES_DB:-argos_audit}"]
+      test: ["CMD-SHELL", "pg_isready -U argos -d argos_audit"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -85,6 +87,11 @@ services:
     env_file: .env
     environment:
       LLM_BACKEND: ${LLM_BACKEND:-openai}
+    # Cache LLM a prueba de camara (DEMO_MODE): el host genera demo/cached-responses/
+    # (scripts/gen_llm_cache.py) y se monta read-only. Con DEMO_MODE=true en .env el
+    # servicio sirve desde aca (DEMO_CACHE_PATH=./demo/cached-responses -> /app/demo/...).
+    volumes:
+      - ./demo:/app/demo:ro
     ports: ["8002:8002"]
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8002/health"]

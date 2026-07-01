@@ -107,6 +107,12 @@ def build_slowhttptest_command(target: str, connections: int, duration_s: int) -
 
 
 def main() -> int:
+    # Salida UTF-8 segura: la consola Windows es cp1252 y los emojis de los
+    # mensajes de laboratorio (⚠️) crashean con UnicodeEncodeError. (fix 2026-06-29)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
         description="Simulador controlado UC-06 (DoS de red) — rate-limited, solo lab."
     )

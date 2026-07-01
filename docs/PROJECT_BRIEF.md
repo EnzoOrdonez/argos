@@ -18,13 +18,13 @@ Plataforma multi-vector de detección y respuesta (XDR-style per ADR-0008) con *
 1. **Capa 1 — Rule-Based:** Reglas Sigma mapeadas a MITRE ATT&CK (T1486, T1490, T1083, T1562) ejecutadas en Wazuh. Alta precisión.
 2. **Capa 2 — ML Anomaly:** Isolation Forest + One-Class SVM sobre features de procesos (entropía, syscalls cripto, I/O patterns). Detecta variantes nuevas.
 3. **Capa 3 — Deception:** Canary files con FIM whodata. Zero false-positive por diseño. Detección ultra-temprana.
-4. **Capa 4 — LLM Triage:** FastAPI + mini-RAG (MITRE + NIST 800-61) + LLMClient vendor-agnostic (GPT-4o-mini primary / Llama 3.1 8B local fallback, per ADR-0001 v2). Output estructurado con técnica, severidad, runbook.
+4. **Capa 4 — LLM Triage:** FastAPI + mini-RAG (MITRE + NIST 800-61) + LLMClient vendor-agnostic (NVIDIA NIM `openai/gpt-oss-120b` primary / Llama 3.1 8B local vía Ollama como fallback zero-egress, diferido — per ADR-0001 v3). Output estructurado con técnica, severidad, runbook.
 
 **SOAR Decision Engine** clasifica alertas en 4 tiers (T0-T3) según confianza, fusiona scores y dispara contención automatizada para alta confianza, o solicita aprobación humana vía notificación multi-canal (Telegram + Discord + Twilio Voice, per ADR-0007 v2) para tiers medios. **Approval Workflow Console** visualiza decisiones multi-aprobador en tiempo real con resolución de split-brain por conservative-wins policy.
 
 ## Stack
 
-Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera · scikit-learn · FastAPI · Streamlit · Redis · OpenAI GPT-4o-mini + Llama 3.1 local (Ollama) · JWT signing · Jinja2 templates · APScheduler · PostgreSQL (activo defendido)
+Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera · scikit-learn · FastAPI · Streamlit · Redis · NVIDIA NIM (`openai/gpt-oss-120b`) + Llama 3.1 local vía Ollama (diferido) · JWT signing · Jinja2 templates · APScheduler · PostgreSQL (activo defendido)
 
 ## Equipo y división
 
@@ -40,7 +40,7 @@ Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera �
 - **Gate 1:** Capa 1 end-to-end funcional.
 - **Gate 2:** Capas 1+2+3 integradas con SOAR.
 - **Gate 3:** Stack completo + Capa 4 LLM + Approval flow + métricas iniciales.
-- **Entrega final:** 13 de junio de 2026 — informe técnico + demo en vivo + presentación.
+- **Entrega final:** 1 de julio de 2026 (movida desde 28-jun, antes 13-jun) — informe técnico + demo en vivo + presentación (~13 min).
 
 ## Resultados esperados
 
@@ -59,4 +59,5 @@ El sistema está diseñado contra fallos del propio defensor. **El LLM nunca est
 Replica la arquitectura de productos comerciales de gama alta (Microsoft Defender XDR, CrowdStrike Falcon) con stack 100% open source. El cache profesional viene de la **calidad de ejecución y rigor del informe**, no de originalidad arquitectónica forzada. Proyecto apto para portafolio LinkedIn y referencia técnica en entrevistas blue team.
 
 ---
-*v1.4 · Cleanup pass post-ADR-0001v2 + ADR-0007v2 · Owner: P1 (Enzo Ordoñez Flores)*
+*v1.5 · Sync 2026-07-01: backend LLM (NVIDIA NIM gpt-oss-120b, ADR-0001 v3) + fecha de entrega (1-jul) ·
+Owner: P1 (Enzo Ordoñez Flores)*
