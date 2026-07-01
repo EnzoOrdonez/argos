@@ -33,6 +33,11 @@
   ul,ol{padding-left:22px}
   .lead{color:#c2ccda}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .hero{background:linear-gradient(180deg,rgba(240,163,56,.08),rgba(240,163,56,.02));
+    border:1.5px solid var(--accent);border-radius:14px;padding:18px 22px;margin:16px 0 28px}
+  .hero-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+  .hero p{margin:10px 0 4px}
   .toc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 22px;margin-bottom:10px}
   .toc h4{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
   .toc ol{columns:2;column-gap:32px}
@@ -81,9 +86,41 @@
 Si algo acá choca con un manual viejo o un PDF generado, <strong class="k">gana este documento + los ADRs</strong>
 (ver §H, trampas de integración). Pensado para que cualquiera del equipo levante su parte sin romper la coherencia.</p>
 
+<!-- ============ DEMO AUTOMÁTICA (hero) ============ -->
+<div class="hero" id="demo">
+  <span class="hero-tag">▶ Empezá acá · demo automática desde tu PC</span>
+  <p>Todo con <strong>docker compose</strong>, una sola PC: <strong>sin Telegram, sin ngrok, sin internet</strong>.
+  La aprobación de las 2 personas la castea el inyector solo y la consola se actualiza sola (~1.5s).</p>
+
+  <p><strong>1 · Levantar el core</strong> (una vez):</p>
+  <pre><span class="c"># en la raíz del repo; .env con POSTGRES_PASSWORD (y OPENAI_API_KEY si querés el LLM real)</span>
+docker compose up -d
+docker compose ps                <span class="c"># esperá a que TODOS digan (healthy)</span>
+<span class="c"># abrí la consola en el navegador:  http://localhost:8080</span></pre>
+
+  <p><strong>2 · Por cada caso</strong> — reseteá e inyectá; la consola muestra el incidente resolviéndose solo:</p>
+  <pre>.\.venv\Scripts\python.exe scripts\demo_reset.py --redis-url redis://localhost:6379/0
+.\.venv\Scripts\python.exe scripts\demo_injector.py uc04 --redis-url redis://localhost:6379/0
+<span class="c"># cambiá el UC:  uc01 ransomware · uc02 canary · uc04 DB two-person · uc06 DDoS · uc07 falso positivo (NO_ACTION)</span></pre>
+
+  <p><strong>3 · (opcional) Panel LLM siempre lleno</strong> para grabar (el real tarda &gt;5s y el SOAR corta a 5s → <code>None</code>):</p>
+  <pre>docker compose stop llm-triage
+.\.venv\Scripts\python.exe scripts\triage_stub.py        <span class="c"># respuesta instantánea en :8002</span></pre>
+
+  <p><strong>4 · (opcional) "Un humano aprueba en vivo"</strong> — también local, sin internet:</p>
+  <pre>.\.venv\Scripts\python.exe scripts\demo_injector.py uc04 --live --redis-url redis://localhost:6379/0
+.\.venv\Scripts\python.exe scripts\live_approve.py --latest --decision approve --email telegram:soc-lead
+.\.venv\Scripts\python.exe scripts\live_approve.py --latest --decision approve --email telegram:dba</pre>
+
+  <div class="warn" style="margin-bottom:0"><strong>Telegram / Discord NO hacen falta acá.</strong> El inyector simula los
+  votos; la consola es la estrella visual. Telegram solo sirve si querés que aprueben de verdad desde el celular — necesita
+  un grupo + ngrok y es lo más frágil en vivo (ver §D). <strong>Para la expo: usá esto.</strong></div>
+</div>
+
 <nav class="toc">
   <h4>Contenido</h4>
   <ol>
+    <li><a href="#demo"><strong>▶ Demo automática (empezá acá)</strong></a></li>
     <li><a href="#a">Qué es ARGOS + estado por parte (P1–P4)</a></li>
     <li><a href="#b">Cambios y decisiones por fase (1–6) + ADRs</a></li>
     <li><a href="#c">Prerrequisitos + qué levanta cada máquina</a></li>
@@ -117,7 +154,7 @@ Combina <strong>4 capas de detección</strong> — Sigma (L1), ML (L2), canarios
   del score ML (Camino B). El scorer ML Capa 2 en vivo (Isolation Forest + OC-SVM) queda aparte.</td>
   <td><span class="badge b-ok">hecho</span> bridge · <span class="badge b-lab">pendiente</span> scorer ML en vivo +
   bridge tailea el <code>alerts.json</code> real</td></tr>
-<tr><td><strong>P3</strong></td><td>Nicole Castillo<br><span class="mono" style="color:var(--muted)">detección / AR</span></td>
+<tr><td><strong>P3</strong></td><td>Angeles Castillo<br><span class="mono" style="color:var(--muted)">detección / AR</span></td>
   <td>Reglas Sigma (L1), canarios (L3, auditd), scripts active-response para los 2 OS
   (<code>argos-isolate/throttle/snapshot/kill</code>).</td>
   <td><span class="badge b-ok">hecho</span> scripts + simuladores · <span class="badge b-lab">pendiente-lab</span>
@@ -269,6 +306,24 @@ Para el camino Telegram, correr el Approval API <strong>sin</strong> <code>ARGOS
 sin token firmado) y agregar <code>--no-wait</code> al <code>live_approve</code> (el API es dueño del reloj).</div>
 <p>Swap simulado↔real de la contención: <code>$env:ARGOS_EXECUTOR = "wazuh"</code> (degrada a <code>simulated</code> si
 faltan las <code>WAZUH_API_*</code>). Con compose: <code>--profile real</code> suma el <code>bridge</code>.</p>
+
+<h3>Telegram / Discord — cómo se conectan de verdad (NO hacen falta para el demo)</h3>
+<div class="card">
+<ul>
+<li><strong class="k">El bot solo te escribe a vos</strong> si el <code>TELEGRAM_CHAT_ID</code> es tu usuario. Para que
+<strong>voten todos</strong>: creá un <strong>grupo</strong> de Telegram, meté al bot + a los compañeros, y usá el
+<code>chat_id</code> <em>del grupo</em> (lo sacás de <code>getUpdates</code> o con @userinfobot). Seteá
+<code>TELEGRAM_BOT_TOKEN</code> + ese <code>TELEGRAM_CHAT_ID</code> en el entorno donde corre el inyector/SOAR → el bot
+manda el mensaje con botones al grupo.</li>
+<li><strong class="k">Recibir los votos NO es automático.</strong> Telegram tiene que poder <em>llegar</em> al Approval
+API, así que hace falta <code>ngrok http 8003</code> + <code>setWebhook</code> a la URL de ngrok (que cambia en cada
+reinicio). Por eso en vivo es lo más frágil. <strong>Para la expo, aprobá con el trigger local</strong>
+(<code>live_approve.py</code>) o dejá que el inyector automático lo haga.</li>
+<li><strong class="k">Discord</strong> no usa "usuario": usa un <strong>webhook</strong>. Creás un webhook en un canal
+(Ajustes del canal → Integraciones → Webhooks), copiás la URL y la ponés en <code>DISCORD_WEBHOOK_URL</code>. Las
+notificaciones caen en ese canal. Opcional.</li>
+</ul>
+</div>
 
 <h3>Panel LLM en la demo (real vs stub)</h3>
 <p>El hook del SOAR corta el triage a los <strong>5s</strong> (hardcoded; no se toca <code>soar/</code>) y
