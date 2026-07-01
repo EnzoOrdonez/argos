@@ -13,6 +13,16 @@ mitre_mapping:
       - detection/sigma-rules/ransomware/ransom_note_drop.yml
     use_cases: [UC-01, UC-02, UC-03]
 
+  # C7 (2026-06-29): T1485 ya estaba en MITRE_WHITELIST y en AUTO_T0_TECHNIQUES,
+  # y el bridge hace fallback al ID crudo (bridge/mapping.py, test_mapping.py:58),
+  # pero faltaba la fila aquí. La detección es Capa 3 (canary), NO una regla Sigma:
+  # la eliminación de un canary emite T1485. Por eso `rules` apunta al XML del canary.
+  - technique_id: T1485
+    technique_name: "Data Destruction"
+    rules:
+      - deception/wazuh-rules/canary_rules.xml
+    use_cases: [UC-01, UC-02]
+
   - technique_id: T1490
     technique_name: "Inhibit System Recovery"
     rules:

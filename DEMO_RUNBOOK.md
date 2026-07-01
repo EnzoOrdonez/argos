@@ -1,5 +1,10 @@
 # ARGOS — Runbook del demo y del video
 
+> ⚠ **DOCUMENTO SUPERADO (27-jun-2026) — NO USAR PARA LA GRABACIÓN DE HOY (1-jul-2026).**
+> Este archivo cubre solo 5 UC y menciona `deepseek-v4-pro` como backend (descartado por latencia,
+> hoy es `gpt-oss-120b`/gemma). El guion vigente es **`GUION_GRABACION_TRACKB.html`** (8 UC), con
+> **`docs/RUNBOOK_GRABACION_TRACKB.md`** como runbook de referencia — usar esos dos, no este.
+
 Cómo correr ARGOS de punta a punta y grabar el video de la exposición. Dos caminos:
 
 - **Fase A — demo simulado (este documento).** Corre en una sola PC, sin lab, con `SimulatedExecutor`. Es el **respaldo garantizado** y la base del video (ADR-0010 backup narrative).

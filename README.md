@@ -8,8 +8,8 @@
 
 [![Status](https://img.shields.io/badge/status-prototipo%20F1--F6%20completo-brightgreen)](docs/ARGOS_RUNBOOK_MAESTRO.html)
 [![Contracts](https://img.shields.io/badge/argos__contracts-v1.1.0-blue)](argos_contracts/)
-[![Tests](https://img.shields.io/badge/tests-413%20passing-brightgreen)](pyproject.toml)
-[![Deadline](https://img.shields.io/badge/entrega-28%20jun%202026-red)](docs/EVALUATION_CRITERIA.md)
+[![Tests](https://img.shields.io/badge/tests-~441%20(no%20reverificado)-yellow)](docs/PROJECT_STATUS.md)
+[![Deadline](https://img.shields.io/badge/entrega-1%20jul%202026-red)](docs/EVALUATION_CRITERIA.md)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 **Activo defendido:** 🛡 PostgreSQL Production DB · **Curso:** Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
@@ -36,7 +36,7 @@ ARGOS replica la arquitectura de productos comerciales high-end EDR/XDR (Microso
 | 👥 **HITL automation con consenso anti-split-brain** | Decisiones multi-aprobador resueltas por *conservative-wins policy* explícita (ADR-0006), no por improvisación. Visible en tiempo real en la Approval Workflow Console. |
 | 🤖 **ML contra variantes novel** | Ensemble Isolation Forest + One-Class SVM detecta ransomware que no matchea ninguna regla — el caso donde las defensas signature-only se quedan ciegas. |
 | 🍯 **Capa de deception con propiedad zero-FP** | Canary files con FIM whodata atrapan al atacante *antes* de que toque datos reales. Por diseño: un usuario legítimo nunca toca un honeypot. |
-| 🌐 **Soberanía de datos** | El dato va a **NVIDIA NIM** (jurisdicción US), no a proveedores PRC, aunque los modelos sean open-weights de origen chino (`deepseek-v4-pro`/`kimi-k2.6`): procedencia del modelo ≠ jurisdicción del dato. + data sintética + sanitizer T-030. Fallback Ollama (diferido) = zero-egress real (ADR-0001 v3). |
+| 🌐 **Soberanía de datos** | El dato va a **NVIDIA NIM** (jurisdicción US) vía `openai/gpt-oss-120b` (pivote 2026-06-30 desde `deepseek-v4-pro`, descartado por latencia 15-21s): procedencia del modelo ≠ jurisdicción del dato. + data sintética + sanitizer T-030. Fallback Ollama (diferido) = zero-egress real (ADR-0001 v3). |
 
 ---
 
@@ -135,7 +135,7 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 - FastAPI · Redis · APScheduler · Pydantic v2 · PyJWT
 
 **🛡 LLM Triage** (per ADR-0001 v3)
-- NVIDIA NIM (SDK OpenAI) — `deepseek-v4-pro` primario, `kimi-k2.6` fallback
+- NVIDIA NIM (SDK OpenAI) — `openai/gpt-oss-120b` (pivote 2026-06-30 tras problemas de key/créditos con el backend anterior)
 - Sanitizer T-030 + MITRE whitelist (anti-alucinación)
 - Ollama (Llama 3.1 8B local) = fallback zero-egress, diferido
 
@@ -160,7 +160,7 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 |:--:|---|---|---|
 | 🟣 | **Enzo Ordoñez** | P1 · Líder · LLM/SOAR | `argos_contracts`, Capa 4 LLM Triage (NVIDIA), motor SOAR + Tier Classifier, Approval API con JWT, notificaciones multi-canal, consola web + Streamlit, bridge/live mode, docker-compose, coordinación general |
 | 🔵 | **Sebastian Montenegro** | P2 · Ingeniero ML | Capa 2 (Isolation Forest + One-Class SVM), feature extraction, calibración de thresholds, métricas A/B/C (P/R/F1, MITRE coverage), captura forense |
-| 🟠 | **Nicole Castillo** | P3 · Detección · Engaño | Capa 1 (Sigma rules mapeadas a MITRE), Capa 3 (canary FIM + whodata), active-response Win+Linux, validación con Atomic Red Team y Caldera |
+| 🟠 | **Angeles Castillo** | P3 · Detección · Engaño | Capa 1 (Sigma rules mapeadas a MITRE), Capa 3 (canary FIM + whodata), active-response Win+Linux, validación con Atomic Red Team y Caldera |
 | 🟢 | **Diego Jara** | P4 · Infraestructura · UI | Lab de 3 VMs + Wazuh manager, PostgreSQL `app_prod`/`argos_audit` con datos sintéticos, ejecución del ataque, grabación del video demo |
 | 🟡 | **Yohamin Pimentel** | Apoyo P2 · Forense | Integración forense con **Velociraptor** (`soar/response/forensics/`, recolección post-incidente), apoyo a la Capa 2 |
 
@@ -168,7 +168,7 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 
 ## Estado actual
 
-Prototipo **F1–F6 completo** (413 tests). Leyenda: ✅ hecho (testeado) · 🟡 simulado (corre demo-safe sin lab) · 🔧 pendiente-lab (necesita las VMs).
+Prototipo **F1–F6 completo** (~441 tests per docs de equipo; no re-verificado en un sandbox limpio esta sesión). Leyenda: ✅ hecho (testeado) · 🟡 simulado (corre demo-safe sin lab) · 🔧 pendiente-lab (necesita las VMs).
 
 | Componente | Estado | Notas |
 |---|:---:|---|
@@ -178,12 +178,12 @@ Prototipo **F1–F6 completo** (413 tests). Leyenda: ✅ hecho (testeado) · �
 | 🌐 F1 · Live mode (Telegram/ngrok/trigger local) | ✅ | `--live` + `scripts/live_approve.py` |
 | 🤖 F2 · Bridge de normalización (`events:normalized`) | ✅🔧 | Camino A Wazuh→`payload` + Camino B publisher ML (ADR-0014). **Scorer ML en vivo = pendiente (P2)** |
 | 🛡 F3 · Active-response (Windows + Linux) | ✅🔧 | Scripts `argos-{isolate,throttle,snapshot,kill}` listos; instalación en agentes = pendiente-lab |
-| 🧠 F4 · Capa 4 LLM Triage (NVIDIA NIM) | ✅ | `POST /triage` · deepseek/kimi · sanitizer T-030 · fail-soft (R-2) |
+| 🧠 F4 · Capa 4 LLM Triage (NVIDIA NIM) | ✅ | `POST /triage` · `openai/gpt-oss-120b` · sanitizer T-030 · fail-soft (R-2) |
 | 🐳 F5 · docker-compose Perfil A | ✅ | Core en la VM Linux core · ADR-0015 · `deploy/README.md` |
 | 📺 F6 · Consola web + Streamlit fallback | ✅ | `:8080` (web) / `:8501` (streamlit) · read-only |
 | 🔍 Capa 1 (Sigma) · 🍯 Capa 3 (Canary FIM) | ✅🔧 | Reglas + simuladores listos; despliegue/auditd en el lab = pendiente-lab |
-| 🏗 Lab 3 VMs + ataque real | 🔧 | pendiente-lab (Diego) |
-| 🎬 Video demo + exposición | 🟡 | Camino simulado garantizado listo ([`DEMO_RUNBOOK.md`](./DEMO_RUNBOOK.md)) |
+| 🏗 Lab 3 VMs + ataque real (Track A) | 🔧 | Código real (Vagrantfile + provisioning de 2/3 VMs, `vagrant validate` OK) — `vagrant up` nunca completó con éxito en la máquina de prueba (conflicto Hyper-V/VirtualBox, no es un problema de código). Diferido; Track B es el confirmado para la entrega. |
+| 🎬 Video demo + exposición (Track B) | ✅ | Docker-compose confirmado funcional y corrido en vivo. Guion vigente: [`GUION_GRABACION_TRACKB.html`](./GUION_GRABACION_TRACKB.html) · runbook: [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md) |
 
 > **Manual maestro del equipo (la fuente de verdad):** [`docs/ARGOS_RUNBOOK_MAESTRO.html`](./docs/ARGOS_RUNBOOK_MAESTRO.html) · **status detallado:** [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md)
 
@@ -197,30 +197,41 @@ El prototipo F1–F6 corre hoy, demo-safe, sin lab.
 git clone https://github.com/EnzoOrdonez/argos.git
 cd argos
 pip install -e ".[soar,llm,dev,ui]"
-pytest -q                          # 413 passing (2 ajenos: charmap de P3, ver troubleshooting del runbook)
+pytest -q                          # ~441 tests per docs de equipo; no re-verificado en un sandbox limpio esta sesión
 ```
 
-**Correr el demo (camino simulado, garantizado):**
+**Correr el demo (Track B — docker-compose, confirmado funcional):**
 
 ```bash
-# Opción A — docker-compose (todo el core junto):
-docker compose up -d                                          # redis, postgres, soar, console, llm-triage
-python scripts/demo_injector.py uc04 --redis-url redis://localhost:6379/0
-# consola web -> http://localhost:8080
+cp .env.example .env
+# completar credenciales propias (OPENAI_API_KEY de NVIDIA NIM como mínimo; el resto
+# es opcional — Telegram/Discord/Twilio se omiten fail-soft si faltan)
+# poner DEMO_MODE=true en .env (usa las respuestas LLM ya cacheadas en demo/cached-responses/,
+# evita depender del backend real durante la demo)
 
-# Opción B — manual (sin Docker para los servicios): ver DEMO_RUNBOOK.md §2
+docker compose up -d                                          # redis, postgres, soar, console, llm-triage
+python scripts/demo_injector.py uc04
+# consola web -> http://localhost:8080
 ```
 
-> 📘 **Runbook completo (simulado + live + troubleshooting):** [`DEMO_RUNBOOK.md`](./DEMO_RUNBOOK.md)
-> 📕 **Manual maestro del equipo (estado, comandos, guion, trampas):** [`docs/ARGOS_RUNBOOK_MAESTRO.html`](./docs/ARGOS_RUNBOOK_MAESTRO.html)
+> ⚠ Si usás notificaciones Telegram/Twilio reales: revisar `TELEGRAM_CHAT_ID`/`TWILIO_TO_NUMBER`
+> en `.env.example` (BUG-4 en `CLAUDE.md`) — el código lee esos nombres, no
+> `TELEGRAM_APPROVER_CHAT_IDS`/`TWILIO_APPROVER_PHONES`.
+
+> 📘 **Guion de grabación vigente:** [`GUION_GRABACION_TRACKB.html`](./GUION_GRABACION_TRACKB.html) · **runbook completo (troubleshooting):** [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md)
+> 📕 **Manual maestro del equipo (estado, comandos, trampas):** [`docs/ARGOS_RUNBOOK_MAESTRO.html`](./docs/ARGOS_RUNBOOK_MAESTRO.html)
 
 <details>
 <summary><b>Prototipo real (3 VMs)</b></summary>
 
-El provisioning del lab (Wazuh manager en la VM core + víctimas Windows/Debian + PostgreSQL) **no vive en `lab/`**
-(es un stub); está documentado en **ADR-0015**, [`deploy/README.md`](./deploy/README.md) y
-[`detection/p3_deployment_guide.md`](./detection/p3_deployment_guide.md). Swap simulado↔real con
-`ARGOS_EXECUTOR=wazuh` + `docker compose --profile real up -d`.
+`lab/` **sí tiene código real**: Vagrantfile + provisioning de 2 de las 3 VMs (`core` = Wazuh
+manager, `lin-victim-01` = Debian + PostgreSQL 17.5 + pgAudit), más `postgres/init.sql` + `seed.py`
+y runbooks de boot. `vagrant validate` pasa. La VM Windows víctima (Fase 1B) está diferida a
+propósito. **`vagrant up` nunca completó con éxito** — conflicto Hyper-V (Docker Desktop/WSL2)
+vs. VirtualBox en la máquina de prueba, no un problema del código (ver `lab/RUNBOOK_BOOT_1A.md`
+y `CLAUDE.md`). Para la entrega se usa Track B (docker-compose, arriba) como demo garantizada;
+Track A queda para retomar sin presión de tiempo. Swap simulado↔real con `ARGOS_EXECUTOR=wazuh` +
+`docker compose --profile real up -d` una vez que el lab bootee.
 
 ```bash
 cp .env.example .env    # completar valores reales (gitignored)
@@ -248,17 +259,20 @@ Agrupadas por componente:
 
 ## Escenarios de demo
 
-Cinco escenarios end-to-end de ataque diseñados para la exposición en vivo (~13 min total). TTPs completos, guiones de narración y criterios de éxito en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md).
+Ocho escenarios end-to-end de ataque (6 núcleo + 2 opcionales) diseñados para la exposición en vivo (~13 min el set núcleo). TTPs completos, guiones de narración y criterios de éxito en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md); orden y timing exacto de grabación en [`GUION_GRABACION_TRACKB.html`](./GUION_GRABACION_TRACKB.html).
 
 | UC | Escenario | Tier | Desenlace | Foco del demo |
 |:--:|-----------|:----:|-----------|--------------|
 | `uc01` | Ransomware en 3 capas casi simultáneas (T1486) | T0 | EXECUTE_ISOLATION (auto, sub-seg) | Fast-path full-stack |
 | `uc02` | Canary sola (Capa 3), zero-FP | T0 | EXECUTE_ISOLATION (auto) | Detección ultra-temprana · **zero archivos cifrados** |
-| `uc04` | Ataque a la DB del banco (L1+L2) | T1 | EXECUTE_ISOLATION | **two-person rule** · four-eyes · matriz de decisión |
+| `uc03` ★ | Variante novedosa (ML sola) → split-brain | T2 | EXECUTE_ISOLATION (conservative-wins) | **Centerpiece:** HITL con desacuerdo real entre 4 aprobadores, resuelto por política |
+| `uc04` | Ataque a la DB de IntiBank (L1+L2) | T1 | EXECUTE_ISOLATION | **two-person rule** · four-eyes · host production-critical |
+| `uc05` (opcional) | Agent-kill sigiloso (T1562.001) | T0 | EXECUTE_ISOLATION (auto) | Resiliencia: silencio del agente como señal |
 | `uc06` | DDoS volumétrico (T1498), fast-path | T0 | EXECUTE_ISOLATION (auto) | Contención en el edge |
-| `uc07` | SELECT masivo legítimo | — | **NO_ACTION** (el humano rechaza) | El HITL atrapa un **falso positivo** |
+| `uc07` | SELECT masivo legítimo | T1 | **NO_ACTION** (el humano rechaza) | El HITL atrapa un **falso positivo** |
+| `uc08` (opcional) | SQL injection contra app web (T1190) | T1 | EXECUTE_ISOLATION (auto, block IP) | OWASP Top 10 #1 · Initial Access |
 
-**Técnicas MITRE ATT&CK en alcance:** T1486 (ransomware) · T1498 (DDoS) · T1005/T1213 (DB) · T1562 (agent-kill) · T1083. Detalle por UC en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md).
+**Técnicas MITRE ATT&CK en alcance:** T1486 (ransomware) · T1490 (inhibit recovery) · T1498 (DDoS) · T1190 (SQLi) · T1078 (valid accounts / FP) · T1562 (agent-kill) · T1083 (discovery). Detalle por UC en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md).
 
 ---
 
@@ -297,7 +311,7 @@ argos/
 ├── argos_contracts/           # Cross-team Pydantic v2 contracts (inmutable · v1.1.0)
 ├── llm_triage/                # Capa 4 — FastAPI + LLM client (NVIDIA NIM) + sanitizer T-030
 │   ├── api/                   #     POST /triage endpoint
-│   ├── llm_client/            #     OpenAI SDK -> NVIDIA (deepseek/kimi) + Ollama stub (ADR-0001 v3)
+│   ├── llm_client/            #     OpenAI SDK -> NVIDIA (gpt-oss-120b) + Ollama stub (ADR-0001 v3)
 │   ├── prompts/               #     Jinja2 templates
 │   └── rag/                   #     BM25 + BGE-large + RRF
 │
@@ -317,7 +331,7 @@ argos/
 │   ├── architecture/          #     SAD, threat model, flujo + ownership
 │   └── decisions/             #     15 ADRs + OPEN_QUESTIONS_RESOLUTION
 │
-├── lab/                       # (stub) provisioning real en ADR-0015 / deploy/README / p3_deployment_guide
+├── lab/                       # Vagrantfile + provisioning real (2/3 VMs); vagrant up nunca completó (ver README)
 ├── attack-simulation/         # Wrappers de emulación adversaria
 └── evaluation/                # Métricas, datasets, reportes
 ```
@@ -328,9 +342,9 @@ argos/
 
 ## Hito siguiente
 
-🎯 **Entrega final: 28 de junio de 2026** (prórroga del profesor, 2026-06-10): informe técnico + demo en vivo + presentación. Los triggers de fallback de ADR-0010 §5 se recalculan contra esta fecha: T-21 = 7-jun (vencido), T-14 = 14-jun, T-10 = 18-jun, T-7 = 21-jun.
+🎯 **Entrega final: 1 de julio de 2026** (fecha movida desde 28-jun, antes 13-jun): informe técnico + demo en vivo + presentación (~13 min). Decisión tomada el mismo día de entrega: se prioriza Track B (docker-compose, confirmado funcional y corrido en vivo) como demo garantizada; Track A (lab real de 3 VMs) queda diferido — `vagrant up` nunca completó con éxito (conflicto Hyper-V/VirtualBox), sin relación con la calidad del código del lab. Retomar Track A es trabajo post-entrega, sin presión de calendario.
 
-El alcance se va recortando según el orden documentado en [`docs/PROJECT_STATUS.md §4`](./docs/PROJECT_STATUS.md) si la presión de calendario lo exige. UC-01 + UC-02 + UC-04 son los irrenunciables del demo.
+Detalle completo del estado real (verificado contra código, no solo contra READMEs) en [`CLAUDE.md`](./CLAUDE.md).
 
 ---
 

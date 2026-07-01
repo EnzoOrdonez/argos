@@ -26,9 +26,12 @@ del demo simulado es idéntico.
 Escenarios (capas per matriz ADR-0009 §2.6):
   uc01  ransomware 3 capas casi simultáneas (T1486) en WIN-VICTIM-01 -> T0 auto
   uc02  canary sola (Capa 3) -> T0 auto, cero archivos reales tocados
+  uc03  variante novedosa (ML sola T2) -> split-brain 2A/1R/1timeout -> conservative-wins (CENTERPIECE)
   uc04  DB production-critical (L1 pg_mass_read + L2) -> T1 two-person, 2 approve
+  uc05  agent-kill (T1562.001): L1 stop-service + L3 canary -> T0 auto
   uc06  DDoS T1498 fast-path -> T0 auto
   uc07  L1+L2 en host crítico, el humano rechaza -> NO_ACTION two-person
+  uc08  SQLi web (T1190): L1 firmas + L2 patron -> T1 auto (block IP)
 
 Sale con código 0 si el desenlace coincide con el esperado del UC (o, en --live,
 si el incidente quedó creado a la espera de aprobación).
@@ -46,11 +49,13 @@ from datetime import datetime, timezone
 from _runtime import make_executor
 
 from argos_contracts.alert import NormalizedAlert
-from argos_contracts.enums import Layer, NotificationChannelType, Severity
+from argos_contracts.enums import ApproverStatus, Layer, NotificationChannelType, Severity
+from argos_contracts.incident import ApproverState
 from soar.approval_api.handlers import (
     build_final_decision_if_ready,
     load_incident,
     record_approval_response,
+    save_incident,
 )
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
@@ -97,6 +102,11 @@ class Scenario:
     expected_outcome: str | None = None
     expected_policy: str | None = None
     expected_state: str = "executed"
+    # uc03 (split-brain): aprobadores sembrados PENDING que NO votan -> TIMEOUT al cierre.
+    pending: list[str] = field(default_factory=list)
+    # uc03: resolver por el cierre de la ventana de consolidacion (no per-voto), para
+    # exhibir el conflicto (conflict_detected) + el TIMEOUT en la consola.
+    use_window: bool = False
 
 
 def _scenarios() -> dict[str, Scenario]:
@@ -127,6 +137,27 @@ def _scenarios() -> dict[str, Scenario]:
             expected_outcome="EXECUTE_ISOLATION",
             expected_policy="auto-execute",
         ),
+        "uc03": Scenario(
+            description="Variante novedosa (ML sola, T2) -> split-brain -> conservative-wins",
+            alerts=[
+                # Capa 2 sola, score 0.74 (= L2_ALONE_T2_MIN_SCORE) -> T2.
+                # Tecnica T1083 (whitelisted, NO en AUTO_T0) para no caer en T0 fast-path.
+                # Host STANDARD (desconocido -> STANDARD) -> conservative-wins, no two-person.
+                _alert(Layer.LAYER_2, "WIN-WS-07", score=0.74,
+                       severity=Severity.HIGH, technique="T1083",
+                       alert_id="uc03-ml", rule="iforest-ocsvm-entropy"),
+            ],
+            # 3 votos reales (2 approve, 1 reject); el 4to (telegram:p4) no vota -> TIMEOUT.
+            votes=[
+                ("telegram:enzo", "reject"),
+                ("telegram:p2", "approve"),
+                ("telegram:p3", "approve"),
+            ],
+            pending=["telegram:p4"],
+            use_window=True,
+            expected_outcome="EXECUTE_ISOLATION",
+            expected_policy="conservative-wins",
+        ),
         "uc04": Scenario(
             description="Ataque a la DB IntiBank (two-person rule, 2 aprueban)",
             alerts=[
@@ -140,6 +171,21 @@ def _scenarios() -> dict[str, Scenario]:
             votes=[("telegram:soc-lead", "approve"), ("telegram:dba", "approve")],
             expected_outcome="EXECUTE_ISOLATION",
             expected_policy="two-person-rule",
+        ),
+        "uc05": Scenario(
+            description="Agent-kill sigiloso (T1562.001): L1 stop-service + L3 canary -> T0 auto",
+            alerts=[
+                # "1 + 3 + heartbeat" (USE_CASES): L1 Sigma stop-service + L3 canary.
+                # La capa 3 (canary) enruta a T0 (zero-FP) -> auto-aislar sin HITL.
+                _alert(Layer.LAYER_1, "WIN-VICTIM-01", score=0.88,
+                       severity=Severity.HIGH, technique="T1562.001",
+                       alert_id="uc05-sigma", rule="stop_service_wazuh_agent"),
+                _alert(Layer.LAYER_3, "WIN-VICTIM-01", score=0.99,
+                       severity=Severity.CRITICAL, technique=None,
+                       alert_id="uc05-canary", rule="canary-fim-whodata"),
+            ],
+            expected_outcome="EXECUTE_ISOLATION",
+            expected_policy="auto-execute",
         ),
         "uc06": Scenario(
             description="DDoS volumetrico (T1498): fast-path a T0",
@@ -166,6 +212,21 @@ def _scenarios() -> dict[str, Scenario]:
             expected_policy="two-person-rule",
             expected_state="rejected",
         ),
+        "uc08": Scenario(
+            description="SQL injection web (T1190): L1 firmas SQLi + L2 patron -> T1 auto, block IP",
+            alerts=[
+                # "1 + 2" (USE_CASES): L1 Sigma SQLi + L2 anomalia de patron de request.
+                # Corroboracion L1+L2 alta -> T1. Host STANDARD -> auto-execute (sin two-person).
+                _alert(Layer.LAYER_1, "WIN-WEB-01", score=0.88,
+                       severity=Severity.HIGH, technique="T1190",
+                       alert_id="uc08-sigma", rule="sql_injection_signatures"),
+                _alert(Layer.LAYER_2, "WIN-WEB-01", score=0.91,
+                       severity=Severity.HIGH, technique="T1190",
+                       alert_id="uc08-ml", rule="request-pattern-anomaly"),
+            ],
+            expected_outcome="EXECUTE_ISOLATION",
+            expected_policy="auto-execute",
+        ),
     }
 
 
@@ -183,14 +244,33 @@ def _build_notifier() -> NotificationService:
     return NotificationService(channels)
 
 
-def build_runtime(r: object, *, live: bool):  # devuelve la tupla de colaboradores P1
+def build_runtime(r: object, *, live: bool, fast_window: bool = False):
     """Arma el pipeline P1 (consumer + colaboradores). En --live el executor lo
-    elige `ARGOS_EXECUTOR`; en el demo simulado es siempre `SimulatedExecutor`."""
+    elige `ARGOS_EXECUTOR`; en el demo simulado es siempre `SimulatedExecutor`.
+
+    `fast_window`: comprime la ventana de consolidacion a 0s con sleep instantaneo
+    (uc03 en --in-process/tests). Con Redis real la ventana la fija el env
+    APPROVAL_CONSOLIDATION_WINDOW_SECONDS (ej. 5s para que el countdown se vea)."""
     memory = MemorySink()
-    audit = AuditLogger([memory])
+    sinks = [memory]
+    # Sink SQL opcional: si ARGOS_AUDIT_SQL_DSN está, persiste a Postgres argos_audit
+    # (para mostrar una fila real en la grabación). Fail-soft: sin DB no-opea.
+    dsn = os.environ.get("ARGOS_AUDIT_SQL_DSN")
+    if dsn:
+        from soar.audit.postgres import PostgresSink
+
+        sinks.append(PostgresSink(dsn))
+    audit = AuditLogger(sinks)
     executor = make_executor() if live else SimulatedExecutor()
     notifier = _build_notifier()
     scheduler = WindowScheduler(r, notifier=notifier, audit=audit)
+    if fast_window:
+        # Ventana de consolidacion a 0s (asyncio.sleep(0) real). Se setea el atributo
+        # directo porque el ctor hace `consolidation_seconds or env` y 0 es falsy
+        # (0 or 60 == 60). NO se toca t2_timeout/voice: si se comprimieran, el failsafe
+        # T2-sin-respuesta dispararia ANTES de los votos y lockearia timeout-escalation.
+        # Quedan en 180s/60s reales y nunca disparan en el smoke (await solo consolidacion).
+        scheduler._consolidation_seconds = 0
     triage = TriageClient(audit=audit)  # apunta al stub si esta corriendo
     consumer = SOARConsumer(
         r,
@@ -214,6 +294,52 @@ async def inject_scenario(r: object, scenario: Scenario, consumer: SOARConsumer)
     return f"INC-{today}-{sequence:03d}"
 
 
+async def drive_window_scenario(
+    r: object, incident_id: str, scenario: Scenario, *, scheduler, executor, audit
+) -> None:
+    """uc03 split-brain: registra los votos SIN resolver per-voto, siembra el aprobador
+    PENDING, y resuelve por el CIERRE de la ventana de consolidacion (conservative-wins,
+    `finalize_after_window`). Es la unica via que exhibe `conflict_detected` + el TIMEOUT
+    en la consola. Usa la logica real de soar; solo cambia el driving (no per-voto)."""
+    for email, decision in scenario.votes:
+        print(f"   voto HITL: {email} -> {decision}")
+        await record_approval_response(
+            r, incident_id, email=email, role="approver",
+            decision=decision,  # type: ignore[arg-type]
+            channel=NotificationChannelType.TELEGRAM,
+        )
+        audit.emit("approval_response", incident_id, email=email, decision=decision)
+    if scenario.pending:
+        incident = await load_incident(r, incident_id)
+        for email in scenario.pending:
+            print(f"   aprobador sin responder (sembrado PENDING): {email}")
+            incident.approvers.append(
+                ApproverState(
+                    email=email, role="approver",
+                    status=ApproverStatus.PENDING,
+                    channel=NotificationChannelType.TELEGRAM,
+                )
+            )
+        await save_incident(r, incident)
+    # Abrir la ventana y AWAIT solo la task de consolidacion (no la t2-timeout/voice que
+    # arma el consumer: voice=60s no es env-overridable y colgaria el gather).
+    before = set(scheduler._tasks)
+    await scheduler.ensure_consolidation_started(incident_id)
+    new_tasks = [t for t in scheduler._tasks if t not in before]
+    await asyncio.gather(*new_tasks, return_exceptions=True)
+    incident = await load_incident(r, incident_id)
+    if (
+        incident.final_decision is not None
+        and incident.final_decision.execution_status is None
+    ):
+        audit.emit(
+            "decision_final", incident_id,
+            outcome=incident.final_decision.outcome,
+            policy=incident.final_decision.policy_applied,
+        )
+        await apply_decision(r, incident_id, executor=executor, audit=audit)
+
+
 async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = False) -> int:
     scenario = _scenarios()[uc]
     if in_process:
@@ -225,12 +351,18 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = F
 
         r = redis.from_url(redis_url, decode_responses=True)
 
-    consumer, executor, scheduler, audit, memory = build_runtime(r, live=live)
+    consumer, executor, scheduler, audit, memory = build_runtime(
+        r, live=live, fast_window=scenario.use_window and in_process
+    )
 
     print(f"== {uc.upper()}: {scenario.description}{' [LIVE]' if live else ''}")
     incident_id = await inject_scenario(r, scenario, consumer)
 
-    if not live:
+    if not live and scenario.use_window:
+        await drive_window_scenario(
+            r, incident_id, scenario, scheduler=scheduler, executor=executor, audit=audit
+        )
+    elif not live:
         for email, decision in scenario.votes:
             print(f"   voto HITL: {email} -> {decision}")
             await record_approval_response(

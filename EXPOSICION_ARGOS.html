@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARGOS — Exposición</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;500;700;800;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #020c0f;
+  --bg2:      #040f13;
+  --bg3:      #061a1f;
+  --green:    #00ffb3;
+  --green2:   #00cc8a;
+  --green3:   #007a52;
+  --green4:   #003d2a;
+  --amber:    #ffb800;
+  --blue:     #00d4ff;
+  --blue2:    #0088aa;
+  --red:      #ff4d6a;
+  --cyan:     #00fff0;
+  --border:   rgba(0,255,179,0.1);
+  --border2:  rgba(0,255,179,0.3);
+  --border3:  rgba(0,255,179,0.5);
+  --text:     #a8ccc4;
+  --text-dim: #3d6b61;
+  --text-brt: #e0f5ef;
+  --mono:     'Share Tech Mono', monospace;
+  --jet:      'JetBrains Mono', monospace;
+  --title:    'Orbitron', sans-serif;
+  --body:     'Exo 2', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); overflow-x: hidden; cursor: default; }
+::selection { background: var(--green); color: var(--bg); text-shadow: none; }
+
+/* ---------- fondo animado (digital rain, sutil) ---------- */
+#rain { position: fixed; inset: 0; z-index: 0; opacity: .22; pointer-events: none; }
+
+/* ---------- barra de progreso ---------- */
+#progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--green3), var(--green)); z-index: 100; width: 0%; transition: width .1s linear; box-shadow: 0 0 8px var(--green); }
+
+/* ---------- dots de navegación ---------- */
+#navdots { position: fixed; right: 26px; top: 50%; transform: translateY(-50%); z-index: 90; display: flex; flex-direction: column; gap: 14px; }
+.navdot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--border3); background: transparent; cursor: pointer; transition: all .3s ease; position: relative; }
+.navdot::after { content: attr(data-label); position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text-dim); white-space: nowrap; opacity: 0; transition: opacity .2s ease; }
+.navdot:hover::after { opacity: 1; }
+.navdot.active { background: var(--green); box-shadow: 0 0 10px var(--green); border-color: var(--green); }
+
+/* ---------- secciones tipo slide ---------- */
+section.slide { position: relative; min-height: 100vh; width: 100%; display: flex; flex-direction: column; justify-content: center; padding: 90px 90px; z-index: 1; border-bottom: 1px solid var(--border); }
+@media (max-width: 900px) { section.slide { padding: 70px 24px; } }
+
+.eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 5px; color: var(--green3); text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+.eyebrow::before { content: ''; width: 26px; height: 1px; background: var(--green3); }
+.sec-num { font-family: var(--jet); font-size: 10px; color: var(--text-dim); }
+
+.sec-title { font-family: var(--title); font-weight: 900; font-size: clamp(30px, 4.4vw, 56px); color: var(--text-brt); line-height: 1.05; letter-spacing: 1px; margin-bottom: 28px; text-shadow: 0 0 30px rgba(0,255,179,.15); }
+.sec-title em { font-style: normal; color: var(--green); }
+
+.lead { font-family: var(--body); font-weight: 300; font-size: clamp(15px, 1.5vw, 19px); color: var(--text); line-height: 1.65; max-width: 840px; margin-bottom: 20px; }
+.lead b { color: var(--text-brt); font-weight: 600; }
+.lead .hl { color: var(--green); font-weight: 600; }
+
+[data-animate] { opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1); }
+[data-animate].in-view { opacity: 1; transform: translateY(0); }
+[data-animate="1"] { transition-delay: .05s; }
+[data-animate="2"] { transition-delay: .15s; }
+[data-animate="3"] { transition-delay: .25s; }
+[data-animate="4"] { transition-delay: .35s; }
+[data-animate="5"] { transition-delay: .45s; }
+[data-animate="6"] { transition-delay: .55s; }
+
+/* ---------- portada ---------- */
+#s0 { align-items: flex-start; }
+.brand-mark { font-family: var(--mono); font-size: 10px; letter-spacing: 6px; color: var(--green3); margin-bottom: 26px; }
+.brand-title { font-family: var(--title); font-weight: 900; font-size: clamp(64px, 13vw, 150px); line-height: .86; color: var(--green); text-shadow: 0 0 60px rgba(0,255,179,.35); }
+.brand-sub { font-family: var(--title); font-size: clamp(11px, 1.5vw, 14px); font-weight: 500; letter-spacing: 4px; color: var(--text-brt); text-transform: uppercase; margin-top: 22px; }
+.brand-tag { font-family: var(--body); font-weight: 300; font-size: 15px; color: var(--text-dim); margin-top: 14px; max-width: 620px; line-height: 1.6; }
+.brand-meta { margin-top: 56px; display: flex; gap: 46px; flex-wrap: wrap; }
+.brand-meta div { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); }
+.brand-meta strong { display: block; font-family: var(--title); font-size: 15px; color: var(--green); letter-spacing: 1px; margin-top: 4px; }
+.scrolldown { position: absolute; bottom: 42px; left: 90px; font-family: var(--mono); font-size: 9px; letter-spacing: 4px; color: var(--text-dim); display: flex; align-items: center; gap: 10px; animation: bob 2s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+/* ---------- stat counters ---------- */
+.stat-row { display: flex; gap: 54px; flex-wrap: wrap; margin-top: 34px; }
+.stat { font-family: var(--title); }
+.stat .num { font-size: clamp(34px, 4vw, 52px); font-weight: 900; color: var(--green); text-shadow: 0 0 24px rgba(0,255,179,.25); line-height: 1; }
+.stat .lbl { font-family: var(--mono); font-size: 9.5px; letter-spacing: 2px; color: var(--text-dim); margin-top: 8px; text-transform: uppercase; }
+
+/* ---------- grid genérico de tarjetas ---------- */
+.grid { display: grid; gap: 16px; margin-top: 14px; }
+.grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1000px) { .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; } }
+
+.card { background: linear-gradient(180deg, var(--bg2), var(--bg3)); border: 1px solid var(--border); padding: 22px 24px; transition: all .3s ease; position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--c, var(--green)); opacity: .6; }
+.card:hover { border-color: var(--border3); transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+.card .k { font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px; color: var(--c, var(--green3)); text-transform: uppercase; margin-bottom: 8px; }
+.card h4 { font-family: var(--title); font-size: 15px; font-weight: 700; color: var(--text-brt); margin-bottom: 8px; letter-spacing: .5px; }
+.card p { font-family: var(--body); font-weight: 300; font-size: 12.5px; line-height: 1.6; color: var(--text); }
+
+/* ---------- problemática: comparación ---------- */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+@media (max-width: 900px) { .compare { grid-template-columns: 1fr; } }
+.compare .col { border: 1px solid var(--border); padding: 22px; background: rgba(0,0,0,.15); }
+.compare .col.bad { border-color: rgba(255,77,106,.25); }
+.compare .col.good { border-color: rgba(0,255,179,.25); }
+.compare .col-hd { font-family: var(--mono); font-size: 9.5px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.compare .col.bad .col-hd { color: var(--red); }
+.compare .col.good .col-hd { color: var(--green); }
+.compare ul { list-style: none; }
+.compare li { font-family: var(--body); font-weight: 300; font-size: 13px; line-height: 1.7; color: var(--text); padding-left: 18px; position: relative; margin-bottom: 6px; }
+.compare .col.bad li::before { content: '✕'; position: absolute; left: 0; color: var(--red); font-size: 10px; }
+.compare .col.good li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-size: 10px; }
+
+/* ---------- objetivos ---------- */
+.obj-list { margin-top: 10px; }
+.obj-item { display: flex; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.obj-item .oi { font-family: var(--title); font-size: 22px; font-weight: 900; color: var(--green3); min-width: 40px; }
+.obj-item .ot { font-family: var(--body); font-weight: 400; font-size: 14.5px; color: var(--text-brt); line-height: 1.55; }
+.obj-item .ot b { color: var(--green); font-weight: 600; }
+
+/* ---------- herramientas: por capa ---------- */
+.layer-row { display: flex; gap: 20px; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid var(--border); }
+.layer-row .lnum { font-family: var(--title); font-size: 12px; font-weight: 900; color: var(--bg); background: var(--c, var(--green)); padding: 5px 11px; letter-spacing: 1px; white-space: nowrap; height: fit-content; }
+.layer-row .lbody { flex: 1; }
+.layer-row .lname { font-family: var(--title); font-size: 14.5px; font-weight: 700; color: var(--text-brt); margin-bottom: 6px; letter-spacing: .5px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { font-family: var(--jet); font-size: 10.5px; padding: 4px 11px; border: 1px solid var(--border2); color: var(--text); letter-spacing: .5px; background: rgba(0,255,179,.04); }
+
+/* ---------- conclusiones: veredicto ---------- */
+.verdict { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border: 1px solid var(--border2); margin-bottom: 10px; background: rgba(0,0,0,.15); }
+.verdict .vb { font-family: var(--mono); font-size: 9.5px; letter-spacing: 2px; padding: 5px 12px; white-space: nowrap; font-weight: 700; }
+.verdict.ok .vb { color: var(--bg); background: var(--green); }
+.verdict.warn .vb { color: var(--bg); background: var(--amber); }
+.verdict p { font-family: var(--body); font-weight: 300; font-size: 13px; color: var(--text); line-height: 1.55; }
+.verdict p b { color: var(--text-brt); font-weight: 600; }
+
+/* ---------- equipo / cierre ---------- */
+.team-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 24px; }
+@media (max-width: 1100px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+.team-card { border: 1px solid var(--border); padding: 18px 16px; text-align: center; background: rgba(0,0,0,.15); }
+.team-card .role { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--green3); margin-bottom: 8px; }
+.team-card .nm { font-family: var(--title); font-size: 13px; font-weight: 700; color: var(--text-brt); margin-bottom: 6px; }
+.team-card .fn { font-family: var(--body); font-weight: 300; font-size: 10.5px; color: var(--text-dim); line-height: 1.4; }
+
+.thanks { margin-top: 40px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text-dim); line-height: 1.9; }
+.thanks b { color: var(--green3); }
+
+footer.end { position: relative; z-index: 1; padding: 46px 90px; text-align: center; font-family: var(--mono); font-size: 9.5px; letter-spacing: 2px; color: var(--text-dim); }
+@media (max-width: 900px) { footer.end { padding: 40px 24px; } }
+</style>
+</head>
+<body>
+
+<canvas id="rain"></canvas>
+<div id="progress"></div>
+<div id="navdots"></div>
+
+<!-- ================= 0. PORTADA ================= -->
+<section class="slide" id="s0" data-sec="Portada">
+  <div class="brand-mark" data-animate="1">XDR / SOAR MULTI-CAPA · OPEN SOURCE</div>
+  <div class="brand-title" data-animate="2">ARGOS</div>
+  <div class="brand-sub" data-animate="3">Adaptive Response Guard with Orchestrated Surveillance</div>
+  <div class="brand-tag" data-animate="4">Plataforma de detección y respuesta en 4 capas paralelas + SOAR con aprobación humana asistida por LLM. Defiende la base de datos productiva de un banco ficticio, <b style="color:var(--text-brt)">IntiBank</b>.</div>
+  <div class="brand-meta" data-animate="5">
+    <div>CURSO<strong>Tópicos Avanzados de Ciberseguridad</strong></div>
+    <div>UNIVERSIDAD<strong>Universidad de Lima · 2026-1</strong></div>
+    <div>ENTREGA<strong>1 de julio de 2026</strong></div>
+  </div>
+  <div class="scrolldown"><span>SCROLL</span> ↓</div>
+</section>
+
+<!-- ================= 1. INTRODUCCIÓN ================= -->
+<section class="slide" id="s1" data-sec="Introducción">
+  <div class="eyebrow" data-animate="1"><span class="sec-num">01</span> INTRODUCCIÓN</div>
+  <h2 class="sec-title" data-animate="2">¿Qué es <em>ARGOS</em>?</h2>
+  <p class="lead" data-animate="3">ARGOS replica la arquitectura de productos comerciales <b>high-end EDR/XDR</b> (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando <span class="hl">exclusivamente componentes open source</span>, más una API LLM de bajo costo para la capa de triage.</p>
+  <p class="lead" data-animate="4">Cuatro capas de detección corren en paralelo y alimentan un <b>SOAR</b> (Security Orchestration, Automation and Response) que clasifica cada alerta por nivel de confianza y decide entre contención automática o aprobación humana — con resolución visible de desacuerdos entre aprobadores (split-brain).</p>
+  <div class="stat-row" data-animate="5">
+    <div class="stat"><div class="num" data-count="4">0</div><div class="lbl">Capas de detección</div></div>
+    <div class="stat"><div class="num" data-count="8">0</div><div class="lbl">Escenarios de ataque</div></div>
+    <div class="stat"><div class="num" data-count="4">0</div><div class="lbl">Tiers de confianza T0–T3</div></div>
+    <div class="stat"><div class="num" data-count="441">0</div><div class="lbl">Tests (equipo, no reverificado)</div></div>
+  </div>
+</section>
+
+<!-- ================= 2. PROBLEMÁTICA ================= -->
+<section class="slide" id="s2" data-sec="Problemática">
+  <div class="eyebrow" data-animate="1"><span class="sec-num">02</span> PROBLEMÁTICA</div>
+  <h2 class="sec-title" data-animate="2">El gap entre <em>EDR comercial</em> y <em>OSS actual</em></h2>
+  <p class="lead" data-animate="3">Las empresas medianas y grandes no pueden costear EDRs comerciales que combinan reglas, ML y triage asistido por LLM en un solo producto. Los stacks open source actuales se quedan en <b>una sola capa de detección</b> — y el ransomware moderno cifra hasta <span class="hl">~25 000 archivos por minuto</span>: cada segundo de retraso importa.</p>
+  <div class="compare" data-animate="4">
+    <div class="col bad">
+      <div class="col-hd">✕ Stack OSS típico hoy</div>
+      <ul>
+        <li>Una sola capa de detección (reglas o ML, rara vez ambas)</li>
+        <li>Ciego ante variantes de ransomware sin firma conocida</li>
+        <li>Triage 100% manual — cuello de botella humano y fatiga de alertas</li>
+        <li>Sin orquestación: contener es una decisión ad-hoc, no un proceso</li>
+      </ul>
+    </div>
+    <div class="col good">
+      <div class="col-hd">✓ Lo que exige el problema</div>
+      <ul>
+        <li>Defensa en profundidad: varias capas que fallan de forma independiente</li>
+        <li>Detección de anomalías más allá de firmas conocidas</li>
+        <li>Triage enriquecido sin bloquear la contención si el enriquecimiento falla</li>
+        <li>Automatización proporcional a confianza — no todo o nada</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3. OBJETIVOS ================= -->
+<section class="slide" id="s3" data-sec="Objetivos">
+  <div class="eyebrow" data-animate="1"><span class="sec-num">03</span> OBJETIVOS</div>
+  <h2 class="sec-title" data-animate="2">Objetivo general</h2>
+  <p class="lead" data-animate="3">Diseñar e implementar una plataforma XDR/SOAR de <b>defensa en profundidad</b>, 100% open source salvo una API LLM de bajo costo, capaz de detectar y contener ransomware — y vectores relacionados (DDoS, SQL injection) — con aprobación humana asistida, en un entorno reproducible.</p>
+  <div class="obj-list" data-animate="4">
+    <div class="obj-item"><div class="oi">01</div><div class="ot">Detectar por <b>firmas</b> (Sigma mapeado a MITRE ATT&CK) con alta precisión sobre técnicas conocidas.</div></div>
+    <div class="obj-item"><div class="oi">02</div><div class="ot">Detectar <b>variantes sin firma</b> mediante ML no supervisado (Isolation Forest + One-Class SVM).</div></div>
+    <div class="obj-item"><div class="oi">03</div><div class="ot">Tender una capa de <b>engaño</b> (canary files + FIM) con cero falsos positivos por diseño.</div></div>
+    <div class="obj-item"><div class="oi">04</div><div class="ot">Enriquecer el triage con un <b>LLM</b>, sin ponerlo nunca en el camino crítico de contención (invariante R-2).</div></div>
+    <div class="obj-item"><div class="oi">05</div><div class="ot">Orquestar la respuesta con un <b>SOAR</b> por tiers de confianza (T0–T3), balanceando automatización vs. aprobación humana.</div></div>
+    <div class="obj-item"><div class="oi">06</div><div class="ot">Resolver desacuerdos entre aprobadores (<b>split-brain</b>) sin bloquear la contención — conservative-wins.</div></div>
+    <div class="obj-item"><div class="oi">07</div><div class="ot">Demostrar el sistema end-to-end sobre un activo realista: la base de datos productiva de <b>IntiBank</b>.</div></div>
+  </div>
+</section>
+
+<!-- ================= 4. HERRAMIENTAS USADAS ================= -->
+<section class="slide" id="s4" data-sec="Herramientas">
+  <div class="eyebrow" data-animate="1"><span class="sec-num">04</span> HERRAMIENTAS USADAS</div>
+  <h2 class="sec-title" data-animate="2">Stack por capa</h2>
+
+  <div data-animate="3">
+    <div class="layer-row" style="--c:var(--green)">
+      <div class="lnum">L1</div>
+      <div class="lbody">
+        <div class="lname">Rule-based (Sigma)</div>
+        <div class="chip-row">
+          <span class="chip">Wazuh 4.7</span><span class="chip">OpenSearch</span><span class="chip">Sigma</span><span class="chip">Sysmon</span><span class="chip">auditd</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-row" style="--c:var(--blue)">
+      <div class="lnum">L2</div>
+      <div class="lbody">
+        <div class="lname">ML Anomaly</div>
+        <div class="chip-row">
+          <span class="chip">scikit-learn</span><span class="chip">Isolation Forest</span><span class="chip">One-Class SVM</span><span class="chip">scipy (entropía Shannon)</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-row" style="--c:var(--amber)">
+      <div class="lnum">L3</div>
+      <div class="lbody">
+        <div class="lname">Deception (Canary)</div>
+        <div class="chip-row">
+          <span class="chip">Canary files</span><span class="chip">FIM whodata</span><span class="chip">auditd</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-row" style="--c:var(--cyan)">
+      <div class="lnum">L4</div>
+      <div class="lbody">
+        <div class="lname">LLM Triage (enrichment-only)</div>
+        <div class="chip-row">
+          <span class="chip">FastAPI</span><span class="chip">NVIDIA NIM</span><span class="chip">openai/gpt-oss-120b</span><span class="chip">RAG (BM25+BGE-large+RRF)</span><span class="chip">Ollama / Llama 3.1 8B (fallback, diferido)</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-row" style="--c:var(--red)">
+      <div class="lnum">SOAR</div>
+      <div class="lbody">
+        <div class="lname">Orquestación + Backend</div>
+        <div class="chip-row">
+          <span class="chip">FastAPI</span><span class="chip">Redis</span><span class="chip">APScheduler</span><span class="chip">Pydantic v2</span><span class="chip">PyJWT</span><span class="chip">Telegram / Discord / Twilio Voice / SMTP</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-row" style="--c:var(--text-dim); border-bottom:none">
+      <div class="lnum" style="background:var(--text-dim)">INFRA</div>
+      <div class="lbody">
+        <div class="lname">Simulación, UI e infraestructura</div>
+        <div class="chip-row">
+          <span class="chip">Atomic Red Team</span><span class="chip">MITRE Caldera</span><span class="chip">hping3 / slowhttptest</span><span class="chip">sqlmap</span><span class="chip">Consola web (:8080)</span><span class="chip">Streamlit (:8501)</span><span class="chip">Vagrant + VirtualBox</span><span class="chip">Docker Compose</span><span class="chip">PostgreSQL 17.5 + pgAudit</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5. RECOMENDACIONES Y CONCLUSIONES ================= -->
+<section class="slide" id="s5" data-sec="Conclusiones">
+  <div class="eyebrow" data-animate="1"><span class="sec-num">05</span> RECOMENDACIONES Y CONCLUSIONES</div>
+  <h2 class="sec-title" data-animate="2">Qué se logró, <em>con honestidad</em></h2>
+
+  <div data-animate="3">
+    <div class="verdict ok"><div class="vb">CONFIRMADO</div><p>Prototipo <b>F1–F6 completo</b>: 4 capas de detección, SOAR con tiers T0–T3, aprobación humana con resolución de split-brain, consola web. Track B (docker-compose) corrido <b>en vivo</b> por el equipo.</p></div>
+    <div class="verdict ok"><div class="vb">CONFIRMADO</div><p>El diseño de resiliencia se sostuvo: el LLM nunca bloqueó una contención (R-2), y las 3 capas de detección restantes operan de forma independiente entre sí.</p></div>
+    <div class="verdict warn"><div class="vb">PENDIENTE</div><p>El lab real de 3 VMs (Track A) tiene <b>código real</b> (Vagrantfile + provisioning), pero <b>el boot nunca completó</b> — conflicto Hyper-V/VirtualBox en la máquina de prueba, no un problema del código.</p></div>
+    <div class="verdict warn"><div class="vb">PENDIENTE</div><p>Calibración empírica de los thresholds T0–T3: los valores usados hoy son <b>preliminares</b>, no calibrados contra datos reales de producción.</p></div>
+  </div>
+
+  <p class="lead" data-animate="4" style="margin-top:26px">Recomendaciones para la siguiente iteración: retomar el boot del lab real sin presión de tiempo (máquina sin Hyper-V activo), calibrar thresholds con un dataset etiquetado, cablear el sink de auditoría a PostgreSQL, y perseguir reglas Sigma aceptadas upstream en <b>SigmaHQ/sigma</b>.</p>
+</section>
+
+<!-- ================= 6. CIERRE / EQUIPO ================= -->
+<section class="slide" id="s6" data-sec="Equipo">
+  <div class="eyebrow" data-animate="1"><span class="sec-num">06</span> CIERRE</div>
+  <h2 class="sec-title" data-animate="2">Equipo</h2>
+  <div class="team-grid" data-animate="3">
+    <div class="team-card"><div class="role">P1 · LÍDER</div><div class="nm">Enzo Ordoñez</div><div class="fn">LLM/SOAR · contracts · Capa 4 · motor SOAR · Approval API · consola · coordinación</div></div>
+    <div class="team-card"><div class="role">P2 · ML</div><div class="nm">Sebastian Montenegro</div><div class="fn">Capa 2 (Isolation Forest + One-Class SVM) · features · calibración · métricas</div></div>
+    <div class="team-card"><div class="role">P3 · DETECCIÓN</div><div class="nm">Angeles Castillo</div><div class="fn">Capa 1 (Sigma/MITRE) · Capa 3 (canary + FIM) · active-response · validación ART/Caldera</div></div>
+    <div class="team-card"><div class="role">P4 · INFRA/UI</div><div class="nm">Diego Jara</div><div class="fn">Lab de 3 VMs · Wazuh manager · PostgreSQL IntiBank · grabación demo</div></div>
+    <div class="team-card"><div class="role">APOYO P2</div><div class="nm">Yohamin Pimentel</div><div class="fn">Integración forense (Velociraptor) · apoyo Capa 2</div></div>
+  </div>
+  <div class="thanks" data-animate="4"><b>Agradecimientos:</b> SigmaHQ (formato Sigma abierto) · MITRE ATT&CK (taxonomía de amenazas) · Wazuh (SIEM/HIDS open-source) · Atomic Red Team y MITRE Caldera (adversary emulation) · Ollama (inferencia local accesible).</div>
+</section>
+
+<footer class="end">ARGOS · Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1</footer>
+
+<script>
+(function(){
+  // ---------- fondo: digital rain sutil ----------
+  var canvas = document.getElementById('rain');
+  var ctx = canvas.getContext('2d');
+  var w, h, cols, drops, fontSize = 14;
+  var chars = '01ARGOS<>/{}[]#$%SOAR';
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    cols = Math.floor(w / fontSize);
+    drops = new Array(cols).fill(0).map(function(){ return Math.random() * -100; });
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  var running = true;
+  document.addEventListener('visibilitychange', function(){ running = !document.hidden; });
+
+  function draw() {
+    if (running) {
+      ctx.fillStyle = 'rgba(2,12,15,0.06)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#00ffb3';
+      ctx.font = fontSize + 'px monospace';
+      for (var i = 0; i < cols; i++) {
+        var text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  // ---------- barra de progreso ----------
+  var progress = document.getElementById('progress');
+  function onScroll() {
+    var scrollTop = window.scrollY || document.documentElement.scrollTop;
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = max > 0 ? (scrollTop / max) * 100 : 0;
+    progress.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ---------- dots de navegación ----------
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.slide'));
+  var navdots = document.getElementById('navdots');
+  var dotEls = sections.map(function(sec) {
+    var dot = document.createElement('div');
+    dot.className = 'navdot';
+    dot.setAttribute('data-label', sec.getAttribute('data-sec'));
+    dot.addEventListener('click', function() { sec.scrollIntoView({ behavior: 'smooth' }); });
+    navdots.appendChild(dot);
+    return dot;
+  });
+
+  // ---------- animación de entrada + dot activo ----------
+  var animatedEls = document.querySelectorAll('[data-animate]');
+  var animObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) entry.target.classList.add('in-view');
+    });
+  }, { threshold: 0.2 });
+  animatedEls.forEach(function(el) { animObserver.observe(el); });
+
+  var secObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      var idx = sections.indexOf(entry.target);
+      if (entry.isIntersecting && idx > -1) {
+        dotEls.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+      }
+    });
+  }, { threshold: 0.5 });
+  sections.forEach(function(sec) { secObserver.observe(sec); });
+
+  // ---------- contadores animados ----------
+  var counters = document.querySelectorAll('[data-count]');
+  var countObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting) return;
+      var el = entry.target;
+      if (el.dataset.done) return;
+      el.dataset.done = '1';
+      var target = parseInt(el.getAttribute('data-count'), 10);
+      var start = null;
+      var duration = 1100;
+      function step(ts) {
+        if (!start) start = ts;
+        var progressT = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progressT, 3);
+        el.textContent = Math.floor(eased * target);
+        if (progressT < 1) requestAnimationFrame(step);
+        else el.textContent = target;
+      }
+      requestAnimationFrame(step);
+      countObserver.unobserve(el);
+    });
+  }, { threshold: 0.4 });
+  counters.forEach(function(el) { countObserver.observe(el); });
+
+  // ---------- navegación por teclado ----------
+  window.addEventListener('keydown', function(e) {
+    var curIdx = 0;
+    var mid = window.scrollY + window.innerHeight / 2;
+    sections.forEach(function(sec, i) {
+      if (sec.offsetTop <= mid) curIdx = i;
+    });
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      var next = sections[Math.min(curIdx + 1, sections.length - 1)];
+      next.scrollIntoView({ behavior: 'smooth' });
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      var prev = sections[Math.max(curIdx - 1, 0)];
+      prev.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+})();
+</script>
+</body>
+</html>
