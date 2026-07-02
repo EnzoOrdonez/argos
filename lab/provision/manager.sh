@@ -1,0 +1,29 @@
+sudo apt-get install -y docker.io docker-compose-plugin
+sudo mkdir -p /opt/opensearch && cd /opt/opensearch
+sudo tee docker-compose.yml << 'EOF'
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: opensearch
+    environment:
+      - cluster.name=argos-cluster
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports: ["9200:9200", "9600:9600"]
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: opensearch-dashboards
+    environment:
+      - 'OPENSEARCH_HOSTS=["https://opensearch:9200"]'
+    ports: ["5601:5601"]
+volumes:
+  opensearch-data:
+EOF
+sudo docker compose up -d
+sleep 30
