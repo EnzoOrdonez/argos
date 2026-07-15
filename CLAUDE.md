@@ -52,7 +52,7 @@ Lima, 2026-1). Entregables: demo en vivo + informe técnico + exposición ~13 mi
 
 | Carpeta | Estado real | Evidencia |
 |---|---|---|
-| `argos_contracts/` | Terminado, v1.1.0, congelado | 69 tests |
+| `argos_contracts/` | Terminado, v1.1.0, congelado | 64 tests (corregido Ronda 9; ver nota más abajo) |
 | `soar/` | Terminado (Fases 0-3) | tests verdes según docs del equipo — **no verificado en esta sesión**, ver nota pytest |
 | `active-response/` | Terminado: 6 scripts Linux + 6 Windows + tests | `argos-{isolate,throttle,snapshot,kill,unisolate,unthrottle}` |
 | `deception/` (canary L3) | Terminado | generator + fim-configs + wazuh-rules + tests |
@@ -535,16 +535,13 @@ revise), créditos del equipo en sección discreta al final del README (pendient
 portafolio open-source gratis sin intención comercial, solo lectura (no se optimiza para recibir
 PRs externos).
 
-**🔴 Hallazgo más serio de toda la sesión, más urgente que cualquier otra cosa de este archivo:**
-el repo ya está **público en GitHub ahora mismo** (verificado en vivo, no es una fecha futura) — lo
-cual significa que el `TELEGRAM_BOT_TOKEN` filtrado (Ronda 7/8) es recuperable por cualquiera desde
-hace más de dos semanas, no es un riesgo condicional. Además se encontró que la identidad real de
-una integrante del equipo (correo institucional + código de alumno) quedó expuesta en el historial
-de git bajo un usuario distinto al nombre público que usa el proyecto para ella. **Detalle completo,
-incluyendo qué hacer, en `MEMORIA_AUDITORIA_GITHUB.md` (raíz del repo, gitignored a propósito — no
-se repiten acá el email ni el username reales para no empeorar la exposición en un archivo que sí
-se commitea).** Acción pendiente de Enzo: rotar el token (@BotFather) si no lo hizo ya, y hablar con
-esa persona antes de que el repo circule más.
+**Hallazgo de Ronda 9 (ya gestionado):** el repo estuvo público con el `TELEGRAM_BOT_TOKEN`
+filtrado (Ronda 7/8) recuperable desde el historial — resuelto en Ronda 11 (purgado vía
+`git filter-repo`, bot y chat borrados por Enzo). La misma sesión encontró un hallazgo de
+privacidad sobre un ex-integrante del equipo en el historial de git; gestionado directamente
+por Enzo fuera de este archivo, sin detalle acá a propósito. Para cualquier sesión futura: si
+algo en `git log --all` sugiere una identidad no acreditada públicamente en el proyecto, no
+investigar ni documentar más — es terreno exclusivo de Enzo.
 
 **Trabajo ejecutado hoy (no solo diagnóstico) en `docs/use-cases/argos_use_cases_v2.html`:**
 investigación real (WebSearch) de capacidades 2026 de Microsoft Defender XDR / CrowdStrike Falcon /
@@ -864,3 +861,157 @@ compañera expuesta, nunca rotar secretos).
 **No ejecutado en esta sesión** — el propio pedido de Enzo es que la ejecución de código la haga
 Claude Code, no Cowork. Las 8 fases siguen pendientes en su totalidad. Próxima sesión (de Claude Code,
 no de acá): empezar por la Fase 0 del prompt.
+
+## Ronda 11 (mismo día, 2026-07-15): historial de git reescrito — token de Telegram purgado
+
+Mientras Claude Code ejecutaba el prompt maestro (Fase 0 y Fase 1 completadas, ver más abajo), Enzo
+resolvió el riesgo funcional del `TELEGRAM_BOT_TOKEN` filtrado borrando el bot y el chat en Telegram
+directamente ("por mientras"). Preguntó, desde esta sesión de Cowork, si además se podía purgar el
+string del token del historial de git — hasta ahora esto había quedado deliberadamente pendiente en
+todas las rondas anteriores ("requiere coordinación con el equipo, no por sorpresa").
+
+**Recomendación dada:** esperar y coordinar con Yohamin/Diego/Angeles antes de reescribir, ya que el
+bot ya invalidado resuelve el riesgo real (nadie puede usar ese token para nada) y lo que queda es
+cosmético. Enzo, informado de que esto rompe los clones locales de los tres, decidió explícitamente
+**proceder de todas formas** vía `AskUserQuestion` ("Proceder ahora, asumo el riesgo").
+
+### Ejecución
+
+1. Backup completo antes de tocar nada: `git bundle create ... --all` (20 refs, verificado con
+   `git bundle verify`), guardado fuera del repo.
+2. Token real localizado con precisión en el historial (valor omitido a propósito de esta bitácora —
+   este archivo SÍ se commitea, a diferencia de `MEMORIA_AUDITORIA_GITHUB.md`; escribirlo acá habría
+   re-filtrado exactamente lo que se estaba purgando), presente en un único commit (`f1dc9a5`,
+   introducido) y revertido a placeholder en `8b0f431` — exactamente la cronología que ya documentaba
+   la Ronda 7.
+3. **Primer intento (desde el sandbox de Cowork) falló** — no por error de comando, sino porque el mount
+   de este sandbox sobre el filesystem real de Windows de Enzo no tiene permisos para hacer `unlink` sobre
+   archivos dentro de `.git/refs/` y `.git/logs/refs/` (mismo tipo de desincronización de mount ya
+   documentado en rondas anteriores, pero esta vez bloqueando una escritura real, no solo dando falsos
+   positivos de lectura). `git-filter-repo --force` abortó a mitad de camino con `fatal: unable to unlink
+   ...git update-ref failed`. Diagnóstico posterior confirmó que ningún ref se movió (todos los hashes
+   intactos) — el intento dejó basura "dangling" inofensiva y varios `.lock` huérfanos, pero no corrupción.
+   **Lección:** operaciones de escritura pesada sobre `.git/` (no solo lectura) no son seguras desde este
+   sandbox contra el mount de Enzo; deben ejecutarse directo en su máquina.
+4. Enzo limpió los `.lock` huérfanos él mismo (confirmando antes, en el Administrador de Tareas, que no
+   había ningún proceso git corriendo), instaló `git-filter-repo` vía `pip` en su Windows, y corrió la
+   purga directo en su Git Bash.
+5. **Casi-incidente real, detectado a tiempo:** el primer intento de Enzo de correr `git filter-repo` se
+   ejecutó en la terminal equivocada — el prompt mostraba `~/Projects/Agentwatch/arqui261-grupo3
+   (seccion8-limitacion-rollback)`, un repositorio de otro curso/equipo, no ARGOS. El comando falló solo
+   porque `replacements.txt` no existía ahí (`FileNotFoundError`), no por ninguna protección real — con
+   `--force`, si el archivo hubiera existido, se habría reescrito el historial de ese otro proyecto sin
+   ningún motivo. Detectado por revisión directa del prompt de la terminal antes de reintentar. **Lección
+   para cualquier operación destructiva futura: pedir `pwd` confirmado en texto antes de cada comando de
+   riesgo, nunca asumir que la terminal activa es la esperada cuando hay múltiples proyectos abiertos.**
+6. Confirmado el directorio correcto (`/c/Users/enziz/Projects/argos`), la purga corrió limpia:
+   `git filter-repo --replace-text replacements.txt --force` → 111 commits parseados, reescritos en 0.8s,
+   repack sin errores. `HEAD` de `chore/oss-transformation` pasó de `cca8ba0` a `d830a0b` (incidentalmente
+   también aplicó el `--replace-text` de forma correcta sobre `main` y `feature/lab/p4-lab-real`).
+7. Verificación real antes de cualquier push: `git log --all -p | grep "<prefijo numérico del bot ID>"`
+   → vacío (cero apariciones del token real en todo el historial reescrito, ni siquiera su prefijo).
+   `grep "REDACTED_TELEGRAM_BOT_TOKEN"` → 2 apariciones, exactamente en los 2 commits que correspondían.
+8. `filter-repo` había removido el remote `origin` (comportamiento de seguridad por diseño de la
+   herramienta). Re-agregado, y `git push origin --force --all` + `--force --tags` aplicado.
+
+### Resultado y efecto secundario a resolver
+
+Push exitoso: `chore/oss-transformation` (→`d830a0b`), `feature/lab/p4-lab-real` (→`27cc7dd`) y `main`
+(→`9a97ea9`) quedaron con `forced update` en GitHub — el historial público ya no contiene el token real
+en ningún commit alcanzable.
+
+**Efecto secundario no buscado, detectado tras el push:** `--force --all` empujó también 9 ramas que
+hasta ahora eran puramente locales de Enzo y nunca se habían compartido a `origin` (`chore/finalizacion-
+readme-limpieza`, `feat/demo-polish`, `feature/fase-1-live-mode` a `-6-console`, `feature/p4/approval-
+console`) — el push las reporta como `[new branch]`. Son checkpoints del propio desarrollo de ARGOS (no
+contenido ajeno), y ya pasaron por el mismo `--replace-text` que limpió `main`, así que no reintroducen
+el token. Pendiente confirmar con Enzo si las deja públicas (son historia real del proyecto, consistente
+con ya ser un repo público) o prefiere borrarlas de `origin` (`git push origin --delete <rama>`) por no
+haber sido una decisión explícita.
+
+**Nota técnica pendiente de que Enzo entienda, no accionable:** GitHub puede seguir sirviendo el commit
+viejo (`f1dc9a5`, con el token real) por hash directo durante un tiempo, hasta que su propio garbage
+collector interno lo recolecte — un force-push cambia qué es *alcanzable* desde las ramas, no borra
+instantáneamente objetos huérfanos del lado de GitHub. Irrelevante en la práctica porque el bot ya está
+borrado (el string no sirve para nada), pero no es "cero rastro inmediato".
+
+**Acción pendiente de Enzo, urgente:** avisar a Yohamin, Diego y Angeles que sus clones locales de ARGOS
+quedaron con historial divergente — necesitan **re-clonar**, no `git pull` (un pull/merge normal sobre
+historial reescrito genera conflictos masivos o reintroduce commits viejos con el token).
+
+**Sección 1.2 de `MEMORIA_AUDITORIA_GITHUB.md` queda resuelta** (token purgado del historial, no solo
+del working tree) — no editado ese archivo todavía para reflejarlo, pendiente de una pasada de
+consolidación.
+
+## Ronda 12 (2026-07-15): ejecución completa del prompt maestro de transformación OSS (Fases 0-7)
+
+Esta ronda la ejecutó **Claude Code** (shell/git real, no Cowork), corriendo el
+`PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md` (Ronda 10) de punta a punta. Las 8 fases (0-7) quedaron
+**cerradas**, cada una en su propio PR a `main`, cada PR con **CI real verde** en el runner de GitHub
+antes de mergear. Trabajo sobre el branch `chore/oss-transformation`.
+
+### Qué se hizo, fase por fase
+
+- **Fase 0 — auditoría + crítica del plan.** Primera sesión que corrió la suite de verdad:
+  línea base **488 items verdes** (441 del default + 47 de ml/ui/forensics). Se confirmó que "441"
+  era correcto (350 funciones `def test_` expanden a 441 por parametrización). Crítica al plan del
+  prompt aplicada (Fase 6 mal especificada — gitignore no basta; `datetime.UTC` no rompe en 3.11+;
+  console/ ya más maduro de lo asumido; +hallazgos fuera del prompt como `ui/README.md`).
+- **Fase 1 — honestidad de bajo riesgo.** "Repositorio privado durante el curso; público al cierre"
+  corregido en 7 sitios (el repo ya era público). Copyright del README alineado con LICENSE.
+- **Fase 2 — CI/CD (primer pipeline del repo).** `.github/workflows/ci.yml`: test matrix ubuntu
+  py3.11/3.12 + lint (ruff + `mypy argos_contracts`). **Ruff baseline**: 157 auto-fixes + 52 triados
+  a mano (UP042 ignore repo-wide por los enums `str,Enum` del contrato; per-file-ignores acotados;
+  noqa justificados). `testpaths` completado (ml/ui/forensics ahora en un solo `pytest`). Badge real.
+- **Fase 3 — portabilidad + BUG-1 (toca `soar/`, con tests).** `inventory.py` config-driven
+  (`ARGOS_HOST_INVENTORY`, fail-loud, boot-time validation). BUG-1: timeout del hook LLM configurable
+  (`LLM_TRIAGE_TIMEOUT_SECONDS`) + fail-soft diferenciado por causa (R-2 intacto). Suite 488→507.
+- **Fase 3.5 — el CI real cazó un bug que lo local no.** El primer run en GitHub falló:
+  `ui/streamlit_app/lib/` (código real: config/incident_loader/view_model) estaba tragado por el
+  patrón `.gitignore` `lib/` sin anclar → **nunca se había commiteado**, nadie que clonara podía
+  correr la UI. Fix: anclar `/lib/` `/lib64/` + commitear los 4 huérfanos. Tres runs hasta verde.
+- **Fase 4 — honestidad de la documentación (20 archivos, docs-only).** Framing "replica/mirrors la
+  arquitectura" → "toma el patrón a escala de laboratorio". Backend `gpt-4o-mini` stale → NVIDIA NIM
+  en 10 docs activos; fallback Llama marcado diferido/no-cableado en todos lados. THREAT_MODEL
+  (T-030 US/China resuelto, Week 13 no realizada), SAD (CI real vs Atomic Red Team no-corrido,
+  heartbeat 60s, 0.74 preliminar), EXPOSICION chips INFRA, PROJECT_STATUS banner, ui/README roadmap.
+- **Fase 5 — consola web (toca `soar/audit/`, con tests).** Tabla `audit_events` append-only + write
+  genérico en `PostgresSink.emit()` (los agregados perdían el historial evento-por-evento). Consola:
+  timeline de auditoría navegable (endpoint opcional, nunca 503, degrada solo-Redis), ráfaga
+  multi-capa, indicador de staleness, columnas Rol/Respondió. Verificado con harness node+jsdom
+  sobre el `app.js` real (16 checks del DOM). Suite 507→519.
+- **Fase 6 — limpieza de portafolio.** `SECURITY.md` (GitHub Private Vulnerability Reporting);
+  `git rm --cached` de 6 andamiajes de curso; README a tono portafolio (badge Deadline fuera, equipo
+  → sección Créditos discreta, framing de curso aligerado); CONTEXT/EVALUATION_CRITERIA marcados
+  "histórico del curso".
+- **Fase 7 — verificación final + cierre (esta ronda).** Suite completa **519 passed**. Barrido de
+  secretos sobre todo lo agregado en las 6 fases (limpio). Confirmado que los 3 archivos privados
+  gitignoreados no entraron a ningún commit. Este cierre.
+
+### Fuera de alcance (a propósito, documentado)
+
+Artefactos de curso marcados "ilustrativos/desfasados por diseño" (ADR-0011): la narrativa profunda
+OpenAI+Ollama de `manual-p1/p2.md`, las líneas de backend de los 4 HTMLs de equipo salvo la del
+patrón, el ADR-0001 mismo (registro versionado), los diagramas `.drawio`, y los changelogs históricos
+(se agregan filas nuevas, no se reescribe historia). Track A (lab de 3 VMs) sigue sin bootear (C19) —
+es una limitación de entorno, no del código, ya documentada.
+
+### Nota sensible (decisión explícita de Enzo)
+
+El párrafo "🔴 Hallazgo más serio" de la Ronda 9 se **suavizó** por decisión directa de Enzo: ya no
+menciona ningún detalle identificable del hallazgo de privacidad sobre un ex-integrante. El tema
+queda gestionado por Enzo fuera de este archivo; sesiones futuras: no investigar ni documentar más
+sobre identidades no acreditadas públicamente en el historial de git — es terreno exclusivo de Enzo.
+
+### En manos de Enzo al cierre
+
+- Habilitar **Private Vulnerability Reporting** en Settings→Security del repo (lo que promete
+  `SECURITY.md`).
+- Mergear el PR de Fase 7.
+- Las acciones de la Ronda 11 que siguen siendo suyas (9 ramas force-pusheadas, aviso de re-clone al
+  equipo, `replacements.txt`).
+
+**Estado final: el prompt maestro completo (Fases 0-7) está ejecutado.** El repo pasó de tarea de
+curso a pieza de portafolio open-source con CI real verde, código y documentación honestos, consola
+funcional y limpieza de andamiaje — sin reescribir historia de git (más allá de la purga del token de
+la Ronda 11, que fue de Enzo) y sin tocar las líneas rojas.
