@@ -11,7 +11,7 @@ from __future__ import annotations
 import pathlib
 import sys
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -41,7 +41,7 @@ _UI_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(_UI_ROOT) not in sys.path:
     sys.path.insert(0, str(_UI_ROOT))
 
-_NOW = datetime(2026, 6, 24, 12, 0, 0, tzinfo=timezone.utc)
+_NOW = datetime(2026, 6, 24, 12, 0, 0, tzinfo=UTC)
 
 
 @pytest.fixture

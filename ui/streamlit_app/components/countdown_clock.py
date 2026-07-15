@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import streamlit as st
 
@@ -17,7 +17,7 @@ def render(incident: Incident) -> None:
         st.caption("Sin ventana de consolidación todavía (arranca con el primer voto).")
         return
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     remaining = vm.consolidation_remaining(window, now) or 0.0
     fraction = vm.consolidation_elapsed_fraction(window, now)
     label = f"{vm.format_mmss(remaining)} / {vm.format_mmss(window.duration_seconds)}"

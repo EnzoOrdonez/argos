@@ -50,10 +50,10 @@ def evaluate_binary_detection(
 
     y_pred = predict_labels(y_score, threshold=threshold)
 
-    true_positives = sum(1 for yt, yp in zip(y_true, y_pred) if yt == 1 and yp == 1)
-    false_positives = sum(1 for yt, yp in zip(y_true, y_pred) if yt == 0 and yp == 1)
-    true_negatives = sum(1 for yt, yp in zip(y_true, y_pred) if yt == 0 and yp == 0)
-    false_negatives = sum(1 for yt, yp in zip(y_true, y_pred) if yt == 1 and yp == 0)
+    true_positives = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == 1 and yp == 1)
+    false_positives = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == 0 and yp == 1)
+    true_negatives = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == 0 and yp == 0)
+    false_negatives = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == 1 and yp == 0)
 
     return DetectionMetrics(
         threshold=threshold,

@@ -33,7 +33,7 @@ import random
 import sys
 import time
 from dataclasses import dataclass
-from pathlib import Path, PureWindowsPath, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import yaml
 

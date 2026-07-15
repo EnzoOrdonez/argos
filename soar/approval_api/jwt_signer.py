@@ -43,10 +43,10 @@ DEFAULT_EXPIRATION_MINUTES = 5  # ADR-0006 §política JWT
 
 Decision = Literal["approve", "reject"]
 
-_TOKEN_KEY = "jwt:tok:{jti}"
+_TOKEN_KEY = "jwt:tok:{jti}"  # noqa: S105  plantilla de clave Redis, no un secreto
 
 
-class TokenInvalid(Exception):
+class TokenInvalid(Exception):  # noqa: N818  nombre público estable (lo capturan otras capas)
     """Token rechazado: firma, algoritmo, exp, iss o claims que no calzan."""
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import respx
@@ -82,7 +82,7 @@ def test_opensearch_500_no_lanza(respx_mock: respx.Router):
 
     sink.emit(
         AuditEvent(
-            ts=datetime.now(timezone.utc),
+            ts=datetime.now(UTC),
             kind="x",
             incident_id="INC-2026-06-10-004",
         )

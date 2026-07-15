@@ -10,9 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from argos_contracts.ml_score import MLFeatures
-
 from ml.features.entropy import shannon_entropy
-
 
 CRYPTO_DLL_KEYWORDS = {
     "bcrypt.dll",

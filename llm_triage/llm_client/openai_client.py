@@ -1,9 +1,11 @@
 """Backend de triage vía endpoint OpenAI-compatible (default NVIDIA NIM).
 
 Lee del entorno: `OPENAI_BASE_URL` (default NVIDIA), `OPENAI_API_KEY`, `OPENAI_MODEL`
-(primario), `OPENAI_FALLBACK_MODEL`. ADR-0001 / Fase 4: primario
-`deepseek-ai/deepseek-v4-pro` (con `thinking:false` para salida estructurada más
-rápida), fallback `moonshotai/kimi-k2.6`.
+(primario), `OPENAI_FALLBACK_MODEL`. ADR-0001 v3 / Fase 4 (rev. C10 2026-06-29):
+primario `openai/gpt-oss-120b` (rápido/fiable; el id requiere prefijo `openai/`),
+fallback `moonshotai/kimi-k2.6`. Se desactiva el "thinking" del modelo (deepseek:
+`thinking:false`; gemma: `enable_thinking:false`) para acelerar la salida estructurada.
+Timeout del request = `LLM_REQUEST_TIMEOUT_SECONDS` (default 120s).
 
 Flujo: sanitizar (T-030) → render prompts → llamar al modelo (JSON mode) → si falla,
 probar el fallback → parsear y validar contra `TriageResponse` (la validación del
@@ -16,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from openai import AsyncOpenAI
 
@@ -28,7 +30,7 @@ from llm_triage.sanitizer import sanitize
 logger = logging.getLogger(__name__)
 
 _NVIDIA_BASE = "https://integrate.api.nvidia.com/v1"
-_DEFAULT_MODEL = "deepseek-ai/deepseek-v4-pro"
+_DEFAULT_MODEL = "openai/gpt-oss-120b"
 _DEFAULT_FALLBACK = "moonshotai/kimi-k2.6"
 
 
@@ -57,7 +59,7 @@ class OpenAIClient(LLMClient):
         self._fallback = fallback_model or os.environ.get(
             "OPENAI_FALLBACK_MODEL", _DEFAULT_FALLBACK
         )
-        timeout = timeout or float(os.environ.get("LLM_REQUEST_TIMEOUT_SECONDS", "30"))
+        timeout = timeout or float(os.environ.get("LLM_REQUEST_TIMEOUT_SECONDS", "120"))
         # max_retries=0: el fallback de modelo es nuestra resiliencia, no el retry del SDK.
         self._client = client or AsyncOpenAI(
             api_key=api_key or os.environ.get("OPENAI_API_KEY") or "missing",
@@ -90,8 +92,15 @@ class OpenAIClient(LLMClient):
     async def _call_model(
         self, model: str, context: AlertContext, messages: list[dict[str, str]]
     ) -> TriageResponse:
-        # DeepSeek en NVIDIA: thinking:false acelera y limpia la salida estructurada.
-        extra_body = {"chat_template_kwargs": {"thinking": False}} if "deepseek" in model else {}
+        # Desactivar el "thinking" del modelo acelera y limpia la salida estructurada.
+        # deepseek usa la key `thinking`; gemma usa `enable_thinking` (sin esto,
+        # google/gemma-4-31b-it se cuelga en el endpoint gratis de NVIDIA -> timeout).
+        if "deepseek" in model:
+            extra_body = {"chat_template_kwargs": {"thinking": False}}
+        elif "gemma" in model:
+            extra_body = {"chat_template_kwargs": {"enable_thinking": False}}
+        else:
+            extra_body = {}
         completion = await self._client.chat.completions.create(
             model=model,
             messages=messages,  # type: ignore[arg-type]
@@ -104,5 +113,5 @@ class OpenAIClient(LLMClient):
         # Campos que NO se confían al modelo: se fuerzan desde el contexto/runtime.
         data["incident_id"] = context.incident_id
         data["llm_backend"] = model
-        data["generated_at"] = datetime.now(timezone.utc).isoformat()
+        data["generated_at"] = datetime.now(UTC).isoformat()
         return TriageResponse.model_validate(data)  # valida MITRE whitelist (R-6)

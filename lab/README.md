@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Owner | **P4 · Diego Jara** (Infra · UI · Eval) |
-| Status | 📅 Planned · Weeks 2-3 |
+| Status | 🟡 Fase 1A escrita (`vagrant validate` OK) · boot real PENDIENTE (bloqueo Hyper-V, ver `RUNBOOK_BOOT_1A.md`) · Fase 1B (Windows) **diferida → video** |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §3 (Block 02 — Victim Lab), [`docs/decisions/0002-heartbeat-default-60s.md`](../docs/decisions/0002-heartbeat-default-60s.md) |
 
 ---
@@ -13,6 +13,8 @@
 Isolated virtualized environment that receives attacks and produces telemetry. Reproducible from zero in <30 minutes via Infrastructure as Code, per the reproducibility property in SAD §13.2.
 
 The lab is the **substrate** that every other layer assumes exists. Without it, no use case can run.
+
+> **Qué es real en el lab hoy (Fase 1A, honesto — C18):** **canary L3 (FIM) + active-response** sobre la víctima Linux. La capa **Sigma (L1) NO está desplegada** (los 10 `.yml` no están convertidos a Wazuh; `wazuh-manager.sh` solo despliega `canary_rules.xml`). Por eso **UC-02** es el único end-to-end totalmente real; **UC-01** dispara por canary (no por Sigma); **UC-04/06/07/08** van por `demo_injector` (pipeline real, detección simulada). Boot real bloqueado por Hyper-V en la máquina de Enzo → ver `RUNBOOK_BOOT_1A.md`. Fase 1B (Windows) diferida a video.
 
 ---
 
@@ -24,7 +26,7 @@ The lab is the **substrate** that every other layer assumes exists. Without it, 
 | VirtualBox 7.x | Hypervisor for local dev |
 | Terraform 1.7+ (optional) | Azure deployment for the stretch goal "hybrid on-prem / cloud" demo |
 | Bash / PowerShell | Provisioning scripts inside each VM |
-| PostgreSQL 15 | Activo defendido — corre en Linux VM, esquema `argos_demo_prod` con datos sintéticos |
+| PostgreSQL | Activo defendido — Linux VM (`192.168.56.21`), DB `app_prod` / schema `intibank`, datos sintéticos (ADR-0009) |
 
 **Network topology:** isolated host-only or internal network. No internet access from victim hosts during attack runs (mitigates accidental real-world impact — see THREAT_MODEL.md §3.1).
 
@@ -37,12 +39,13 @@ lab/
 ├── README.md                  # This file
 ├── Vagrantfile                # All VMs defined here (manager + 2 victims)
 ├── provision/
-│   ├── wazuh-manager.sh       # Wazuh manager + OpenSearch install
-│   ├── victim-windows.ps1     # Sysmon (SwiftOnSecurity baseline) + Wazuh agent
-│   ├── victim-linux.sh        # auditd + Wazuh agent + PostgreSQL 15 install + seed
-│   ├── postgres-seed.sql      # Esquema argos_demo_prod + datos sintéticos
-│   ├── postgres-dumps.sh      # Genera dumps en /var/backups/postgres/ para targets de canary y ransomware
-│   └── network-isolation.sh   # iptables / NetFirewallRule rules
+│   ├── wazuh-manager.sh       # Wazuh manager (systemd, Perfil A manager-only) + docker compose --profile real
+│   ├── victim-linux.sh        # auditd + Wazuh agent + PostgreSQL + pgAudit + carga lab/postgres/
+│   └── victim-windows.ps1     # Wazuh agent + AR PowerShell (.cmd wrappers) + FIM (Fase 1B)
+├── postgres/                  # DB víctima IntiBank (ADR-0009 §2.2/2.4/5.1)
+│   ├── init.sql               # DDL: schema intibank, 7 tablas, 6 roles inti_*
+│   ├── seed.py                # Faker(es_PE) + numpy seed=42, volúmenes mínimos
+│   └── seed_snapshot.sql.gz   # pg_dump pre-horneado (no regenerar en cada vagrant up)
 ├── terraform/                 # Optional Azure stretch goal
 │   ├── main.tf
 │   ├── variables.tf
@@ -56,7 +59,7 @@ lab/
 
 This layer **does not consume or produce** any `argos_contracts` models directly — it's pure infrastructure. The contract it *enables* is "Wazuh manager API is reachable at `${WAZUH_API_URL}`, victim agents are registered, FIM is configured on canary paths".
 
-Tag hosts in Wazuh with `criticality=production-critical` on the Linux victim per `OPEN_QUESTIONS_RESOLUTION.md` §Q2 — this is what triggers the two-person rule in UC-04. The Linux VM hosts a **PostgreSQL 15** instance with synthetic data (`argos_demo_prod` schema), which is the concrete asset ARGOS defends. The provisioning script seeds the database and dumps periodic `pg_dump` exports to `/var/backups/postgres/` so the canary FIM and the ransomware simulator have file-level targets.
+Tag hosts in Wazuh with `criticality=production-critical` on the Linux victim per `OPEN_QUESTIONS_RESOLUTION.md` §Q2 — this is what triggers the two-person rule in UC-04. The Linux VM hosts a **PostgreSQL** instance with synthetic data (DB `app_prod`, schema `intibank`, per ADR-0009), the concrete asset ARGOS defends. `lab/postgres/seed.py` seeds the database (Faker es_PE) and dumps periodic `pg_dump` exports to `/var/backups/postgres/` so the canary FIM and the ransomware simulator have file-level targets.
 
 ---
 
@@ -64,9 +67,10 @@ Tag hosts in Wazuh with `criticality=production-critical` on the Linux victim pe
 
 ```bash
 cd lab/
-vagrant up               # provisions all 3 VMs (~10-15 min first time)
-vagrant status           # confirm all running
-vagrant ssh wazuh-mgr    # connect to manager
+vagrant up core linux-victim   # Fase 1A: manager + victima Linux (PostgreSQL)
+vagrant up windows-victim      # Fase 1B: endpoint Windows 10 (poste largo)
+vagrant status                 # confirm all running
+vagrant ssh core               # connect to manager (192.168.56.10)
 ```
 
 Validate without bringing VMs up:

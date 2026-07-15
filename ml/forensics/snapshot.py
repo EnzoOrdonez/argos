@@ -6,11 +6,11 @@ It only creates a structured evidence record for demo and testing purposes.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+import json
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
-import json
 
 from argos_contracts.ml_score import MLScore
 

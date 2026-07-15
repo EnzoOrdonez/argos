@@ -5,7 +5,7 @@ smoke `--in-process` (se corre aparte)."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import _runtime
 import demo_injector
@@ -112,7 +112,7 @@ async def test_cast_vote_two_person_reject_cancels() -> None:
 # -- conservative-wins solo-reject: se fija al cerrar la ventana ---------------
 
 def _conservative_incident() -> Incident:
-    now = datetime(2026, 6, 26, 12, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 26, 12, 0, 0, tzinfo=UTC)
     return Incident(
         incident_id="INC-2026-06-26-900",
         created_at=now,

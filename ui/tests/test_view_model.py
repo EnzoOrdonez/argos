@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from streamlit_app.lib import view_model as vm
@@ -16,7 +16,7 @@ from argos_contracts.enums import (
 )
 from argos_contracts.incident import ConsolidationWindow, FinalDecision
 
-_START = datetime(2026, 6, 24, 12, 0, 0, tzinfo=timezone.utc)
+_START = datetime(2026, 6, 24, 12, 0, 0, tzinfo=UTC)
 
 
 def test_consolidation_remaining_none() -> None:

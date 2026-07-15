@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as redis
 
@@ -49,7 +49,7 @@ def make_executor() -> ResponseExecutor:
 
 async def latest_incident_id(r: redis.Redis) -> str | None:
     """Último incidente del día (INC-YYYY-MM-DD-NNN) según el contador, o None."""
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     sequence = int(await r.get(f"incident:counter:{today}") or 0)
     if sequence <= 0:
         return None

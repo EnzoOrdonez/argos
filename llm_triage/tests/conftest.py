@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -16,7 +16,7 @@ def alert_context() -> AlertContext:
     para ejercitar la sanitización."""
     return AlertContext(
         incident_id="INC-2026-06-27-001",
-        created_at=datetime(2026, 6, 27, 12, 0, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 6, 27, 12, 0, 0, tzinfo=UTC),
         host=HostInfo(
             id="LIN-VICTIM-01",
             criticality=Criticality.PRODUCTION_CRITICAL,

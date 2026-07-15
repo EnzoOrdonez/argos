@@ -1,0 +1,90 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+# ARGOS lab — 3 VMs, red host-only 192.168.56.0/24 (ADR-0015 Perfil A).
+#   core           192.168.56.10  Ubuntu 22.04  Wazuh manager (systemd) + docker compose --profile real
+#   linux-victim   192.168.56.21  Debian 12     PostgreSQL app_prod (production-critical) + agente + AR
+#   windows-victim 192.168.56.20  Windows 10    endpoint (ransomware/canary/agent-kill) + agente + AR
+#
+# Fase 1A:  vagrant up core linux-victim
+# Fase 1B:  vagrant up windows-victim         (poste largo: box pesado + WinRM frágil)
+#
+# La criticidad la resuelve soar/inventory.py por host_id (LAB-MANAGER / LIN-VICTIM-01 / WIN-VICTIM-01),
+# no por IP. El rango 192.168.56.0/24 ya está en el allowlist host-only default de VirtualBox (.0/21).
+
+MANAGER_IP = "192.168.56.10"
+LINUX_IP   = "192.168.56.21"
+WIN_IP     = "192.168.56.20"
+
+Vagrant.configure("2") do |config|
+
+  # -------- core: Wazuh manager + servicios ARGOS --------
+  config.vm.define "core" do |core|
+    core.vm.box = "ubuntu/jammy64"           # Ubuntu 22.04 LTS
+    core.vm.hostname = "argos-core"
+    core.vm.network "private_network", ip: MANAGER_IP
+
+    # Monta el repo (raíz, un nivel arriba de lab/) en /argos para que el
+    # provision despliegue reglas/AR y corra docker compose. Read-only.
+    core.vm.synced_folder "..", "/argos", mount_options: ["ro"]
+
+    core.vm.provider "virtualbox" do |vb|
+      vb.name = "argos-core"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+
+    core.vm.provision "shell",
+      path: "provision/wazuh-manager.sh",
+      env: { "MANAGER_IP" => MANAGER_IP, "LINUX_IP" => LINUX_IP, "WIN_IP" => WIN_IP }
+  end
+
+  # -------- linux-victim: PostgreSQL IntiBank (production-critical) --------
+  config.vm.define "linux-victim" do |lin|
+    lin.vm.box = "debian/bookworm64"          # Debian 12
+    lin.vm.hostname = "lin-victim-01"
+    lin.vm.network "private_network", ip: LINUX_IP
+
+    # Necesita lab/postgres/ (init.sql, seed.py, snapshot) + active-response/linux.
+    lin.vm.synced_folder "..", "/argos", mount_options: ["ro"]
+
+    lin.vm.provider "virtualbox" do |vb|
+      vb.name = "argos-linux-victim"
+      vb.memory = 2560
+      vb.cpus = 2
+    end
+
+    lin.vm.provision "shell",
+      path: "provision/victim-linux.sh",
+      env: { "MANAGER_IP" => MANAGER_IP }
+  end
+
+  # -------- windows-victim: endpoint — DIFERIDA → video (decisión 29-jun) --------
+  # NO se levanta para la entrega 1-jul. Su valor único eran reglas Sigma que igual
+  # no dispararían (C18). Definida acá por completitud; provision (victim-windows.ps1)
+  # no existe a propósito (guardado por File.exist? abajo).
+  config.vm.define "windows-victim", autostart: false do |win|
+    win.vm.box = "gusztavvargadr/windows-10"  # box público Win10 (eval, ~10-15 GB)
+    win.vm.communicator = "winrm"
+    win.vm.boot_timeout = 600                  # WinRM tarda; subir el timeout
+    win.vm.network "private_network", ip: WIN_IP
+
+    win.vm.provider "virtualbox" do |vb|
+      vb.name = "argos-windows-victim"
+      vb.memory = 4096
+      vb.cpus = 2
+      vb.gui = false
+    end
+
+    # victim-windows.ps1 NO se escribe (Fase 1B diferida). El provisioner se omite
+    # (guardado por File.exist?) para que `vagrant validate` pase sin el script.
+    win_ps = File.expand_path("provision/victim-windows.ps1", __dir__)
+    if File.exist?(win_ps)
+      win.vm.provision "shell",
+        path: "provision/victim-windows.ps1",
+        privileged: true,
+        env: { "MANAGER_IP" => MANAGER_IP }
+    end
+  end
+
+end

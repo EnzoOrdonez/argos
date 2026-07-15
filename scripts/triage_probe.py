@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -26,7 +26,7 @@ from argos_contracts.triage import AlertContext, AlertSummary, HostInfo
 def build_context() -> AlertContext:
     return AlertContext(
         incident_id="INC-2026-06-27-001",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         host=HostInfo(
             id="LIN-VICTIM-01",
             criticality=Criticality.PRODUCTION_CRITICAL,

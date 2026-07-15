@@ -36,8 +36,9 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Anclado a la raíz: 'lib/'/'lib64/' sin anclar tragaban ui/streamlit_app/lib/ (código real).
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -252,6 +253,7 @@ evidence/
 # Local lab configuration
 config/velociraptor_hosts.json
 config/api.config.yaml
+config/host_inventory.json
 
 # ----------- Tooling/scaffolding interno (NO entregables; quedan en disco) -----------
 # Coordinación interna + prompts de trabajo + aids personales. Fuera del repo entregable.
@@ -262,3 +264,14 @@ config/api.config.yaml
 /GUIA_VIDEO_DEMO.html
 /GUIA_VIDEO_DEMO.pdf
 /ARGOS Console.html
+
+# Auditoría interna privada (post-curso, transición a portafolio). Nunca commitear ni pushear.
+/MEMORIA_AUDITORIA_GITHUB.md
+/PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md
+/MEMORIA_EJECUCION_OSS.md
+
+# Helper de git filter-repo (Ronda 11): contiene el string del token ya purgado. NUNCA commitear.
+/replacements.txt
+
+# Dataset de Kaggle sin trackear, no referenciado por ningún .py/.md (auditoría §2.1). No commitear.
+/Bank_Personal_Loan_Modelling.xlsx

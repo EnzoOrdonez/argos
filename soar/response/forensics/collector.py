@@ -27,7 +27,6 @@ from pathlib import Path
 from typing import Any
 
 from argos_contracts.ml_score import MLScore
-
 from soar.response.forensics.manifest import EvidenceManifest, build_manifest
 
 

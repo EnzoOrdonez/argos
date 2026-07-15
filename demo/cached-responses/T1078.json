@@ -1,0 +1,16 @@
+{
+  "incident_id": "INC-DEMO-UC07",
+  "tecnica_mitre": "T1078",
+  "confianza": 0.7,
+  "severidad": "high",
+  "runbook_aplicable": "NIST SP 800-61 Rev. 2 - Incident Handling Guide",
+  "accion_recomendada": "Validar con el usuario si la consulta masiva fue autorizada y revisar logs de acceso para descartar compromiso de credenciales.",
+  "indicadores_correlacionar": [
+    "user_id",
+    "source_ip",
+    "query_volume_baseline",
+    "access_timestamp"
+  ],
+  "llm_backend": "google/gemma-4-31b-it",
+  "generated_at": "2026-06-30T04:45:06.597478Z"
+}

@@ -3,11 +3,12 @@
 | Field | Value |
 |-------|-------|
 | Document type | Use Case Specification |
-| Version | 1.1 |
+| Version | 1.2 |
+| Last updated | 2026-07-01 — completadas secciones truncadas + UC-08 (ver Changelog al final) |
 | Status | Approved |
 | Owner | P1 (Enzo) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `THREAT_MODEL.md`, ADRs 0001-0008, `OPEN_QUESTIONS_RESOLUTION.md` |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `THREAT_MODEL.md`, ADRs 0001-0009, `OPEN_QUESTIONS_RESOLUTION.md` |
 
 ---
 
@@ -34,7 +35,7 @@ The exception is the **Canary Deception scenario** (UC-02), which targets a stro
 
 ## 2. Demo scenarios overview
 
-The exposition presents **four demo scenarios** in narrative sequence, plus an optional fifth as time allows:
+The exposition presents **eight demo scenarios** in narrative sequence — six núcleo (UC-01/02/03/04/06/07) + dos opcionales si sobra tiempo (UC-05/08), per el guion de grabación vigente (`GUION_GRABACION_TRACKB.html`):
 
 | ID | Name | Tier | Vector | Layers triggered | Approval flow | Duration | Purpose |
 |----|------|------|--------|------------------|---------------|----------|---------|
@@ -238,12 +239,12 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 
 #### Attack details
 
-- **Target:** Linux Ubuntu Server VM con **PostgreSQL 15** corriendo (esquema `argos_demo_prod` con tablas employees / payroll / customers / invoices / payments y datos sintéticos representativos). Host tagged en Wazuh como `criticality=production-critical` per OPEN_QUESTIONS_RESOLUTION §Q2.
+- **Target:** `lin-victim-01` (.21), Debian con **PostgreSQL 17.5 + pgAudit** corriendo (database `app_prod`, esquema `intibank` con tablas customers / accounts / transactions / payments per ADR-0009 §2.2, datos sintéticos representativos). Host tagged en Wazuh como `criticality=production-critical` per OPEN_QUESTIONS_RESOLUTION §Q2.
 - **Source:** Atomic Red Team T1490 — shadow copy deletion equivalent on Linux + `pg_dump` exfil simulation.
 - **Behavior chain:**
   1. SSH access (legitimate-looking but using stolen credential simulation).
   2. Snapshot deletion: `btrfs subvolume delete /backup/snapshots/*` y borrado de los `pg_dump` exports en `/var/backups/postgres/*.sql`.
-  3. Tar archive de `/var/lib/postgresql/15/main/` (data directory de PostgreSQL) a staging.
+  3. Tar archive de `/var/lib/postgresql/17/main/` (data directory de PostgreSQL) a staging.
   4. Intento de encriptación de los dumps SQL antes de exfil (signal claro para ML).
   5. (Attack interrupted by detection)
 
@@ -274,7 +275,7 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 
 | Time | Narrator | Screen |
 |------|----------|--------|
-| 0:00 | "Our crown-jewel asset: PostgreSQL en producción con payroll, customers, invoices. Tagged production-critical." | Show host inventory + `\dt` output del esquema argos_demo_prod |
+| 0:00 | "Our crown-jewel asset: IntiBank's PostgreSQL de producción — customers, accounts, transactions. Tagged production-critical." | Show host inventory + `\dt` output del esquema intibank |
 | 0:15 | P4 launches attack: `python attack_db_server.py` | Terminal |
 | 0:30 | "Detection fires from Layers 1 and 2. Tier T1, normally auto-execute." | Dashboard lights up |
 | 0:45 | "But this host requires two-person rule. The system asks for *two* approvals, not one." | Console shows counter "0 of 2" |
@@ -384,14 +385,14 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 
 #### Attack details — pero NO es un ataque
 
-- **Source:** Sebastian (P2) ejecuta legítimamente `SELECT * FROM payroll JOIN employees ON ...` que devuelve 100,000 filas a las 03:47 AM (fuera de horario laboral) porque está generando el reporte mensual de nómina con deadline el día siguiente.
-- **Target:** PostgreSQL `argos_demo_prod` schema, mismo activo defendido.
+- **Source:** Sebastian (P2) ejecuta legítimamente `SELECT * FROM intibank.transactions JOIN intibank.accounts ON ...` que devuelve 100,000 filas a las 03:47 AM (fuera de horario laboral) porque está generando el reporte mensual de conciliación con deadline el día siguiente.
+- **Target:** `lin-victim-01` (.21), database `app_prod`, esquema `intibank` (PostgreSQL 17.5 + pgAudit), mismo activo defendido.
 - **Behavior chain:** query SELECT muy amplia, devuelve volumen anormal, en horario no laboral, desde IP del laptop de P2 que no es servidor de reporting habitual.
 
 #### Expected system behavior
 
 - **Layer 1 (Sigma):** NO dispara — no hay patrón de query malicioso, es SELECT válido.
-- **Layer 2 (ML query pattern anomaly):** dispara con score 0.65. Modelo entrenado sobre baseline de queries normales encuentra que la combinación (rows_returned=100K, duration=8s, hour=3am, user=sebastian, query_template=join_payroll_employees) es estadísticamente anómala respecto a las queries previas de Sebastian.
+- **Layer 2 (ML query pattern anomaly):** dispara con score 0.65. Modelo entrenado sobre baseline de queries normales encuentra que la combinación (rows_returned=100K, duration=8s, hour=3am, user=sebastian, query_template=join_transactions_accounts) es estadísticamente anómala respecto a las queries previas de Sebastian.
 - **Tier classification:** **T2** (medium-uncertain — ML solo con score moderado, sin corroboración de Layer 1). Esta es justamente la zona del countdown de 3 minutos.
 - **Decision Engine action:**
   1. Throttle preventivo: limita conexiones de Sebastian a 1 query/min (no destructivo, no rompe nada).
@@ -400,4 +401,74 @@ The exposition presents **four demo scenarios** in narrative sequence, plus an o
 - **Human decision:**
   1. Enzo (P1, primero en ver el Telegram) revisa el contexto: identifica que es Sebastian y que es deadline de reporte mensual.
   2. Enzo clickea **"Reject — false positive"** en el botón inline JWT.
-  3. Sistema cancela el throttle, libera la conexión, registra el caso en OpenSearch como False Positive con razón
+  3. Sistema cancela el throttle, libera la conexión, registra el caso en OpenSearch como False Positive con razón `legitimate_reporting_activity`, timestamp y aprobador. La query de Sebastian, que ya había terminado de correr antes del reject, no se ve afectada retroactivamente.
+
+#### Success criteria
+
+- El sistema NO ejecuta aislamiento — el throttle preventivo se cancela apenas llega el primer (y único) reject.
+- Audit log registra el incidente como `false_positive=true` con el razonamiento del aprobador, queryable en OpenSearch.
+- El panel LLM mostró el verdict ("possible legitimate reporting OR data exfiltration") ANTES de la decisión humana — informa, no reemplaza el juicio del aprobador.
+- Feedback loop: el caso queda marcado para re-entrenamiento del modelo ML, con el objetivo de reducir falsos positivos futuros sobre este patrón de usuario/horario.
+
+#### Demo narration script (~2 min)
+
+| Time | Narrator | Screen |
+|------|----------|--------|
+| 0:00 | "Esta es la pieza más valiosa del HITL: el ML detecta algo real, pero el humano tiene contexto que el sistema no tiene." | Incident T2 apareciendo en consola |
+| 0:20 | "Score 0.65, tier T2 — ni tan bajo para ignorar, ni tan alto para auto-ejecutar. Throttle y snapshot ya corrieron." | Throttle indicator activo |
+| 0:40 | "El panel LLM sugiere 'possible legitimate reporting OR exfiltration' — no decide, informa." | Panel LLM con verdict |
+| 1:00 | Enzo revisa el contexto: es Sebastian, es el reporte mensual, hay deadline mañana. | Aprobador revisando el caso |
+| 1:20 | Enzo clickea **Reject — false positive**. | Botón inline JWT |
+| 1:40 | "El throttle se libera, no hubo daño, y el caso queda auditado como falso positivo para reentrenar el modelo." | Audit log: `false_positive=true` |
+
+#### Owner: P1 (Approval Console + decision logic), P2 (Sebastian — query pattern model + role-play del analista)
+
+---
+
+### UC-08 — SQL injection contra app web (per ADR-0008)
+
+**Purpose:** Cobertura de Initial Access via Exploit Public-Facing Application (OWASP Top 10 #1). Demuestra que ARGOS no solo defiende el host de base de datos, sino también la capa de aplicación web que actúa como frontend de IntiBank.
+
+#### Attack details
+
+- **Source:** atacante remoto usando `sqlmap` contra el formulario de login/búsqueda de la webapp de IntiBank (`intibank-app.local`), con payloads UNION-based y boolean-blind.
+- **Target:** `WIN-WEB-01`, servidor web que expone la app de IntiBank sobre el mismo activo PostgreSQL (`app_prod` / esquema `intibank`).
+- **Behavior chain:**
+  1. `sqlmap -u "http://intibank-app.local/login" --data="user=x&pass=y" --level=5 --risk=3` prueba parámetros vulnerables.
+  2. Requests con patrones de SQLi (`UNION SELECT`, `' OR '1'='1`, time-based `SLEEP()`) golpean los access logs de la app.
+  3. Capa 1 (Sigma) matchea firmas de SQLi conocidas sobre esos logs.
+  4. Capa 2 (ML) corrobora con anomalía de patrón de request (frecuencia, longitud de parámetros, entropía del payload).
+
+#### Expected system behavior
+
+- **Layer 1 (Sigma SQLi signatures):** dispara sobre patrones `UNION SELECT` / `OR 1=1` / `SLEEP(`. Score: 0.90+.
+- **Layer 2 (ML request pattern anomaly):** corrobora con score 0.85+ (features: request rate, parameter entropy, payload length variance).
+- **Tier classification:** T1 (ambas capas corroboran, sin canary en el camino).
+- **Decision Engine action:** auto-execute — block del IP atacante a nivel firewall/WAF, snapshot de logs de la app para forense.
+- **LLM analysis:** identifica T1190, cita OWASP Top 10 #1, recomienda revisar si input sanitization/parametrized queries están vigentes en el endpoint afectado.
+
+#### Success criteria
+
+- Detección dentro de los primeros intentos de `sqlmap` (no espera a que encuentre una columna vulnerable).
+- IP atacante bloqueado antes de exfiltración exitosa de datos.
+- Audit log captura: IP, endpoint atacado, técnica MITRE T1190, payloads representativos (sanitizados).
+
+#### Demo narration script (~2 min)
+
+| Time | Narrator | Screen |
+|------|----------|--------|
+| 0:00 | "Último vector: no atacamos el archivo ni la red, atacamos la aplicación web que expone IntiBank al público." | Topología: webapp → DB |
+| 0:20 | P4 lanza `sqlmap` contra el login de la app. | Terminal con sqlmap corriendo |
+| 0:40 | "Sigma reconoce las firmas de inyección SQL en los logs." | Sigma rule firing |
+| 1:00 | "ML corrobora: el patrón de requests es anómalo — frecuencia y payloads fuera de lo normal." | ML score panel |
+| 1:20 | "T1, ambas capas de acuerdo — el sistema bloquea el IP automáticamente." | IP bloqueado, banner de contención |
+| 1:40 | "OWASP Top 10 número uno, cubierto con la misma arquitectura que defendió ransomware y DDoS." | MITRE coverage con T1190 destacado |
+
+#### Owner: P3 (Sigma SQLi signatures + sqlmap orchestration), P2 (request pattern anomaly model)
+
+---
+
+## Changelog
+
+- **v1.2 (2026-07-01):** completadas las secciones truncadas de UC-07 (success criteria + demo narration script, el documento cortaba a media oración) y agregada la sección UC-08 completa (faltaba por completo pese a estar en la tabla de §2). Corregida la introducción de §2 (decía "four scenarios... plus optional fifth" cuando la tabla adyacente ya listaba 8). Actualizada la identidad del activo defendido en UC-04/UC-07: de `argos_demo_prod` / PostgreSQL 15 / tablas `employees·payroll·invoices` (nombre de trabajo temprano, sin referencias en el código real) a `app_prod` / esquema `intibank` / PostgreSQL 17.5 + pgAudit / tablas `customers·accounts·transactions·payments`, consistente con ADR-0009 (IntiBank scenario), `lab/postgres/init.sql` y el host real `lin-victim-01` (.21).
+- **v1.1:** versión previa a esta revisión (ver historial de git para el detalle).

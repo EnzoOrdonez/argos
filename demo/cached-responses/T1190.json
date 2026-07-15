@@ -1,0 +1,16 @@
+{
+  "incident_id": "INC-DEMO-UC04",
+  "tecnica_mitre": "T1190",
+  "confianza": 0.9,
+  "severidad": "critical",
+  "runbook_aplicable": "NIST SP 800-61 Rev. 2 - Incident Handling Guide",
+  "accion_recomendada": "Aislar inmediatamente el host LIN-VICTIM-01 y revocar credenciales de acceso a la base de base de datos IntiBank para detener la exfiltración.",
+  "indicadores_correlacionar": [
+    "volumen_trafico_saliente_anormal",
+    "consultas_sql_masivas",
+    "ips_externas_desconocidas",
+    "logs_de_autenticacion_db"
+  ],
+  "llm_backend": "google/gemma-4-31b-it",
+  "generated_at": "2026-06-30T04:44:54.886343Z"
+}

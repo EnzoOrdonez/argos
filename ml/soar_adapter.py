@@ -12,7 +12,6 @@ from typing import Any
 
 from argos_contracts.alert import NormalizedAlert
 from argos_contracts.enums import Layer, Severity
-
 from argos_contracts.ml_score import MLScore
 from soar.decision_engine.tier_router import RoutingSignal
 

@@ -8,7 +8,6 @@ import numpy as np
 
 from argos_contracts.ml_score import MLFeatures
 
-
 FEATURE_NAMES = (
     "file_write_rate",
     "avg_entropy",

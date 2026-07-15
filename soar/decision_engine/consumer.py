@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as redis
 from redis.exceptions import ResponseError
@@ -126,7 +126,7 @@ class SOARConsumer:
         self._audit = audit
         self._triage = triage
         self._name = consumer_name
-        self._now = now_fn or (lambda: datetime.now(timezone.utc))
+        self._now = now_fn or (lambda: datetime.now(UTC))
 
     # -- plumbing ----------------------------------------------------------
 
@@ -147,6 +147,11 @@ class SOARConsumer:
 
     async def run(self, *, block_ms: int = 1000, once: bool = False) -> None:
         """Loop principal. `once=True` procesa lo disponible y retorna (tests/demo)."""
+        # Valida el inventario de criticidad al arrancar (fail-loud si ARGOS_HOST_INVENTORY
+        # apunta a un archivo malformado), no a mitad del primer incidente.
+        from soar.inventory import load_effective_inventory
+
+        load_effective_inventory()
         await self.ensure_group()
         while True:
             response = await self._r.xreadgroup(

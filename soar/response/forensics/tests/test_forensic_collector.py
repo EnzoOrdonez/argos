@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
 from argos_contracts.ml_score import MLFeatures, MLScore
-
 from soar.response.forensics.collector import collect_forensic_bundle
 
 

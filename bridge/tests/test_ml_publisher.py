@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from fakeredis import FakeStrictRedis
@@ -20,7 +20,7 @@ from soar.decision_engine.consumer import STREAM
 def _score() -> MLScore:
     return MLScore(
         score_id="s1",
-        timestamp=datetime(2026, 6, 27, 12, 0, 0, tzinfo=timezone.utc),
+        timestamp=datetime(2026, 6, 27, 12, 0, 0, tzinfo=UTC),
         host_id="WIN-VICTIM-01",
         process_id=4321,
         process_name="powershell.exe",

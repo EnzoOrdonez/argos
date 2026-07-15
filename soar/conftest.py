@@ -8,7 +8,7 @@ tz-aware, alert/host/proposed_actions requeridos). Reutilizable en §2.2-§2.8.
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -23,7 +23,7 @@ def make_incident() -> Callable[..., Incident]:
     """Devuelve un factory: make_incident(tier=Tier.T2, **overrides) -> Incident."""
 
     def _make(*, tier: Tier = Tier.T2, **overrides: object) -> Incident:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         defaults: dict[str, object] = {
             "incident_id": "INC-2026-05-30-001",
             "created_at": now,

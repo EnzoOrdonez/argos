@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
 from argos_contracts.ml_score import MLFeatures, MLScore
-
 from ml.forensics.snapshot import build_forensic_snapshot_record
 
 

@@ -1,5 +1,4 @@
-from argos_contracts.ml_score import MLScore, MLFeatures
-
+from argos_contracts.ml_score import MLFeatures, MLScore
 from ml.models.ensemble import Layer2AnomalyEnsemble
 from ml.models.vectorizer import FEATURE_NAMES, features_to_matrix, features_to_vector
 

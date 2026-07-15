@@ -28,7 +28,7 @@ Construir un sistema de detección y respuesta a ransomware que combine cuatro c
 ### Qué buscamos como equipo
 
 1. **Buena nota en el curso** — implementación funcional + demo impactante.
-2. **Proyecto de portafolio LinkedIn-worthy** — README enterprise-grade, vídeo demo, métricas concretas, repo público al cierre del curso.
+2. **Proyecto de portafolio LinkedIn-worthy** — README enterprise-grade, vídeo demo, métricas concretas, repo público en GitHub (público desde julio de 2026).
 3. **Contribuciones verificables open source** — al menos 2-4 reglas Sigma aceptadas en `SigmaHQ/sigma` upstream.
 4. **Aprendizaje real** — cada integrante domina su capa al punto de defenderla en entrevista técnica.
 
@@ -265,7 +265,7 @@ Si un PR es rechazado, no es drama — se documenta el aprendizaje y la regla qu
 
 ### Repo
 
-- **Privado durante el curso, público al cierre.**
+- **Público en GitHub desde julio de 2026** (fue privado durante el curso).
 - Branch principal: `main`. PRs obligatorios para merge (al menos 1 review).
 - Branches feature: `feature/<persona>/<descripcion>` (ej. `feature/p2/isolation-forest-baseline`).
 - Commits convencionales: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
@@ -371,7 +371,7 @@ argos/
 
 ## 13. Próximos pasos inmediatos (semana 1)
 
-1. **Crear repo privado en GitHub** con esta estructura — owner: P1, colaboradores: P2, P3, P4.
+1. **Crear repo privado en GitHub** con esta estructura — owner: P1, colaboradores: P2, P3, P4. *(Hecho en su momento; el repo es público desde julio de 2026.)*
 2. **Push inicial:** este `CONTEXT.md`, README skeleton, diagrama, ADR-0001.
 3. **Primer standup lunes:** validar plan con todo el equipo.
 4. **Validar scope con el profesor del curso** antes de empezar — confirmar que la Capa 4 LLM no sale del dominio del curso.

@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 
 from argos_contracts.enums import Layer, Severity, Tier
 from argos_contracts.ml_score import MLFeatures, MLScore
-
 from ml.soar_adapter import (
     ml_score_to_normalized_alert,
     ml_score_to_routing_signal,

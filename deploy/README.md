@@ -9,11 +9,15 @@ El `docker-compose.yml` y el `Dockerfile` viven en la **raíz** (para `docker co
 
 ## Prerrequisitos
 - Docker + docker compose v2.
-- `.env` en la raíz (gitignored) con al menos: `POSTGRES_PASSWORD`; para el LLM real: `OPENAI_API_KEY`
-  (una nvapi key de NVIDIA), `OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1`,
-  `OPENAI_MODEL=deepseek-ai/deepseek-v4-pro`, `OPENAI_FALLBACK_MODEL=moonshotai/kimi-k2.6`;
-  opcional `ARGOS_JWT_SECRET`, `TELEGRAM_*`. **Ojo:** hoy la key real está bajo
-  `DeepSeek_V4_PRO_API_KEY`/`Kimi2_6_API_KEY` — copiala a `OPENAI_API_KEY` para que el servicio la use.
+- `.env` en la raíz (gitignored, `cp .env.example .env` y completar): `POSTGRES_PASSWORD`; para el LLM
+  real: `OPENAI_API_KEY` (una nvapi key de NVIDIA), `OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1`,
+  `OPENAI_MODEL=openai/gpt-oss-120b` (backend actual — `deepseek-ai/deepseek-v4-pro` fue descartado por
+  latencia, ver `CLAUDE.md`), `OPENAI_FALLBACK_MODEL=moonshotai/kimi-k2.6`; opcional `ARGOS_JWT_SECRET`,
+  `TELEGRAM_*`. **`openai_client.py` solo lee `OPENAI_API_KEY`** — ignorar cualquier variable
+  `MiniMax_M3_API_KEY`/`Kimi2_6_API_KEY`/`DeepSeek_V4_PRO_API_KEY` que aparezca en `.env.example`: son
+  restos huérfanos de backends anteriores, ningún código las lee. Para reproducir sin depender del LLM
+  real (Track B tal como se demuestra hoy), poner `DEMO_MODE=true` — usa las respuestas cacheadas en
+  `demo/cached-responses/`.
 
 ## Camino simulado (garantizado, el del video)
 ```bash

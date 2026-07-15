@@ -1,0 +1,36 @@
+# Inventario de hosts del lab ARGOS (subred host-only 192.168.56.0/24).
+# Lo consumen attack-simulation/ y los simuladores de detection/simulators/.
+# Los host_id coinciden con soar/inventory.py (criticidad se resuelve por host_id).
+# Las IPs físicas son 192.168.56.x; las IPs "ficticias" (10.10.x, 198.51.100.x)
+# de ADR-0009 §2.7 viven en los datos/reglas Sigma, no acá.
+
+network:
+  subnet: 192.168.56.0/24       # host-only VirtualBox (default allowlist .0/21)
+
+hosts:
+  - name: core
+    host_id: LAB-MANAGER
+    ip: 192.168.56.10
+    os: Ubuntu Server 22.04
+    role: wazuh-manager          # systemd manager + docker compose --profile real
+    criticality: standard
+
+  - name: linux-victim
+    host_id: LIN-VICTIM-01
+    ip: 192.168.56.21
+    os: Debian 12 (bookworm)
+    role: postgres-victim        # DB app_prod / schema intibank (ADR-0009)
+    criticality: production-critical   # dispara two-person rule (UC-04)
+    # REAL en el lab: canary L3 (FIM) + active-response. UC-04/06/07/08 NO detectan
+    # acá (Sigma no desplegada, C18) -> van por demo_injector.
+    real_in_lab: [canary, active-response]
+    via_injector: [UC-04, UC-06, UC-07, UC-08]
+
+  - name: windows-victim
+    host_id: WIN-VICTIM-01
+    ip: 192.168.56.20
+    os: Windows 10
+    role: endpoint-victim        # ransomware / canary / agent-kill
+    criticality: standard
+    status: DEFERIDA             # Fase 1B no se levanta; va como video (decisión 29-jun)
+    use_cases: [UC-01, UC-02, UC-05]
