@@ -14,7 +14,9 @@ from argos_contracts.triage import HostInfo, TriageResponse
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.triage_hook import (
+    DEFAULT_TIMEOUT_SECONDS,
     TriageClient,
+    _resolve_timeout,
     build_alert_context,
     should_call_triage,
 )
@@ -153,6 +155,74 @@ def test_gate_should_call_triage(make_incident):
     assert should_call_triage(t2)
     assert should_call_triage(t1_critico)
     assert not should_call_triage(t1_estandar)
+
+
+# -- BUG-1: timeout configurable + fail-soft diferenciado -------------------
+
+
+def test_timeout_arg_explicito_gana(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("LLM_TRIAGE_TIMEOUT_SECONDS", "99")
+    assert _resolve_timeout(2.5) == 2.5
+
+
+def test_timeout_desde_env(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("LLM_TRIAGE_TIMEOUT_SECONDS", "12.5")
+    assert _resolve_timeout(None) == 12.5
+
+
+def test_timeout_env_ausente_usa_default(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("LLM_TRIAGE_TIMEOUT_SECONDS", raising=False)
+    assert _resolve_timeout(None) == DEFAULT_TIMEOUT_SECONDS
+
+
+def test_timeout_env_basura_degrada_a_default(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("LLM_TRIAGE_TIMEOUT_SECONDS", "no-es-un-numero")
+    assert _resolve_timeout(None) == DEFAULT_TIMEOUT_SECONDS
+
+
+def test_timeout_env_cablea_el_client_no_inyectado(monkeypatch: pytest.MonkeyPatch):
+    """El timeout resuelto llega al httpx.AsyncClient cuando no se inyecta uno."""
+    monkeypatch.setenv("LLM_TRIAGE_TIMEOUT_SECONDS", "3.5")
+    tc = TriageClient(BASE)
+    assert tc._client.timeout == httpx.Timeout(3.5)
+
+
+@pytest.mark.parametrize(
+    ("outcome", "expected_reason"),
+    [
+        ("timeout", "timeout"),
+        ("connect", "unreachable"),
+        ("http_5xx", "http_error"),
+        ("invalid", "invalid_response"),
+        ("garbage", "unexpected"),
+    ],
+)
+async def test_fail_soft_diferencia_la_causa(
+    make_incident, respx_mock: respx.Router, outcome: str, expected_reason: str
+):
+    """Cada modo de fallo degrada a None pero audita un `reason` distinto (R-2 intacto)."""
+    route = respx_mock.post(f"{BASE}/triage")
+    if outcome == "timeout":
+        route.mock(side_effect=httpx.TimeoutException("lento"))
+    elif outcome == "connect":
+        route.mock(side_effect=httpx.ConnectError("sin ruta"))
+    elif outcome == "http_5xx":
+        route.respond(503)
+    elif outcome == "invalid":
+        body = _triage_json()
+        body["tecnica_mitre"] = "T9999"  # fuera del MITRE_WHITELIST
+        route.respond(200, json=body)
+    else:  # garbage: 200 con cuerpo no-JSON -> JSONDecodeError -> "unexpected"
+        route.respond(200, content=b"<html>no soy json</html>")
+
+    memory = MemorySink()
+    incident = make_incident(tier=Tier.T2, host=_standard_host(), alert=_alert())
+
+    result = await _client(AuditLogger([memory])).fetch(incident, L1)
+
+    assert result is None
+    assert memory.kinds() == ["llm_triage_failed"]
+    assert memory.events[0].payload["reason"] == expected_reason
 
 
 def test_build_alert_context_arma_summary_y_telemetria(make_incident):

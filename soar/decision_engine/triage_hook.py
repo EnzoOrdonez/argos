@@ -13,7 +13,12 @@ donde el LLM es "decisivo" per ADR-0009 §2.6). Nunca para DDoS
 Invariante R-2: el LLM jamás está en el camino crítico de contención.
 Cualquier fallo (timeout, 5xx, red, respuesta inválida) deja
 `llm_analysis = None` y el flujo sigue. Timeout corto a propósito: el
-enriquecimiento no puede demorar la espera HITL.
+enriquecimiento no puede demorar la espera HITL. El corte por default es de
+`DEFAULT_TIMEOUT_SECONDS`, ajustable con la env var `LLM_TRIAGE_TIMEOUT_SECONDS`
+(útil si el backend real es más lento que el stub). El fail-soft distingue la
+causa (timeout / red caída / 5xx / respuesta inválida) en el log y el audit,
+sin cambiar el resultado (siempre None) — para poder diferenciar "LLM lento"
+de "LLM caído" al revisar después.
 """
 
 from __future__ import annotations
@@ -22,6 +27,7 @@ import logging
 import os
 
 import httpx
+from pydantic import ValidationError
 
 from argos_contracts.alert import NormalizedAlert
 from argos_contracts.enums import Layer, Tier
@@ -36,6 +42,26 @@ logger = logging.getLogger(__name__)
 DDOS_TECHNIQUES: frozenset[str] = frozenset({"T1498", "T1499"})
 
 DEFAULT_TIMEOUT_SECONDS = 5.0
+_TIMEOUT_ENV_VAR = "LLM_TRIAGE_TIMEOUT_SECONDS"
+
+
+def _resolve_timeout(explicit: float | None) -> float:
+    """Timeout efectivo: arg explícito > env var > default. Env inválida degrada al default."""
+    if explicit is not None:
+        return explicit
+    raw = os.environ.get(_TIMEOUT_ENV_VAR)
+    if raw is None:
+        return DEFAULT_TIMEOUT_SECONDS
+    try:
+        return float(raw)
+    except ValueError:
+        logger.warning(
+            "%s inválido (%r), usando el default %.1fs",
+            _TIMEOUT_ENV_VAR,
+            raw,
+            DEFAULT_TIMEOUT_SECONDS,
+        )
+        return DEFAULT_TIMEOUT_SECONDS
 
 
 def should_call_triage(incident: Incident) -> bool:
@@ -83,13 +109,13 @@ class TriageClient:
         self,
         base_url: str | None = None,
         *,
-        timeout: float = DEFAULT_TIMEOUT_SECONDS,
+        timeout: float | None = None,
         client: httpx.AsyncClient | None = None,
         audit: AuditLogger | None = None,
     ) -> None:
         port = os.environ.get("LLM_TRIAGE_PORT", "8002")
         self._base = (base_url or f"http://localhost:{port}").rstrip("/")
-        self._client = client or httpx.AsyncClient(timeout=timeout)
+        self._client = client or httpx.AsyncClient(timeout=_resolve_timeout(timeout))
         self._audit = audit
 
     async def fetch(
@@ -99,6 +125,7 @@ class TriageClient:
         if not should_call_triage(incident):
             return None
         context = build_alert_context(incident, fired_layers)
+        incident_id = incident.incident_id
         try:
             response = await self._client.post(
                 f"{self._base}/triage",
@@ -106,19 +133,23 @@ class TriageClient:
             )
             response.raise_for_status()
             triage = TriageResponse.model_validate(response.json())
-        except Exception as exc:
-            # Timeout, 5xx, red caída o respuesta inválida (incl. técnica
-            # alucinada que el whitelist rechaza): todo degrada a None.
-            logger.warning(
-                "triage hook fallo para %s: %s", incident.incident_id, exc
+        except httpx.TimeoutException as exc:
+            # LLM lento (incl. ConnectTimeout, que hereda de TimeoutException).
+            return self._fail(incident_id, "timeout", exc)
+        except httpx.ConnectError as exc:
+            # LLM caído / inalcanzable (conexión rechazada, DNS, etc.).
+            return self._fail(incident_id, "unreachable", exc)
+        except httpx.HTTPStatusError as exc:
+            # LLM arriba pero respondiendo error (5xx/4xx).
+            return self._fail(
+                incident_id, "http_error", exc, status=exc.response.status_code
             )
-            if self._audit is not None:
-                self._audit.emit(
-                    "llm_triage_failed",
-                    incident.incident_id,
-                    error=f"{type(exc).__name__}: {exc}",
-                )
-            return None
+        except ValidationError as exc:
+            # Respuesta fuera de contrato (incl. técnica alucinada que el whitelist rechaza).
+            return self._fail(incident_id, "invalid_response", exc)
+        except Exception as exc:
+            # Backstop de R-2: fetch nunca lanza. Cubre p.ej. JSONDecodeError de response.json().
+            return self._fail(incident_id, "unexpected", exc)
         if self._audit is not None:
             self._audit.emit(
                 "llm_triage_ok",
@@ -128,3 +159,18 @@ class TriageClient:
                 backend=triage.llm_backend,
             )
         return triage
+
+    def _fail(
+        self, incident_id: str, reason: str, exc: Exception, **extra: object
+    ) -> None:
+        """Registra el fallo con su causa y degrada a None (R-2: nunca lanza)."""
+        logger.warning("triage hook fallo (%s) para %s: %s", reason, incident_id, exc)
+        if self._audit is not None:
+            self._audit.emit(
+                "llm_triage_failed",
+                incident_id,
+                reason=reason,
+                error=f"{type(exc).__name__}: {exc}",
+                **extra,
+            )
+        return None

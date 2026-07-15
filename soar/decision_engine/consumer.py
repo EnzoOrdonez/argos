@@ -147,6 +147,11 @@ class SOARConsumer:
 
     async def run(self, *, block_ms: int = 1000, once: bool = False) -> None:
         """Loop principal. `once=True` procesa lo disponible y retorna (tests/demo)."""
+        # Valida el inventario de criticidad al arrancar (fail-loud si ARGOS_HOST_INVENTORY
+        # apunta a un archivo malformado), no a mitad del primer incidente.
+        from soar.inventory import load_effective_inventory
+
+        load_effective_inventory()
         await self.ensure_group()
         while True:
             response = await self._r.xreadgroup(

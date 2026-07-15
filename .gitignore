@@ -252,6 +252,7 @@ evidence/
 # Local lab configuration
 config/velociraptor_hosts.json
 config/api.config.yaml
+config/host_inventory.json
 
 # ----------- Tooling/scaffolding interno (NO entregables; quedan en disco) -----------
 # Coordinación interna + prompts de trabajo + aids personales. Fuera del repo entregable.
@@ -266,6 +267,7 @@ config/api.config.yaml
 # Auditoría interna privada (post-curso, transición a portafolio). Nunca commitear ni pushear.
 /MEMORIA_AUDITORIA_GITHUB.md
 /PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md
+/MEMORIA_EJECUCION_OSS.md
 
 # Helper de git filter-repo (Ronda 11): contiene el string del token ya purgado. NUNCA commitear.
 /replacements.txt
