@@ -20,7 +20,7 @@
 
 ## ¿Qué es ARGOS?
 
-ARGOS replica la arquitectura de productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando **exclusivamente componentes open source** más una API LLM de bajo costo para la capa de triage. Cuatro capas de detección en paralelo, contención automatizada con flujo de aprobación humana, y resolución visible de split-brain — todo reproducible en un lab virtualizado.
+ARGOS toma el patrón arquitectónico de los XDR/EDR comerciales (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) y lo construye **a escala de laboratorio académico** usando **exclusivamente componentes open source** más una API LLM de bajo costo para la capa de triage — sin la telemetría de producción, el threat intel comercial ni los años de tuning de esos productos. Cuatro capas de detección en paralelo, contención automatizada con flujo de aprobación humana, y resolución visible de split-brain — todo reproducible en un lab virtualizado.
 
 > 📄 **Resumen en 90 segundos:** [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md)
 > 🎨 **Flujo visual con asignación por integrante:** [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html)
@@ -32,7 +32,7 @@ ARGOS replica la arquitectura de productos comerciales high-end EDR/XDR (Microso
 
 | | |
 |---|---|
-| 🆓 **Réplica open-source de EDR comercial** | Mismas primitivas arquitectónicas que productos pagos (multi-capa + SOAR + LLM triage). Stack 100% OSS excepto una API LLM con budget tope (~\$5/día). Reproducible en cualquier laptop con Vagrant. |
+| 🆓 **Patrón de EDR comercial, a escala de lab** | Mismas primitivas arquitectónicas que los productos pagos (multi-capa + SOAR + LLM triage), sin su telemetría de producción ni su threat intel comercial. Stack 100% OSS excepto una API LLM con budget tope (~\$5/día). Reproducible en cualquier laptop con Vagrant. |
 | 👥 **HITL automation con consenso anti-split-brain** | Decisiones multi-aprobador resueltas por *conservative-wins policy* explícita (ADR-0006), no por improvisación. Visible en tiempo real en la Approval Workflow Console. |
 | 🤖 **ML contra variantes novel** | Ensemble Isolation Forest + One-Class SVM detecta ransomware que no matchea ninguna regla — el caso donde las defensas signature-only se quedan ciegas. |
 | 🍯 **Capa de deception con propiedad zero-FP** | Canary files con FIM whodata atrapan al atacante *antes* de que toque datos reales. Por diseño: un usuario legítimo nunca toca un honeypot. |

@@ -1,5 +1,7 @@
 # PROJECT STATUS — ARGOS
 
+> ⚠️ **Snapshot congelado el 2026-06-10 — desactualizado.** Este archivo refleja el estado de la Semana 9 (Fase 2/3 SOAR) y **subestima** lo entregado después. Para el estado real y vigente, ver el [`README.md`](../README.md) raíz (público) y la bitácora interna `CLAUDE.md`. No uses este archivo como fuente de verdad actual.
+
 | Field | Value |
 |-------|-------|
 | Document type | Honest snapshot of what's executed vs what's documented |

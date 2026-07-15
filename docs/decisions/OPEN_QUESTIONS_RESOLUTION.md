@@ -100,7 +100,7 @@ This is the schema that P1's backend writes to Redis and P4's Streamlit reads. D
     "runbook_applicable": "NIST 800-61 §3.4 Containment",
     "recommended_action": "Isolate host pending forensic review",
     "indicators_to_correlate": ["unusual_file_enum_pattern", "non_business_hours_activity"],
-    "llm_backend": "gpt-4o-mini",
+    "llm_backend": "openai/gpt-oss-120b",
     "generated_at": "2026-04-30T15:32:18.789Z"
   },
   "proposed_actions": [

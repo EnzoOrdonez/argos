@@ -47,16 +47,16 @@ Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera �
 - **Demo en vivo:** ataque → detección multi-capa → análisis LLM → aprobación humana con split-brain (4 aprobadores) → contención por conservative-wins.
 - **Approval Workflow Console** mostrando decisiones en tiempo real durante el demo.
 - **Métricas:** time-to-detect, archivos afectados antes de contención, false positive rate, MITRE coverage matrix, P/R/F1 por capa, latencia de aprobación humana.
-- **Bonus killer:** 2-4 reglas Sigma aceptadas en `SigmaHQ/sigma` upstream con autoría verificable.
+- **Bonus (aspiracional):** 2-4 reglas Sigma *propuestas* como candidatas a `SigmaHQ/sigma` upstream, con autoría verificable — objetivo ambicioso, sin aceptación garantizada.
 - **Repo público en GitHub** (público desde julio de 2026) con README enterprise-grade + vídeo demo de 3min.
 
 ## Resiliencia y manejo de fallos
 
-El sistema está diseñado contra fallos del propio defensor. **El LLM nunca está en el path crítico de contención** — si alucina o falla, el SOAR sigue actuando desde Capas 1-3. Si el primario OpenAI cae, fallback automático a Llama 3.1 local (zero-egress) — el sistema sigue funcionando sin internet. **Si el atacante mata el agente Wazuh**, la desconexión es ella misma alerta crítica. **Conservative-wins policy** protege contra cuentas comprometidas que rechacen contenciones legítimas. Tres capas de detección independientes garantizan degradación gradual, no ceguera total. Threat model completo (STRIDE + FMEA + Risk Register, ~50 amenazas analizadas) en `THREAT_MODEL.md`. Decisiones arquitectónicas individuales en ADRs 0001 a 0008.
+El sistema está diseñado contra fallos del propio defensor. **El LLM nunca está en el path crítico de contención** — si alucina o falla, el SOAR sigue actuando desde Capas 1-3. Si el backend primario (NVIDIA NIM `openai/gpt-oss-120b`) cae, el SOAR sigue actuando sin enriquecimiento; el fallback zero-egress a Llama 3.1 local está diseñado pero **diferido / no cableado** (ADR-0001 v3), así que hoy no hay failover local automático. **Si el atacante mata el agente Wazuh**, la desconexión es ella misma alerta crítica. **Conservative-wins policy** protege contra cuentas comprometidas que rechacen contenciones legítimas. Tres capas de detección independientes garantizan degradación gradual, no ceguera total. Threat model completo (STRIDE + FMEA + Risk Register, ~50 amenazas analizadas) en `THREAT_MODEL.md`. Decisiones arquitectónicas individuales en ADRs 0001 a 0008.
 
 ## Por qué importa
 
-Replica la arquitectura de productos comerciales de gama alta (Microsoft Defender XDR, CrowdStrike Falcon) con stack 100% open source. El cache profesional viene de la **calidad de ejecución y rigor del informe**, no de originalidad arquitectónica forzada. Proyecto apto para portafolio LinkedIn y referencia técnica en entrevistas blue team.
+Toma el patrón arquitectónico de productos comerciales de gama alta (Microsoft Defender XDR, CrowdStrike Falcon) y lo construye a escala de laboratorio con stack 100% open source — sin la telemetría de producción ni el threat intel comercial de esos productos. El cache profesional viene de la **calidad de ejecución y rigor del informe**, no de originalidad arquitectónica forzada. Proyecto apto para portafolio LinkedIn y referencia técnica en entrevistas blue team.
 
 ---
 *v1.5 · Sync 2026-07-01: backend LLM (NVIDIA NIM gpt-oss-120b, ADR-0001 v3) + fecha de entrega (1-jul) ·

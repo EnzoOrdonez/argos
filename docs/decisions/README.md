@@ -16,7 +16,7 @@ Rejected decisions are documented too — they show that the team evaluated alte
 
 | # | Title | Status | Summary |
 |---|-------|--------|---------|
-| [0001](./0001-llm-vendor-agnostic.md) | LLM vendor-agnostic via LLMClient interface (v2) | ✅ Accepted | Abstract LLM behind interface; OpenAI GPT-4o-mini primary (US-based) + Llama 3.1 8B local fallback (zero-egress). v2 reasignó primario por soberanía de datos. Swap via env var. |
+| [0001](./0001-llm-vendor-agnostic.md) | LLM vendor-agnostic via LLMClient interface (v2) | ✅ Accepted | Abstract LLM behind interface; NVIDIA NIM `openai/gpt-oss-120b` primary (US jurisdiction) + Llama 3.1 8B local fallback (zero-egress, diferido). v3 reasignó primario a open-weights sobre NVIDIA NIM; v2 reasignó primario por soberanía de datos. Swap via env var. |
 | [0002](./0002-heartbeat-default-60s.md) | Wazuh agent heartbeat — keep default 60s | ✅ Accepted | Reject lowering heartbeat interval; alert fatigue cost outweighs marginal detection improvement. |
 | [0003](./0003-confidence-tiered-automation.md) | Confidence-tiered automation with HITL SOAR | ✅ Accepted | 4-tier classification (T0-T3); auto-execute high confidence, human approval for medium-uncertain. T2 timeout 3min with throttle+snapshot during countdown. |
 | [0004](./0004-auto-rollback-rejected.md) | Auto-rollback "dead man's switch" | ❌ Rejected | Rejected. Contradicts "fails closed" principle. Documented to show the team considered and consciously rejected the option. |

@@ -11,15 +11,15 @@
 
 ## 0. Purpose
 
-The Threat Model identifies T-030 ("Sensitive logs sent to third-party API") as a **High** residual risk and mandates a sanitization layer + this document. Tras la reasignación de proveedor en `ADR-0001 v2` (primario GPT-4o-mini en US-based, fallback Llama 3.1 8B local zero-egress), el riesgo se atenúa significativamente: el backend local elimina la frontera de confianza por completo, y el primario US-based reduce el riesgo de soberanía de datos comparado con la v1 (DeepSeek/Qwen en China). Aun así, la política de sanitización se mantiene como defense-in-depth para cualquier payload que sale del lab.
+The Threat Model identifies T-030 ("Sensitive logs sent to third-party API") as a **High** residual risk and mandates a sanitization layer + this document. Tras la reasignación de proveedor en `ADR-0001 v3` (primario NVIDIA NIM `openai/gpt-oss-120b`, jurisdicción US; fallback Llama 3.1 8B local zero-egress, diferido/no cableado), el riesgo se atenúa significativamente: el primario en jurisdicción US reduce el riesgo de soberanía de datos comparado con la v1 (DeepSeek/Qwen en China), y el fallback local *eliminaría* la frontera de confianza por completo si se cablea. Aun así, la política de sanitización se mantiene como defense-in-depth para cualquier payload que sale del lab.
 
-El principio es simple: **el backend cloud (OpenAI) se trata como servicio externo no confiable** (per Trust Boundary 4 en `THREAT_MODEL.md` §2). Todo lo que cruza esa frontera se sanitiza; todo lo que vuelve se valida. El backend local (Llama vía Ollama) opera dentro del lab y no requiere sanitización por egress, aunque puede aplicarla por uniformidad de pipeline.
+El principio es simple: **el backend cloud (NVIDIA NIM) se trata como servicio externo no confiable** (per Trust Boundary 4 en `THREAT_MODEL.md` §2). Todo lo que cruza esa frontera se sanitiza; todo lo que vuelve se valida. El backend local (Llama vía Ollama) opera dentro del lab y no requiere sanitización por egress, aunque puede aplicarla por uniformidad de pipeline.
 
 ---
 
 ## 1. What goes to the LLM API
 
-The only ARGOS component that calls the external LLM API is **Layer 4 LLM Triage** (`llm_triage/api/main.py`), through the abstract `LLMClient` interface (`llm_triage/llm_client/base.py` — OpenAI GPT-4o-mini primary o Llama 3.1 8B local fallback, per ADR-0001 v2).
+The only ARGOS component that calls the external LLM API is **Layer 4 LLM Triage** (`llm_triage/api/main.py`), through the abstract `LLMClient` interface (`llm_triage/llm_client/base.py` — NVIDIA NIM `openai/gpt-oss-120b` primary; Llama 3.1 8B local fallback diferido / no cableado, per ADR-0001 v3).
 
 For each `/triage` request, the payload sent is an `AlertContext` Pydantic model (`argos_contracts/triage.py`). The fields that cross the network are:
 
@@ -47,7 +47,7 @@ What is **never** sent under any circumstance:
 
 ## 2. Sanitization rules (concrete regex patterns)
 
-Implemented in `llm_triage/sanitizer.py`. Aplicado a cada string field antes de cruzar la frontera al backend cloud (OpenAI). Para el backend local (Llama via Ollama) la sanitización es opcional pero recomendada por consistencia de pipeline.
+Implemented in `llm_triage/sanitizer.py`. Aplicado a cada string field antes de cruzar la frontera al backend cloud (NVIDIA NIM). Para el backend local (Llama via Ollama) la sanitización es opcional pero recomendada por consistencia de pipeline.
 
 ### 2.1 Credentials and secrets
 
@@ -139,7 +139,7 @@ For forensic replay, the raw sanitized request can be reconstructed from the sou
 
 For production deployment:
 
-1. **Local LLM como default** (no como fallback). Ya hay foundation con Llama 3.1 8B en ADR-0001 v2. La promoción a default implica aceptar la calidad menor de Llama vs GPT-4o-mini para tener zero-egress garantizado siempre.
+1. **Local LLM como default** (no como fallback). Ya hay foundation con Llama 3.1 8B en ADR-0001 v2. La promoción a default implica aceptar la calidad menor de Llama vs `gpt-oss-120b` para tener zero-egress garantizado siempre.
 2. **Field-level encryption at rest** for `AlertContext` payloads in OpenSearch.
 3. **DLP scanner** as a final gate before any outbound HTTPS connection, independent of the sanitization rules in §2 (defense-in-depth).
 4. **Annual penetration test** specifically targeting the sanitizer (try to leak data through obscure patterns).
