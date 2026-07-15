@@ -25,7 +25,7 @@ For context, scope, planning, and team conventions see `CONTEXT.md`. For the one
 
 ## 1. System overview
 
-ARGOS is a layered ransomware detection and response system that mirrors the architecture of commercial high-end EDR/XDR products (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) using exclusively open source components plus a low-cost LLM API for the triage layer.
+ARGOS is a layered ransomware detection and response system that takes the architectural pattern of commercial high-end EDR/XDR products (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) and rebuilds it at academic-lab scale, using exclusively open source components plus a low-cost LLM API for the triage layer — without the production telemetry, commercial threat intelligence, or years of tuning behind those products.
 
 The system follows a **defense-in-depth** principle: four independent detection layers run in parallel, each with different precision/recall trade-offs, feeding a SOAR (Security Orchestration, Automation and Response) decision engine that fuses their signals and triggers automated containment. A fourth detection layer leverages a Large Language Model for context enrichment and analyst-facing triage.
 
@@ -234,7 +234,7 @@ Per `ADR-0003`, alerts are classified into four tiers based on which detection l
 | Layers 1+2+3 simultaneous | T0 | Immediate isolation + disk snapshot + full LLM analysis |
 | Layer 1 + Layer 2 corroborate (no canary) | T1 | Immediate isolation + disk snapshot |
 | Layer 1 alone (high-fidelity rule — Sigma `level: high\|critical`) | T2 | Throttle + snapshot now, awaiting approval (3-min countdown), LLM analysis to analyst |
-| Layer 2 alone (ensemble_score ≥ 0.74) | T2 | Throttle + snapshot now, awaiting approval, LLM analysis to analyst |
+| Layer 2 alone (ensemble_score ≥ 0.74 — preliminar, sin calibrar ⁽*⁾) | T2 | Throttle + snapshot now, awaiting approval, LLM analysis to analyst |
 | Layer 1 alone (experimental rule — Sigma `level: medium\|low`) | T3 | Notification only with LLM enrichment |
 | Layer 2 alone (ensemble_score 0.40–0.60) | T3 | Notification only with LLM enrichment |
 
@@ -315,11 +315,11 @@ Hybrid retrieval pipeline implementado in-house siguiendo el patrón industrial 
 
 #### 7.3 LLMClient — vendor-agnostic interface
 
-Abstract client con dos backends (per ADR-0001 v2):
-- **Primary:** OpenAI GPT-4o-mini via official API. US-based, soberanía de datos aceptable para ciberseguridad, calidad superior en benchmarks (HELM, SecEval) a costo comparable a alternativas chinas.
-- **Fallback:** Llama 3.1 8B local via Ollama. Zero-egress: el sistema sigue funcionando si el primario se cae o sin internet. Argumento de defensa fuerte: "podemos operar air-gapped".
+Abstract client con dos backends (per ADR-0001 v3):
+- **Primary:** NVIDIA NIM `openai/gpt-oss-120b` (open-weights de OpenAI servido por NVIDIA) vía API OpenAI-compatible. Jurisdicción US (el dato va a NVIDIA), latencia ~0.9 s medida en vivo; procedencia del modelo ≠ jurisdicción del dato (per ADR-0001 v3).
+- **Fallback (diferido, no cableado):** Llama 3.1 8B local via Ollama. Zero-egress: *daría* air-gap si el primario cae o sin internet, pero la implementación quedó diferida (ADR-0001 v3); hoy no hay failover local automático. Argumento de defensa a futuro: "podríamos operar air-gapped".
 
-Backend selection via environment variable `LLM_BACKEND`. See `ADR-0001` (v2) for full rationale incluyendo el análisis de soberanía de datos.
+Backend selection via environment variable `LLM_BACKEND`. See `ADR-0001` (v3) for full rationale incluyendo el análisis de soberanía de datos.
 
 #### 7.4 Structured output
 
@@ -444,7 +444,7 @@ All natively captured by Wazuh + OpenSearch — no extra work, only reporting.
 2. **Telemetry capture.** Sysmon logs file events, process creations, registry changes. Wazuh agent forwards to manager. Canary file is touched within seconds.
 3. **Parallel detection.** Layer 3 (canary) fires immediately with high confidence. Layer 1 matches T1486 Sigma rule. Layer 2 ML detects entropy spike + crypto syscall pattern.
 4. **Decision fusion.** Decision Engine receives all three signals within the same 5-minute window. Logic: Layer 3 + corroboration → maximum severity → immediate isolation playbook.
-5. **LLM enrichment.** FastAPI receives full context. RAG retrieves MITRE T1486 + NIST 800-61 ransomware playbook. GPT-4o-mini (or Llama 3.1 local fallback) generates structured analysis with technique, severity, recommended action, and correlating IoCs.
+5. **LLM enrichment.** FastAPI receives full context. RAG retrieves MITRE T1486 + NIST 800-61 ransomware playbook. NVIDIA NIM `openai/gpt-oss-120b` (per ADR-0001 v3; the local Llama fallback is deferred) generates structured analysis with technique, severity, recommended action, and correlating IoCs.
 6. **Automated containment.** Host isolated via firewall rules. Offending PID killed. Disk snapshot captured for forensics. Team notified via Telegram + Discord with LLM analysis attached (per ADR-0007 v2).
 7. **Analyst review.** Streamlit UI shows alert + LLM analysis side-by-side with citations. OpenSearch dashboard updates MITRE coverage heatmap and time-to-detect histogram.
 
@@ -454,7 +454,7 @@ All natively captured by Wazuh + OpenSearch — no extra work, only reporting.
 
 A defensive system that can be silently disabled by an adversary, or that fails open without warning, is worse than no system at all. ARGOS is designed with explicit failure paths and adversarial assumptions. **The full threat model (STRIDE + FMEA + Risk Register) is documented separately in `THREAT_MODEL.md`.** This section summarizes the resilience properties baked into the architecture.
 
-### 12.1 Ten resilience properties (testable claims, not aspirations)
+### 12.1 Ten resilience properties (testable claims, not aspirations — deferred legs are flagged explicitly)
 
 1. **No single point of failure in detection.** Three detection layers run in parallel and independent. Failure of any one degrades coverage; it does not blind the system.
 2. **LLM is never on the containment critical path.** The Decision Engine triggers containment from Layers 1–3 alone. A malfunctioning, hallucinating, or compromised LLM cannot prevent isolation — only fail to enrich the analyst's view.
@@ -463,7 +463,7 @@ A defensive system that can be silently disabled by an adversary, or that fails 
 5. **Logs ship in real time.** All telemetry forwards to the manager immediately, not buffered locally. An attacker clearing local logs after action cannot prevent the events from being already indexed remotely (mitigation against MITRE T1070.001).
 6. **LLM output validated, never trusted blindly.** Pydantic schema validation, MITRE ATT&CK ID whitelist (rejects hallucinated technique IDs), confidence thresholds, and a hard no-action constraint (LLM cannot trigger isolation or kill commands).
 7. **Redundant log shipping for high-value hosts.** Sysmon writes to local file; a separate Filebeat agent ships to a backup collector. Compromise of one shipping channel does not eliminate the evidence trail.
-8. **Vendor portability prevents lock-in failure.** LLM backend abstracted (ADR-0001 v2): OpenAI primary → Llama 3.1 local fallback (zero-egress) → continue without enrichment if both unavailable → swap to Claude/Mistral with one config change.
+8. **Vendor portability prevents lock-in failure.** LLM backend abstracted (ADR-0001 v3): NVIDIA NIM `openai/gpt-oss-120b` primary → if it is unavailable the system continues without enrichment (Layers 1-3 + SOAR unaffected) → swapping provider or model (Claude/Mistral/another NIM model) is a one-config-line change. The zero-egress local fallback (Llama 3.1 via Ollama) is **designed but deferred / not wired**, and is flagged as such rather than presented as working.
 9. **State persistence across crashes.** Decision Engine queue (Redis with persistence), ML consumer state, and OpenSearch indexes all survive process restarts. A 30-second outage does not lose pending alerts.
 10. **Cost-bounded operations.** LLM API calls have per-incident rate limits and monthly budget caps. A pathological attack pattern (or runaway bug) cannot drain the project budget — the system fails closed on cost before exceeding the cap.
 
@@ -478,13 +478,13 @@ A defensive system that can be silently disabled by an adversary, or that fails 
 | Attacker clears local Windows Event Log | Events already shipped to manager; clear event itself is a Sigma rule | Real-time forwarding mitigates the gap |
 | ML model file corrupted | Service crash detected by heartbeat; fallback to last-known-good model | Capas 1+3 still active during recovery |
 | Decision Engine crashes mid-incident | Persistent queue survives crash; on restart processes queued alerts | Brief delay, no alert loss |
-| Live demo: LLM API down at exposition time | Visible failover from OpenAI to Llama local during demo (good story: "incluso sin internet seguimos analizando"); pre-recorded backup video as last resort | Multiple contingency layers |
+| Live demo: LLM API down at exposition time | Local Llama failover was the intended story ("incluso sin internet seguimos analizando") but is **deferred / not wired**; the real contingency is the pre-recorded backup video and a cached last-good response, while Layers 1-3 + SOAR keep running live | Multiple contingency layers |
 
 ### 12.3 Top accepted residual risks
 
 After mitigations, these risks remain and are explicitly accepted:
 
-1. **Sensitive lab data sent to US-based LLM API (OpenAI).** Reducido frente a la v1 (DeepSeek/Qwen China-based) por ADR-0001 v2. Residual: cualquier API externo está sujeto a requests gubernamentales bajo su jurisdicción. Para air-gap total el fallback es Llama 3.1 local (zero-egress). Documentado en threat model T-030.
+1. **Sensitive lab data sent to a US-jurisdiction LLM API (NVIDIA NIM).** Reducido frente a la v1 (DeepSeek/Qwen China-based) por ADR-0001 v3 — el dato va a NVIDIA (US), no a un proveedor PRC; procedencia del modelo (open-weights) ≠ jurisdicción del dato. Residual: cualquier API externo está sujeto a requests gubernamentales bajo su jurisdicción. El air-gap total dependería del fallback Llama 3.1 local (zero-egress), hoy **diferido / no cableado**. Documentado en threat model T-030.
 2. **Fast attacker disables agent before alert ships (sub-heartbeat-interval window).** Heartbeat interval can be reduced but trades off network noise. Documented as fundamental limit (T-050).
 3. **Race condition: very fast ransomware encrypts some files before isolation triggers.** Documented theoretical TTD floor of 3–5 seconds; acceptable as a transparent metric (F-052).
 
@@ -539,18 +539,18 @@ Test pyramid mandatory for components in critical detection / decision paths. Co
   - Wazuh alert → Redis stream → ML consumer (with synthetic alerts).
   - Decision Engine → Approval API → state transitions in Redis.
   - LLM Triage end-to-end with stubbed LLM API.
-- **End-to-end tests** with Atomic Red Team in CI pipeline:
-  - Weekly scheduled run executes a subset of TTPs against the lab.
-  - Validates that all expected layers fire and that response actions execute.
-  - Coverage report mapped to MITRE ATT&CK matrix.
+- **End-to-end tests** with Atomic Red Team against the lab were designed as a CI stage, but the lab never booted end-to-end, so **this stage was never run** (aspirational):
+  - Planned: a scheduled run executing a subset of TTPs against the lab.
+  - Planned: validation that all expected layers fire and that response actions execute.
+  - Planned: a coverage report mapped to the MITRE ATT&CK matrix.
 
-CI: GitHub Actions runs unit + integration on every PR; e2e runs scheduled weekly. PRs require green CI before merge.
+CI (real — `.github/workflows/ci.yml`): GitHub Actions runs the full `pytest` suite on Python 3.11 and 3.12, plus `ruff check .` and `mypy argos_contracts`, on every push to `main` and every pull request. The suite is isolated from external infrastructure (fakeredis, respx, ASGI transports), so it needs no live Redis/Postgres/Wazuh. The Atomic Red Team end-to-end stage above is **not** part of this workflow.
 
 ### 13.6 Self-monitoring (meta-observability)
 
 ARGOS is the monitor — but who monitors ARGOS itself?
 
-**External heartbeat service** (lightweight Python script on a separate host or cron job) verifies every 30s:
+**External heartbeat service** (lightweight Python script on a separate host or cron job) verifies every 60s (default per ADR-0002):
 - Wazuh manager API responding (`GET /security/user/authenticate`).
 - FastAPI services healthy (`GET /health`).
 - Redis reachable (`PING`).
@@ -558,7 +558,7 @@ ARGOS is the monitor — but who monitors ARGOS itself?
 
 On failure, sends alert via independent channel (different email or SMS) — does NOT use the same notification channel as ARGOS itself, so a complete ARGOS outage is still detected and reported.
 
-For v1 (lab): bash script with `curl` + `mailx` running every 30s via cron.
+For v1 (lab): bash script with `curl` + `mailx` running every 60s via cron (default per ADR-0002).
 For production (out of scope): proper monitoring (Prometheus + Alertmanager).
 
 ### 13.7 Secrets management
@@ -569,7 +569,7 @@ For production deployment (out of scope, mentioned for honesty in informe): prop
 
 Secrets in scope:
 - Wazuh API tokens.
-- LLM API keys (OpenAI; Llama local no requiere key).
+- LLM API keys (NVIDIA NIM; el fallback Llama local, diferido, no requeriría key).
 - JWT signing secret for approval tokens.
 - SMTP credentials for email service.
 - OpenSearch admin password.
@@ -615,6 +615,7 @@ Items considered and deferred. Documented to demonstrate awareness:
 | 1.4 | Week 9 | Sync with `ADR-0007` (multi-channel notification escalation): §6.3 step 3 now describes the Telegram + ntfy + Slack parallel chain with Twilio DTMF escalation; §14 item 3 marked implemented (previously "deferred"). §15 item 1 closed (LLM containment path decision was already final, formalized here). | P1 |
 | 1.5 | Week 7 calendar | Audit pass: §5.2 ensemble formula made explicit (0.6·IF + 0.4·SVM); §6.2 fusion table extended to cover all 2³ layer combinations + high-fidelity Sigma `level:` mapping; §6.5 state machine adds `PENDING_SECOND_APPROVAL` per ADR-0003 §"Edge case 3 AM"; cross-references to new `docs/EVALUATION_CRITERIA.md` and `docs/data-handling.md`. | P1 |
 | 1.6 | 2026-05-24 | Cleanup pass: §7.3 reescrita para reflejar ADR-0001 v2 (OpenAI GPT-4o-mini primary + Llama 3.1 local fallback); §6.3 step 3 reescrito para ADR-0007 v2 (Telegram + Discord en paralelo, Twilio Voice escalación, email post-facto); refs a `architecture_diagram.html` (eliminado) reemplazadas por `argos_flow.html`. Tier thresholds marcados explícitamente como preliminares pendientes de calibración Q5. | P1 |
+| 1.7 | 2026-07-15 | Honesty pass (transición OSS): §7.3 + §12 sincronizados con ADR-0001 v3 (NVIDIA NIM `openai/gpt-oss-120b` primary; fallback Llama local marcado diferido/no cableado, no como implementado); §13.5 CI reescrita (GitHub Actions real: pytest 3.11/3.12 + ruff + mypy; el e2e con Atomic Red Team no se ejecutó, el lab nunca arrancó); §13.6 heartbeat 30s→60s por ADR-0002; §1 framing "mirrors the architecture" → "takes the architectural pattern, at academic-lab scale". | P1 |
 
 ---
 

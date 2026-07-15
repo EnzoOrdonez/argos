@@ -96,7 +96,7 @@ Snapshot detallado en [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 ## Quick stats
 
 - **Arquitectura:** 4 capas de detección + SOAR + LLM triage + Approval Workflow Console.
-- **Stack:** Wazuh, OpenSearch, Sigma, Sysmon, auditd, Atomic Red Team, Caldera, scikit-learn, FastAPI, Streamlit, Redis, GPT-4o-mini (primario) + Llama 3.1 local (fallback).
+- **Stack:** Wazuh, OpenSearch, Sigma, Sysmon, auditd, Atomic Red Team, Caldera, scikit-learn, FastAPI, Streamlit, Redis, NVIDIA NIM `openai/gpt-oss-120b` (primario) + Llama 3.1 local vía Ollama (fallback, diferido).
 - **Activo defendido:** PostgreSQL Production DB sobre Linux VM (criticality = production-critical).
 - **Documentación:** completa para fase de diseño antes de cualquier código escrito.
 - **Amenazas analizadas:** ~50 vía STRIDE + FMEA.

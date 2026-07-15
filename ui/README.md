@@ -3,17 +3,17 @@
 | Field | Value |
 |-------|-------|
 | Owner | **P4 · Diego Jara** (Infra · UI · Eval) |
-| Status | 📅 Planned · Weeks 6-9 (Gate 2 v1 · Gate 3 Approval Console) |
+| Status | ⚙️ Streamlit app implementada (una sola página flat: `app.py` + `components/` + `lib/` + `tests/`). Los dashboards OpenSearch y el split multi-página quedan en roadmap (no implementado). |
 | Related | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](../docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) §9.2, [`docs/decisions/0006-split-brain-resolution.md`](../docs/decisions/0006-split-brain-resolution.md), [`docs/use-cases/USE_CASES.md`](../docs/use-cases/USE_CASES.md) UC-03 (centerpiece visual) |
 
 ---
 
 ## Purpose
 
-Two UI surfaces with different audiences:
+UI surfaces:
 
-1. **Streamlit Analyst UI** — per-incident triage. Three tabs: Alert Inspection, **Approval Workflow Console**, Audit & Forensics.
-2. **OpenSearch Dashboards** — SOC-wide visibility. Three dashboards: Alerts Timeline, MITRE Coverage Heatmap, Layer Performance.
+1. **Streamlit Analyst UI** (implementada) — per-incident triage. Una sola app Streamlit (`streamlit_app/app.py`) que renderiza el incident card, la Approval Workflow Console (Decision Matrix) y la vista de auditoría vía componentes reutilizables en `components/`.
+2. **OpenSearch Dashboards** (roadmap — **no implementado**) — SOC-wide visibility (Alerts Timeline, MITRE Coverage Heatmap, Layer Performance). Ningún dashboard viaja en este repo todavía.
 
 The **Approval Workflow Console is the visual centerpiece of the demo** — it turns the abstract conservative-wins logic of UC-03 into something visible, defensible in audit, and dramatic on-screen.
 
@@ -28,40 +28,35 @@ The **Approval Workflow Console is the visual centerpiece of the demo** — it t
 | redis-py | Reading `Incident` state |
 | Plotly / Altair | Charts (decision matrix, action timeline) |
 | Pydantic v2 + `argos_contracts` | Type-safe `Incident` parsing |
-| OpenSearch Dashboards | JSON-exported dashboards in version control |
+| OpenSearch Dashboards *(roadmap)* | Dashboards JSON-exportados planeados — todavía no en este repo |
 | pytest + `streamlit.testing.v1` | Smoke tests |
 
 ---
 
-## What lives here (planned)
+## What lives here (implementado + marcadores de roadmap)
 
 ```
 ui/
 ├── README.md                   # This file
 ├── requirements.txt
 ├── streamlit_app/
-│   ├── app.py                  # Entry point (tabs: Alert Inspection / Approval Console / Audit)
-│   ├── pages/
-│   │   ├── 01_alert_inspection.py
-│   │   ├── 02_approval_console.py   # ← CENTERPIECE
-│   │   └── 03_audit_forensics.py
+│   ├── app.py                  # Entry point — una sola página flat (incident card + Approval Console + vista de auditoría)
 │   ├── components/
 │   │   ├── incident_card.py
 │   │   ├── decision_matrix.py       # Per-approver row with live status
 │   │   ├── countdown_clock.py       # 3-min HITL + 60s consolidation
 │   │   ├── action_timeline.py
-│   │   └── final_decision_banner.py
-│   └── lib/
-│       ├── redis_subscriber.py
-│       └── incident_loader.py
-├── opensearch-dashboards/
-│   ├── alerts-timeline.ndjson
-│   ├── mitre-heatmap.ndjson
-│   └── layer-performance.ndjson
+│   │   ├── final_decision_banner.py
+│   │   └── widgets.py
+│   └── lib/                          # config, incident_loader, view_model
 └── tests/
     ├── test_smoke.py                # Streamlit doesn't crash on cold start
-    ├── test_decision_matrix.py      # Right number of rows per approver count
-    └── test_dashboard_json.py       # OpenSearch dashboard JSON is valid
+    ├── test_incident_loader.py      # Carga de Incident desde Redis a modelos tipados
+    └── test_view_model.py           # Mapeo del view-model (filas de Decision Matrix, coloreo por tier)
+
+# ROADMAP — NO implementado (no está en disco):
+#   streamlit_app/pages/{01_alert_inspection,02_approval_console,03_audit_forensics}.py  (split multi-página)
+#   opensearch-dashboards/{alerts-timeline,mitre-heatmap,layer-performance}.ndjson       (dashboards SOC)
 ```
 
 ---
@@ -113,10 +108,12 @@ pip install -r requirements.txt
 # Streamlit Analyst UI (requires Redis + soar/)
 streamlit run streamlit_app/app.py
 
-# Import OpenSearch Dashboards (requires OpenSearch + lab/)
-curl -X POST "${OPENSEARCH_DASHBOARDS_URL}/api/saved_objects/_import" \
-  -H "osd-xsrf: true" \
-  --form file=@opensearch-dashboards/alerts-timeline.ndjson
+# Import OpenSearch Dashboards — ROADMAP, no implementado.
+# No hay opensearch-dashboards/*.ndjson en este repo todavía; el comando de abajo
+# es un placeholder para cuando existan:
+#   curl -X POST "${OPENSEARCH_DASHBOARDS_URL}/api/saved_objects/_import" \
+#     -H "osd-xsrf: true" \
+#     --form file=@opensearch-dashboards/alerts-timeline.ndjson
 
 # Tests
 pytest tests/ -v
@@ -129,8 +126,9 @@ pytest tests/ -v
 | Type | What it validates |
 |------|-------------------|
 | `test_smoke.py` | Streamlit starts without errors, default page renders |
-| `test_decision_matrix.py` | Decision Matrix renders the right number of rows per approver count (2, 4, 8) |
-| `test_dashboard_json.py` | All `*.ndjson` parse as valid OpenSearch saved objects |
+| `test_incident_loader.py` | Incident loading from Redis parses into typed models |
+| `test_view_model.py` | View-model mapping (Decision Matrix rows, tier colouring) |
+| _`test_dashboard_json.py`_ | _Roadmap — valida el JSON de dashboards OpenSearch cuando existan (no presente aún)_ |
 
 Target coverage: **smoke tests only** (per SAD §13.5 tiered targets — UI is "best-effort, smoke tests only").
 

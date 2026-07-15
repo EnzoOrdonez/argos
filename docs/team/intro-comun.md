@@ -13,7 +13,7 @@
 
 ## 1. Qué es ARGOS en una página
 
-**ARGOS** es la **Adaptive Response Guard with Orchestrated Surveillance** — una plataforma multi-vector de detección y respuesta a amenazas que replica la arquitectura de productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) usando exclusivamente componentes open source más una API LLM de bajo costo para la capa de triage.
+**ARGOS** es la **Adaptive Response Guard with Orchestrated Surveillance** — una plataforma multi-vector de detección y respuesta a amenazas que toma el patrón arquitectónico de los productos comerciales high-end EDR/XDR (Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR) y lo construye a escala de laboratorio académico usando exclusivamente componentes open source más una API LLM de bajo costo para la capa de triage — sin la telemetría de producción, el threat intel comercial ni los años de tuning de esos productos.
 
 El proyecto es parte del curso **Tópicos Avanzados de Ciberseguridad** en la Universidad de Lima · 2026-1. La entrega final es el **13 de junio de 2026** y consta de tres deliverables obligatorios: informe técnico (~30 % del peso), demo en vivo (~40 %), y presentación (~20 %). Los seguimientos intermedios pesan el ~10 % restante.
 
@@ -118,7 +118,7 @@ ARGOS sigue el patrón industrial estándar de **defense-in-depth**: cuatro capa
 **Dueño: P1 (Enzo).** FastAPI service que recibe el contexto completo de una alerta (process tree, network connections, file modifications) y produce análisis estructurado: técnica MITRE, severidad, runbook NIST aplicable, acción recomendada, IoCs a correlar.
 
 **Backend vendor-agnostic (per ADR-0001 v2):**
-- **Primary:** OpenAI GPT-4o-mini (US-based, soberanía de datos aceptable)
+- **Primary:** NVIDIA NIM `openai/gpt-oss-120b` (open-weights de OpenAI servido por NVIDIA; jurisdicción US — per ADR-0001 v3)
 - **Fallback:** Llama 3.1 8B local vía Ollama (zero-egress, funciona sin internet)
 
 **Invariante crítico R-02:** el LLM **NUNCA está en el path crítico de containment**. El SOAR decide desde Capas 1-3 solamente. El LLM enriquece la vista del analista; si halucina, miente, o cae, el sistema sigue funcionando.
@@ -255,7 +255,7 @@ El **SOAR orchestrator** (proceso de P1 corriendo el FastAPI Approval API en por
 
 **Capa 4 LLM Triage** (en paralelo, T+5 a T+8s):
 - FastAPI `/triage` endpoint recibe el AlertContext con las 3 alertas.
-- Llama a OpenAI GPT-4o-mini con prompt enriquecido.
+- Llama al backend LLM (NVIDIA NIM `openai/gpt-oss-120b`) con prompt enriquecido.
 - Devuelve TriageResponse: `tecnica_mitre=T1486`, `confianza=0.94`, `severidad=critical`, `runbook_aplicable="NIST 800-61 §3.4 Containment"`, `accion_recomendada="Isolate host immediately and capture memory snapshot before remediation"`.
 - El Incident se actualiza en Redis con el `llm_analysis` campo.
 
@@ -364,7 +364,7 @@ Las técnicas relevantes al alcance del proyecto, ordenadas por categoría (tact
 | **Backend** | APScheduler | Timeouts + consolidation windows | P1 |
 | **Backend** | PyJWT | JWT signing para approval tokens | P1 |
 | **Backend** | Pydantic v2 | argos_contracts (cross-team interfaces) | P1 (shipped) |
-| **LLM** | OpenAI GPT-4o-mini | Primary backend (cloud, US-based) | P1 |
+| **LLM** | NVIDIA NIM `openai/gpt-oss-120b` | Primary backend (cloud, jurisdicción US) — per ADR-0001 v3 | P1 |
 | **LLM** | Llama 3.1 8B vía Ollama | Fallback (local, zero-egress) | P1 |
 | **LLM** | BGE-large embeddings | Retrieval en RAG | P1 |
 | **Notifications** | python-telegram-bot | Telegram bot con inline buttons | P1 |

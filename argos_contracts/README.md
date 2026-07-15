@@ -42,7 +42,7 @@ response = TriageResponse(
     runbook_aplicable="NIST 800-61 §3.4 Containment, Eradication, Recovery",
     accion_recomendada="Isolate host, capture memory, preserve disk snapshot before remediation",
     indicadores_correlacionar=["vssadmin.exe", "high entropy writes"],
-    llm_backend="gpt-4o-mini",
+    llm_backend="openai/gpt-oss-120b",
     generated_at=datetime.now(timezone.utc),
 )
 ```

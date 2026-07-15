@@ -345,7 +345,7 @@ class TriageResponse(BaseModel):
     indicadores_correlacionar: list[str] = Field(default_factory=list)
     llm_backend: str = Field(
         ...,
-        description="Identifier of backend used: 'gpt-4o-mini' | 'llama-3.1-8b-local' (per ADR-0001 v2)"
+        description="Identifier of backend used, e.g. 'openai/gpt-oss-120b' (NVIDIA NIM) or 'llama-3.1-8b-local' (deferred) (per ADR-0001 v3)"
     )
     generated_at: datetime
 

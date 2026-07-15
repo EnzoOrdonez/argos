@@ -13,7 +13,7 @@
 
 Construir un sistema de detección y respuesta a ransomware que combine cuatro capas defensivas independientes (rule-based, ML, deception y LLM-assisted triage), todas open source o costo mínimo, desplegado en un lab virtualizado, con demostración de un ataque end-to-end y contención automatizada en tiempo real.
 
-**Inspiración arquitectónica:** Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR. No inventamos nada nuevo — replicamos la arquitectura comercial de gama alta con stack OSS y la documentamos rigurosamente. El cache profesional viene de la **calidad de ejecución**, no de originalidad arquitectónica.
+**Inspiración arquitectónica:** Microsoft Defender XDR, CrowdStrike Falcon, Palo Alto Cortex XDR. No inventamos nada nuevo — tomamos el patrón arquitectónico comercial de gama alta y lo construimos a escala de laboratorio con stack OSS, documentándolo rigurosamente; sin la telemetría de producción, el threat intel comercial ni los años de tuning de esos productos. El cache profesional viene de la **calidad de ejecución**, no de originalidad arquitectónica.
 
 ---
 
@@ -90,8 +90,8 @@ Cuando cualquier capa 1-3 dispara, un servicio FastAPI recibe el contexto comple
 **Pipeline:** BM25 + BGE-large embeddings + RRF (hybrid retrieval estándar industrial; cross-encoder descartado del scope v1 por relación marginal de costo/beneficio — ver `llm_triage/rag/README.md`). Implementación in-house; corpus 100% nuevo.
 
 **LLM backend (vendor-agnostic) — per ADR-0001 v2:**
-- **Primary:** OpenAI GPT-4o-mini (US-based, soberanía de datos aceptable para ciberseguridad)
-- **Fallback:** Llama 3.1 8B local vía Ollama (zero-egress; el sistema sigue funcionando sin internet)
+- **Primary:** NVIDIA NIM `openai/gpt-oss-120b` (open-weights de OpenAI servido por NVIDIA; jurisdicción US, soberanía de datos aceptable — per ADR-0001 v3)
+- **Fallback (diferido, no cableado):** Llama 3.1 8B local vía Ollama (zero-egress; *daría* operación sin internet, pero la implementación quedó diferida — per ADR-0001 v3)
 - Implementado tras `LLMClient` interface — swap en una variable de entorno.
 
 **Output estructurado:** `{tecnica_mitre, confianza, severidad, runbook_aplicable, accion_recomendada, indicadores_correlacionar}`.
@@ -139,8 +139,8 @@ Lógica de fusión de scores con reglas explícitas:
 
 | Componente | Costo aprox | Justificación |
 |------------|-------------|---------------|
-| OpenAI GPT-4o-mini API | ~$0.15 / 1M tokens input · ~$0.60 / 1M output | Calidad superior en benchmarks de seguridad (HELM, SecEval) a costo comparable a alternativas chinas; US-based para soberanía |
-| Llama 3.1 8B local (Ollama) | $0 marginal · ~8 GB RAM | Fallback con zero-egress: el sistema sigue funcionando si el primario se cae o sin internet |
+| NVIDIA NIM `openai/gpt-oss-120b` | ~$0 marginal en el demo (créditos NVIDIA) | Open-weights de OpenAI servido por NVIDIA; jurisdicción US para soberanía; ~0.9 s de latencia medida en vivo (per ADR-0001 v3) |
+| Llama 3.1 8B local (Ollama) — **diferido / no cableado** | $0 marginal · ~8 GB RAM | Fallback zero-egress diseñado en ADR-0001; implementación diferida, hoy sin failover local automático |
 
 **Política de vendor lock-in:** todos los componentes propietarios pasan por interfaces abstractas. El sistema completo es swappeable a Claude API, GPT-4, o Llama local con cambio de configuración, sin tocar lógica.
 
@@ -345,7 +345,7 @@ argos/
 ├── llm_triage/
 │   ├── api/                   # FastAPI service
 │   ├── rag/                   # Mini-RAG: BM25 + BGE-large + RRF
-│   ├── llm_client/            # LLMClient interface + OpenAI + Llama local (ADR-0001 v2)
+│   ├── llm_client/            # LLMClient interface + NVIDIA NIM (OpenAI-compatible) + Llama local diferido (ADR-0001 v3)
 │   ├── prompts/               # Templates Jinja2
 │   └── README.md
 │

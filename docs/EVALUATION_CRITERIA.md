@@ -132,7 +132,7 @@ Decisions where the rubric directly informed the choice:
 To resolve in next office hours (every team member should review this list before that conversation):
 
 1. **Per-section weights** — confirm or correct the assumed split in §3.
-2. **Layer 4 LLM** — is the use of an external LLM API (OpenAI GPT-4o-mini, per ADR-0001 v2) within course scope? Llama 3.1 local fallback elimina la dependencia externa cuando se requiera. See P-005 risk and `OPEN_QUESTIONS_RESOLUTION.md` §Q1.
+2. **Layer 4 LLM** — is the use of an external LLM API (NVIDIA NIM `openai/gpt-oss-120b`, per ADR-0001 v3) within course scope? El fallback Llama 3.1 local (diferido/no cableado) eliminaría la dependencia externa si se implementa. See P-005 risk and `OPEN_QUESTIONS_RESOLUTION.md` §Q1.
 3. **Sigma upstream PRs** — does upstream contribution count toward the grade or is it pure bonus?
 4. **Reproducibility test in defense** — will the professor try to rebuild the lab from the repo? If yes, `lab/` Vagrantfile must be bulletproof.
 5. **Late checkpoint penalty** — if Review 1 or Review 2 is missed due to schedule slippage, is there a recovery path?

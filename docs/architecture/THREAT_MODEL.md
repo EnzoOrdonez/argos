@@ -94,7 +94,7 @@ Threats numbered T-NNN. Mitigations referenced in section 6.
 
 | ID | Component | Threat | L | I | Risk | Mitigation | Residual |
 |----|-----------|--------|---|---|------|------------|----------|
-| T-030 | LLM API request | Sensitive logs (filenames, internal hostnames, command lines with secrets) sent to third-party API (OpenAI, US-based per ADR-0001 v2) | H | M | **Medium** | Sanitization layer before LLM call: redact patterns matching credentials, internal IP ranges, employee usernames; document the data sent in `docs/data-handling.md`; Llama 3.1 local fallback ofrece zero-egress | Low — significativamente reducido vs v1 (DeepSeek/Qwen China-based); air-gap completo disponible vía fallback local |
+| T-030 | LLM API request | Sensitive logs (filenames, internal hostnames, command lines with secrets) sent to third-party API (NVIDIA NIM, US jurisdiction, per ADR-0001 v3) | H | M | **Medium** | Sanitization layer before LLM call: redact patterns matching credentials, internal IP ranges, employee usernames; document the data sent in `docs/data-handling.md`; el fallback Llama 3.1 local (diferido / no cableado) daría zero-egress | Low — significativamente reducido vs v1 (DeepSeek/Qwen China-based); air-gap total quedaría disponible si se cablea el fallback local |
 | T-031 | Canary path leakage | Attacker reads documentation/repo and learns canary paths to avoid them | M | M | Medium | Canary paths configured via env vars, not hardcoded; production deployment generates random subset of canaries per host; demo uses public paths but documents this limitation | Medium — acceptable for demo, documented |
 | T-032 | OpenSearch API | Attacker reads alert history to learn detection logic | L | L | Low | OpenSearch on internal network only, authentication required, no public exposure | Negligible |
 | T-033 | Wazuh agent key | Attacker on victim extracts agent key to register rogue agents | M | M | Medium | Agent key file root-owned 0600, key rotation supported, anomaly rule on duplicate agent registrations | Low |
@@ -162,7 +162,7 @@ Reliability failures — no adversary required. Numbered F-NNN.
 
 | ID | Failure mode | Effect on system | Detection | Mitigation | Degradation |
 |----|--------------|------------------|-----------|------------|-------------|
-| F-001 | OpenAI API down | Capa 4 enrichment unavailable | HTTP error / timeout from client | Automatic fallback to Llama 3.1 local (Ollama) after 2 failed attempts; zero-egress backup garantiza inferencia incluso sin internet | Degraded: alerts continue to flow with Llama-quality enrichment (menor que GPT-4o-mini pero válido) |
+| F-001 | LLM API (NVIDIA NIM) down | Capa 4 enrichment unavailable | HTTP error / timeout from client | Retry/backoff; si persiste, el circuit breaker abre y las alertas se marcan `LLM_UNAVAILABLE`. El fallback zero-egress a Llama 3.1 local (Ollama) está diseñado en ADR-0001 pero **diferido / no cableado** — hoy no hay failover local automático | Degraded: alerts continue to flow without enrichment; SOAR containment (Capas 1-3) unaffected |
 | F-002 | Both LLM APIs down | Full Capa 4 outage | Both fallback attempts fail | Circuit breaker opens, alerts marked `LLM_UNAVAILABLE` | Degraded: same as above; SOAR containment unaffected |
 | F-003 | LLM hallucinates non-existent MITRE technique | Wrong analysis displayed to analyst | Pydantic validator + whitelist of valid ATT&CK IDs catches it | Reject response, retry once, fall through to "needs human triage" state | Degraded: alert without LLM enrichment |
 | F-004 | LLM gives inconsistent verdicts for same input | Analyst confusion | Confidence score + monitoring on response variance over time | Cache responses by input hash (24h TTL), confidence threshold cutoff | Stable verdicts within cache window |
@@ -232,7 +232,7 @@ Numbered P-NNN. Reviewed weekly in standup.
 
 ## 6. Resilience by Design — Defense in Depth Properties
 
-The architecture has explicit resilience properties that follow from defense-in-depth. These are testable claims, not aspirations:
+The architecture has explicit resilience properties that follow from defense-in-depth. These are testable claims, not aspirations — where a property still has a deferred component (e.g. the local zero-egress fallback in R-8), it is called out explicitly rather than presented as done:
 
 ### R-1. No single point of failure in detection
 
@@ -271,7 +271,7 @@ For high-value hosts (in production deployment), Sysmon writes to local file in 
 
 ### R-8. Vendor portability prevents lock-in failure
 
-LLM backend is abstracted (ADR-0001 v2). Si OpenAI cae, Llama 3.1 local toma el relevo (zero-egress). Si ambos fallan, el sistema continúa sin enriquecimiento — las capas 1-3 + SOAR siguen operativas. Swap a Claude/Mistral es one-config-value change.
+LLM backend is abstracted (ADR-0001 v3). Si el backend primario (NVIDIA NIM `openai/gpt-oss-120b`) cae, el sistema continúa sin enriquecimiento — las capas 1-3 + SOAR siguen operativas. El relevo zero-egress a Llama 3.1 local está diseñado pero **diferido (no cableado)**; el swap de proveedor o modelo (Claude/Mistral/otro modelo NIM) es un cambio de una línea de config.
 
 ### R-9. State persistence across crashes
 
@@ -290,7 +290,7 @@ The exposition is the highest-stakes single event. Specific contingencies:
 | Scenario | Contingency |
 |----------|-------------|
 | Live attack doesn't trigger as expected | Pre-recorded video of full successful run played as backup |
-| LLM API down at demo time | Fallback visible de OpenAI a Llama 3.1 local durante el demo (buena narrativa: "incluso sin internet seguimos analizando"); si ambos caen, narrar "aquí aparecería el análisis del LLM" con screenshot |
+| LLM API down at demo time | El fallback local a Llama era el plan (narrativa "incluso sin internet seguimos analizando") pero quedó **diferido / no cableado**; contingencia real: narrar "aquí aparecería el análisis del LLM" con screenshot o respuesta cacheada, mientras Capas 1-3 + SOAR siguen operando en vivo |
 | VM crashes during demo | Snapshot of pre-attack state restored; second laptop with full lab as backup |
 | Network issue (university wifi) | Demo runs entirely on internal lab network; LLM API call cached to last-good response if internet down |
 | Streamlit UI bug surfaces | Show OpenSearch dashboard as alternative view |
@@ -304,7 +304,7 @@ The exposition is the highest-stakes single event. Specific contingencies:
 
 Risks we explicitly accept and document, in order of priority:
 
-1. **T-030 (LLM data disclosure to China-based API):** for an academic project with synthetic lab data, accepted. Documentation states this clearly. For production, swap to local LLM.
+1. **T-030 (LLM data disclosure to a third-party API):** the data goes to NVIDIA NIM (US jurisdiction, per ADR-0001 v3), not to a China-based provider — model provenance (open-weights) ≠ data jurisdiction. For an academic project with synthetic lab data, accepted. Documentation states this clearly. For production, swap to a local LLM (deferred fallback).
 2. **T-014 (LLM prompt injection):** mitigations reduce but don't eliminate. Accept residual risk because LLM cannot trigger actions.
 3. **T-050 (fast attacker disables agent before alert ships):** documented as fundamental limit. Heartbeat interval can be reduced to mitigate but trades off network noise.
 4. **F-052 (race condition: attack faster than detection):** documented theoretical TTD floor of ~3-5s. Some files will be encrypted before isolation. This is honest and documented in metrics.
@@ -317,7 +317,7 @@ Risks we explicitly accept and document, in order of priority:
 This v1.0 covers the architecture as designed. The model will be revisited at:
 - **Gate 2 (Week 7):** when Layers 1+2+3 are integrated, re-verify trust boundaries.
 - **Gate 3 (Week 9):** when LLM is integrated, deep-dive on prompt injection in evaluation.
-- **Pre-demo (Week 13):** dedicated red-team session — one team member tries to break the system.
+- **Pre-demo (Week 13):** a dedicated red-team session (one team member tries to break the system) was planned here; it was **not conducted** — the lab never booted end-to-end, so no live adversarial session took place. Recorded honestly rather than claimed.
 
 Future expansions (out of scope for v1.0):
 - DREAD scoring (currently using simpler L×I matrix).
@@ -336,6 +336,7 @@ Future expansions (out of scope for v1.0):
 | 1.3 | Week 7 calendar | T-062 reframed from "compromised approver **email** account" to channel-agnostic ("any notification channel") with explicit note that email is now post-facto-only per ADR-0007. Cross-references T-067/T-069 as primary-channel threats. | P1 |
 | 1.4 | Week 7 calendar | P-002 mitigation updated to reflect reality: removed "Friday demo" (practice not adopted), kept Monday standup + cross-layer code review + per-module READMEs. Risk score unchanged at High because removed mitigation was aspirational. | P1 |
 | 1.5 | 2026-05-24 | Cleanup pass: T-030 actualizado (riesgo H→M tras cambio a OpenAI US-based + Llama local fallback per ADR-0001 v2); F-001 sincronizado al failover OpenAI→Llama local. T-070 añadido (Discord webhook leak) per ADR-0007 v2. Owner actualizado a Enzo Ordoñez Flores. | P1 |
+| 1.6 | 2026-07-15 | Honesty pass (transición OSS): T-030 reconciliado a ADR-0001 v3 (backend real NVIDIA NIM, jurisdicción US — se elimina la contradicción "US-based" vs "China-based" heredada de v1); F-001 y R-8 dejan de describir el failover a Llama local como automático (está diseñado pero diferido/no cableado); la sesión red-team "Week 13" se marca como no realizada (el lab nunca arrancó end-to-end). | P1 |
 
 ---
 
