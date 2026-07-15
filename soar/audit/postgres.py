@@ -14,6 +14,7 @@ ya traen esos valores (tier 'T0'.., criticality 'standard'/'production_critical'
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -49,6 +50,9 @@ class PostgresSink:
         if self._conn is None:
             return
         try:
+            # Todo evento se persiste en audit_events (log append-only, fuente del
+            # timeline). Los handlers _on_{kind} de abajo mantienen además los agregados.
+            self._insert_event(event)
             handler = getattr(self, f"_on_{event.kind}", None)
             if handler is not None:
                 handler(event)
@@ -58,7 +62,15 @@ class PostgresSink:
                 event.incident_id, event.kind, exc,
             )
 
-    # -- handlers por kind (sin handler = evento ignorado) --------------------
+    def _insert_event(self, e: AuditEvent) -> None:
+        # payload como string + cast ::jsonb evita depender del wrapper Json de psycopg.
+        self._conn.execute(
+            f"INSERT INTO {_S}.audit_events (incident_id, ts, kind, payload) "
+            f"VALUES (%(id)s, %(ts)s, %(kind)s, %(payload)s::jsonb)",
+            {"id": e.incident_id, "ts": e.ts, "kind": e.kind, "payload": json.dumps(e.payload)},
+        )
+
+    # -- handlers por kind: agregados incident-céntricos (sin handler = solo audit_events) --
 
     def _on_incident_created(self, e: AuditEvent) -> None:
         p = e.payload
