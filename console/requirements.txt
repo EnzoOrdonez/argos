@@ -4,3 +4,7 @@
 fastapi>=0.110
 uvicorn[standard]>=0.27
 redis>=5.0
+# Timeline de auditoría (opcional): lee argos_audit vía ARGOS_AUDIT_SQL_DSN. El import
+# es guarded — sin psycopg o sin DSN la consola arranca igual, solo sin timeline.
+# (Un dev con `.[soar,dev]` ya lo tiene; acá se declara para la imagen standalone.)
+psycopg[binary]>=3.1

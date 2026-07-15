@@ -70,10 +70,14 @@ services:
     restart: unless-stopped
     environment:
       REDIS_URL: redis://redis:6379/0
+      # Habilita el card de timeline (lee argos_audit). Sin esto la consola sigue OK, solo Redis.
+      ARGOS_AUDIT_SQL_DSN: postgresql://${POSTGRES_USER:-argos}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-argos_audit}
     ports: ["8080:8080"]
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy   # el reader del timeline conecta lazy 1 vez; postgres debe estar listo
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
       interval: 10s

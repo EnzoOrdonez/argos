@@ -1,5 +1,7 @@
 'use strict';
 // Consola ARGOS — read-only. Poll /api/incidents y renderiza el HITL con el diseño.
+// Por incidente seleccionado además trae la ráfaga multi-capa (corr:alerts) y el
+// timeline de auditoría (Postgres argos_audit, opcional).
 const TIER = { T0: 'var(--t0)', T1: 'var(--t1)', T2: 'var(--t2)', T3: 'var(--t3)' };
 const ASTATUS = {
   approved: { c: 'var(--ok)', t: 'aprobó' },
@@ -9,29 +11,45 @@ const ASTATUS = {
 };
 const SEV = { low: 'var(--t3)', medium: 'var(--t2)', high: 'var(--t1)', critical: 'var(--t0)' };
 const CHANNEL = { telegram: 'Telegram', discord: 'Discord', twilio_voice: 'Twilio', email: 'Email' };
+const STALE_AFTER_S = 5;  // 3 polls perdidos (poll = 1.5s)
 
 let incidents = [];
 let selectedId = null;
+let systemUp = true;
+let lastOkAt = Date.now();
+const extras = {};  // incident_id -> { burst: NormalizedAlert[]|undefined, audit: {available,events}|undefined }
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const badge = (text, color) => `<span class="badge" style="background:${color}">${esc(text)}</span>`;
 const mmss = secs => { const t = Math.max(0, Math.floor(secs)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+const hms = iso => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d.getTime()) ? '—' : d.toLocaleTimeString('es', { hour12: false }); };
 
 async function poll() {
   try {
     const r = await fetch('/api/incidents');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     incidents = await r.json();
-    setStatus(true);
-  } catch (e) { setStatus(false); }
+    lastOkAt = Date.now();
+    systemUp = true;
+  } catch (e) { systemUp = false; }
   render();
 }
-function setStatus(up) {
+
+function renderStatus() {
   const s = $('#status');
-  s.classList.toggle('down', !up);
-  s.innerHTML = `<span class="dot"></span> ${up ? 'SISTEMA ACTIVO' : 'SOAR/Redis no disponible'}`;
+  if (!s) return;
+  const age = (Date.now() - lastOkAt) / 1000;
+  const stale = age > STALE_AFTER_S;
+  s.classList.toggle('down', !systemUp);
+  const detail = $('#detail');
+  if (detail) detail.classList.toggle('stale', stale);
+  let txt;
+  if (!systemUp) txt = 'SOAR/Redis no disponible';
+  else if (stale) txt = `sin datos hace ${Math.floor(age)}s`;
+  else txt = 'SISTEMA ACTIVO';
+  s.innerHTML = `<span class="dot"></span> ${txt}`;
 }
 
 function render() {
@@ -39,6 +57,8 @@ function render() {
   const inc = incidents.find(i => i.incident_id === selectedId) || incidents[0] || null;
   selectedId = inc ? inc.incident_id : null;
   renderDetail(inc);
+  renderStatus();
+  if (selectedId) loadExtras(selectedId);
 }
 
 function renderList() {
@@ -60,7 +80,7 @@ function renderDetail(inc) {
   if (!inc) { d.innerHTML = '<div class="empty">Esperando incidentes…</div>'; return; }
   d.innerHTML = bannerHTML(inc) + incidentCard(inc)
     + `<div class="grid2">${matrixCard(inc)}${clockCard(inc)}</div>`
-    + llmCard(inc) + actionsCard(inc);
+    + llmCard(inc) + burstCard(inc) + auditCard(inc) + actionsCard(inc);
   tickClock();
 }
 
@@ -108,12 +128,14 @@ function matrixCard(inc) {
     const st = ASTATUS[a.status] || { c: 'var(--muted)', t: a.status };
     const lat = a.latency_seconds != null ? `${Math.round(a.latency_seconds)}s` : '—';
     return `<tr><td class="mono">${esc(a.email)}</td>
+      <td>${esc(a.role || '—')}</td>
       <td><span class="pill"><span class="d" style="background:${st.c}"></span>${esc(st.t)}</span></td>
-      <td>${lat}</td><td>${esc(CHANNEL[a.channel] || a.channel)}</td></tr>`;
+      <td>${lat}</td><td class="mono">${esc(hms(a.responded_at))}</td>
+      <td>${esc(CHANNEL[a.channel] || a.channel)}</td></tr>`;
   }).join('');
   return `<div class="card"><h3>Matriz de aprobadores</h3>
     ${inc.approvers.length ? `<table class="matrix"><thead><tr>
-      <th>Aprobador</th><th>Estado</th><th>Latencia</th><th>Canal</th></tr></thead>
+      <th>Aprobador</th><th>Rol</th><th>Estado</th><th>Latencia</th><th>Respondió</th><th>Canal</th></tr></thead>
       <tbody>${rows}</tbody></table>` : '<div class="muted">Aún sin respuestas.</div>'}
     <div class="muted" style="margin-top:10px;font-size:12px">${voteSummary(inc)}</div></div>`;
 }
@@ -125,7 +147,6 @@ function clockBody(inc) {
   const w = inc.consolidation_window;
   if (!w) return '<div class="muted">Sin ventana todavía (arranca con el primer voto).</div>';
   const dur = w.duration_seconds;
-  // cerrada si la ventana terminó O el incidente ya tiene decisión final (executed/no_action)
   const closed = !!(w.ended_at || inc.final_decision);
   const remaining = closed ? 0 : Math.max(0, (Date.parse(w.started_at) + dur * 1000 - Date.now()) / 1000);
   const frac = closed ? 1 : (dur > 0 ? Math.min(1, 1 - remaining / dur) : 1);
@@ -137,6 +158,7 @@ function tickClock() {
   const inc = incidents.find(i => i.incident_id === selectedId);
   const body = $('#clock-body');
   if (inc && body) body.innerHTML = clockBody(inc);
+  renderStatus();  // mantiene el contador de "sin datos hace Ns" vivo
 }
 
 function llmCard(inc) {
@@ -160,6 +182,43 @@ function llmCard(inc) {
   </div>`;
 }
 
+// -- ráfaga multi-capa (corr:alerts) --------------------------------------
+function burstCard(inc) {
+  return `<div class="card"><h3>Ráfaga multi-capa correlacionada</h3><div id="burst-body">${burstBody(inc)}</div></div>`;
+}
+function burstBody(inc) {
+  const rows = (extras[inc.incident_id] || {}).burst;
+  if (rows === undefined) return '<div class="muted">cargando…</div>';
+  if (!rows.length) return '<div class="muted">Sin ráfaga (expiró el TTL o el incidente no tuvo correlación multi-capa).</div>';
+  const body = rows.map(a =>
+    `<tr><td class="mono">${esc(a.alert_id)}</td><td class="mono">${esc(a.source_layer)}</td>
+     <td class="mono">${esc(a.technique_mitre || '—')}</td>
+     <td>${badge(`${a.severity_label} (${a.severity_score.toFixed(2)})`, SEV[a.severity_label] || 'var(--muted)')}</td>
+     <td class="mono">${esc(a.triggering_rule || '—')}</td></tr>`).join('');
+  return `<table class="matrix"><thead><tr><th>Alerta</th><th>Capa</th><th>MITRE</th><th>Severidad</th><th>Regla</th></tr></thead>
+    <tbody>${body}</tbody></table>`;
+}
+
+// -- timeline de auditoría (Postgres argos_audit, opcional) ----------------
+function auditCard(inc) {
+  return `<div class="card"><h3>Timeline de auditoría</h3><div id="audit-body">${auditBody(inc)}</div></div>`;
+}
+function auditBody(inc) {
+  const a = (extras[inc.incident_id] || {}).audit;
+  if (a === undefined) return '<div class="muted">cargando…</div>';
+  if (!a.available) return '<div class="muted">Timeline no disponible (Postgres <span class="mono">argos_audit</span> no configurado). La consola funciona igual con Redis; setea <span class="mono">ARGOS_AUDIT_SQL_DSN</span> para habilitarlo.</div>';
+  if (!a.events.length) return '<div class="muted">Sin eventos de auditoría todavía.</div>';
+  const items = a.events.map(e =>
+    `<li><span class="t mono">${esc(hms(e.ts))}</span><span class="k">${esc(e.kind)}</span>${auditPayload(e.payload)}</li>`).join('');
+  return `<ol class="timeline">${items}</ol>`;
+}
+function auditPayload(p) {
+  const keys = Object.keys(p || {});
+  if (!keys.length) return '';
+  const parts = keys.map(k => `${esc(k)}=${esc(p[k])}`).join(' · ');
+  return `<span class="pl">${parts}</span>`;
+}
+
 function actionsCard(inc) {
   if (!inc.proposed_actions.length) return '';
   const rows = inc.proposed_actions.map(a =>
@@ -168,6 +227,25 @@ function actionsCard(inc) {
   return `<div class="card"><h3>Acciones propuestas</h3>
     <table class="matrix"><thead><tr><th>ID</th><th>Tipo</th><th>Objetivo</th><th>Reversible</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
+}
+
+// Trae ráfaga + timeline del incidente seleccionado y parchea sus cards en sitio.
+async function loadExtras(id) {
+  if (!id) return;
+  try {
+    const [burst, audit] = await Promise.all([
+      fetch(`/api/incidents/${encodeURIComponent(id)}/alerts`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/incidents/${encodeURIComponent(id)}/audit`).then(r => r.ok ? r.json() : { available: false, events: [] }),
+    ]);
+    extras[id] = { burst, audit };
+  } catch (e) {
+    extras[id] = extras[id] || { burst: [], audit: { available: false, events: [] } };
+  }
+  if (selectedId !== id) return;  // el usuario cambió de incidente mientras cargaba
+  const inc = incidents.find(i => i.incident_id === id);
+  if (!inc) return;
+  const b = $('#burst-body'); if (b) b.innerHTML = burstBody(inc);
+  const a = $('#audit-body'); if (a) a.innerHTML = auditBody(inc);
 }
 
 poll();

@@ -53,3 +53,19 @@ CREATE INDEX IF NOT EXISTS idx_audit_responses_incident
     ON audit_responses(incident_id);
 CREATE INDEX IF NOT EXISTS idx_audit_incidents_created
     ON audit_incidents(created_at DESC);
+
+-- Log append-only evento-por-evento. Las dos tablas de arriba son agregados
+-- (audit_incidents pisa el tier en cada escalada; audit_responses solo votos), así
+-- que NO conservan el historial completo (tier_escalated, llm_triage_ok/failed,
+-- timeout_wait, etc. se perdían). Esta tabla persiste CADA AuditEvent tal cual, y es
+-- la fuente del timeline navegable de la consola. Sin FK a audit_incidents a propósito:
+-- un evento puede llegar antes que la fila del incidente (incident_created es un evento).
+CREATE TABLE IF NOT EXISTS audit_events (
+    id           bigserial PRIMARY KEY,
+    incident_id  varchar(20) NOT NULL,
+    ts           timestamptz NOT NULL,
+    kind         varchar(40) NOT NULL,
+    payload      jsonb       NOT NULL DEFAULT '{}'::jsonb
+);
+CREATE INDEX IF NOT EXISTS idx_audit_events_incident
+    ON audit_events(incident_id, ts);

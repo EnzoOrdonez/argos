@@ -13,10 +13,13 @@ from datetime import UTC, datetime
 import redis
 from pydantic import ValidationError
 
+from argos_contracts.alert import NormalizedAlert
 from argos_contracts.incident import Incident
 
 _KEY_PREFIX = "incident:"
 _INCIDENT_ID_RE = re.compile(r"^INC-\d{4}-\d{2}-\d{2}-\d{3}$")
+_BURST_KEY = "corr:alerts:{incident_id}"
+_BURST_CAP = 50  # tope de filas mostradas (la ráfaga rara vez es mayor)
 
 
 def get_client(url: str) -> redis.Redis:
@@ -62,3 +65,19 @@ def get_incident(client: redis.Redis, incident_id: str) -> Incident | None:
         return Incident.model_validate_json(raw)
     except ValidationError:
         return None
+
+
+def list_burst_alerts(client: redis.Redis, incident_id: str) -> list[NormalizedAlert]:
+    """La ráfaga multi-capa de un incidente (LIST `corr:alerts:{id}`, TTL en el consumer).
+
+    Cada item es un `NormalizedAlert` JSON. Fail-soft por item; lista vacía si la
+    ráfaga expiró (TTL) o el incidente no existe. Capada a `_BURST_CAP` filas.
+    """
+    raw_items = client.lrange(_BURST_KEY.format(incident_id=incident_id), 0, _BURST_CAP - 1)
+    alerts: list[NormalizedAlert] = []
+    for raw in raw_items:
+        try:
+            alerts.append(NormalizedAlert.model_validate_json(raw))
+        except ValidationError:
+            continue  # item inválido: fail-soft, no rompe el resto de la ráfaga
+    return alerts

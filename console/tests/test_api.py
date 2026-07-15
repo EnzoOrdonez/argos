@@ -19,17 +19,19 @@ from argos_contracts.enums import (
 )
 from argos_contracts.incident import FinalDecision, Incident, ProposedAction
 from argos_contracts.triage import HostInfo
-from console.api import main, store
+from console.api import audit, main, store
 
 
 def _incident(
-    incident_id: str = "INC-2026-06-27-001", final: FinalDecision | None = None
+    incident_id: str = "INC-2026-06-27-001",
+    final: FinalDecision | None = None,
+    updated: datetime | None = None,
 ) -> Incident:
     now = datetime(2026, 6, 27, 12, 0, 0, tzinfo=UTC)
     return Incident(
         incident_id=incident_id,
         created_at=now,
-        updated_at=now,
+        updated_at=updated or now,
         tier=Tier.T2,
         state=IncidentState.AWAITING_APPROVAL,
         host=HostInfo(
@@ -48,6 +50,14 @@ def _incident(
             )
         ],
         final_decision=final,
+    )
+
+
+def _burst_alert(alert_id: str, technique: str = "T1486") -> NormalizedAlert:
+    now = datetime(2026, 6, 27, 12, 0, 0, tzinfo=UTC)
+    return NormalizedAlert(
+        alert_id=alert_id, source_layer=Layer.LAYER_2, timestamp=now, host_id="LIN-VICTIM-01",
+        severity_score=0.8, severity_label=Severity.HIGH, technique_mitre=technique,
     )
 
 
@@ -93,3 +103,79 @@ async def test_index_served(fake) -> None:
     resp = await _get("/")
     assert resp.status_code == 200
     assert "ARGOS" in resp.text
+
+
+async def test_list_503_when_redis_down(monkeypatch) -> None:
+    def _boom(url):
+        raise ConnectionError("redis caído")
+
+    monkeypatch.setattr(store, "get_client", _boom)
+    resp = await _get("/api/incidents")
+    assert resp.status_code == 503
+
+
+async def test_list_skips_invalid_snapshot(fake) -> None:
+    inc = _incident()
+    fake.set(f"incident:{inc.incident_id}", inc.model_dump_json())
+    fake.set("incident:INC-2026-06-27-002", "{no soy un incidente valido")  # ValidationError
+    resp = await _get("/api/incidents")
+    assert resp.status_code == 200
+    assert [i["incident_id"] for i in resp.json()] == [inc.incident_id]  # el inválido se salta
+
+
+async def test_list_sort_open_first_then_updated_desc(fake) -> None:
+    t = lambda h: datetime(2026, 6, 27, h, 0, 0, tzinfo=UTC)  # noqa: E731
+    final = FinalDecision(
+        outcome="EXECUTE_ISOLATION", policy_applied="auto-execute",
+        rationale="x", executed_at=t(9), execution_status="success",
+    )
+    open_new = _incident("INC-2026-06-27-001", updated=t(10))
+    open_old = _incident("INC-2026-06-27-002", updated=t(8))
+    closed = _incident("INC-2026-06-27-003", final=final, updated=t(11))
+    for inc in (open_old, closed, open_new):
+        fake.set(f"incident:{inc.incident_id}", inc.model_dump_json())
+    resp = await _get("/api/incidents")
+    ids = [i["incident_id"] for i in resp.json()]
+    # abiertos primero (más nuevo antes), luego los cerrados
+    assert ids == ["INC-2026-06-27-001", "INC-2026-06-27-002", "INC-2026-06-27-003"]
+
+
+async def test_burst_alerts_parses_and_skips_invalid(fake) -> None:
+    fake.rpush("corr:alerts:INC-2026-06-27-001", _burst_alert("al-1").model_dump_json())
+    fake.rpush("corr:alerts:INC-2026-06-27-001", "{basura")  # inválido -> se salta
+    fake.rpush("corr:alerts:INC-2026-06-27-001", _burst_alert("al-2").model_dump_json())
+    resp = await _get("/api/incidents/INC-2026-06-27-001/alerts")
+    assert resp.status_code == 200
+    assert [a["alert_id"] for a in resp.json()] == ["al-1", "al-2"]
+
+
+async def test_burst_empty_when_no_key(fake) -> None:
+    resp = await _get("/api/incidents/INC-2026-06-27-999/alerts")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+async def test_audit_available_true(monkeypatch, fake) -> None:
+    class _FakeReader:
+        def timeline(self, incident_id):
+            return [{"ts": "2026-06-27T12:00:00+00:00", "kind": "incident_created", "payload": {}}]
+
+    monkeypatch.setattr(audit, "get_reader", lambda: _FakeReader())
+    resp = await _get("/api/incidents/INC-2026-06-27-001/audit")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["available"] is True
+    assert body["events"][0]["kind"] == "incident_created"
+
+
+async def test_audit_available_false_when_reader_disabled(monkeypatch, fake) -> None:
+    class _DisabledReader:
+        def timeline(self, incident_id):
+            return None
+
+    monkeypatch.setattr(audit, "get_reader", lambda: _DisabledReader())
+    resp = await _get("/api/incidents/INC-2026-06-27-001/audit")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["available"] is False
+    assert body["events"] == []

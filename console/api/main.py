@@ -17,8 +17,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from argos_contracts.alert import NormalizedAlert
 from argos_contracts.incident import Incident
-from console.api import store
+from console.api import audit, store
 
 _STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -58,6 +59,29 @@ async def get_incident(incident_id: str) -> Incident:
     if incident is None:
         raise HTTPException(status_code=404, detail="incidente no encontrado")
     return incident
+
+
+@app.get("/api/incidents/{incident_id}/alerts", response_model=list[NormalizedAlert])
+async def burst_alerts(incident_id: str) -> list[NormalizedAlert]:
+    """Ráfaga multi-capa correlacionada (Redis `corr:alerts:{id}`). [] si expiró (TTL)."""
+    try:
+        client = store.get_client(_redis_url())
+        return store.list_burst_alerts(client, incident_id)
+    except Exception as exc:  # Redis caído -> 503, coherente con /api/incidents
+        raise HTTPException(status_code=503, detail=f"Redis no disponible: {exc}") from exc
+
+
+@app.get("/api/incidents/{incident_id}/audit")
+async def audit_timeline(incident_id: str) -> dict[str, Any]:
+    """Timeline evento-por-evento desde Postgres. Subsistema opcional: nunca 503.
+
+    `{"available": false}` si el audit SQL no está configurado (la consola sigue
+    100% funcional solo con Redis); `{"available": true, "events": [...]}` si sí.
+    """
+    events = audit.get_reader().timeline(incident_id)
+    if events is None:
+        return {"available": False, "events": []}
+    return {"available": True, "events": events}
 
 
 @app.get("/")
