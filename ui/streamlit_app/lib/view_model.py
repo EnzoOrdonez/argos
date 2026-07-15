@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from argos_contracts.enums import (
     ApproverStatus,
@@ -101,7 +101,7 @@ def consolidation_remaining(
     """Segundos restantes de la ventana, o None si no hay ventana. Nunca negativo."""
     if window is None:
         return None
-    current = now if now is not None else datetime.now(timezone.utc)
+    current = now if now is not None else datetime.now(UTC)
     deadline = window.started_at.timestamp() + window.duration_seconds
     return max(0.0, deadline - current.timestamp())
 

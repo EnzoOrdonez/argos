@@ -9,7 +9,7 @@ contrato. Fail-soft: un valor ausente o no parseable se saltea, nunca tumba la c
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis
 from pydantic import ValidationError
@@ -38,7 +38,7 @@ def incident_id_from_key(key: str) -> str | None:
 
 
 def _as_utc(dt: datetime) -> datetime:
-    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
 
 def _sort_key(incident: Incident) -> tuple[int, datetime]:
