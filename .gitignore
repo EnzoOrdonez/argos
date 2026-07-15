@@ -266,3 +266,9 @@ config/api.config.yaml
 # Auditoría interna privada (post-curso, transición a portafolio). Nunca commitear ni pushear.
 /MEMORIA_AUDITORIA_GITHUB.md
 /PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md
+
+# Helper de git filter-repo (Ronda 11): contiene el string del token ya purgado. NUNCA commitear.
+/replacements.txt
+
+# Dataset de Kaggle sin trackear, no referenciado por ningún .py/.md (auditoría §2.1). No commitear.
+/Bank_Personal_Loan_Modelling.xlsx
