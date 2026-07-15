@@ -278,6 +278,11 @@ config/host_inventory.json
 /PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md
 /MEMORIA_EJECUCION_OSS.md
 
+# Planificación interna: ARGOS → XDR genérico funcional (post-transformación OSS). Nunca commitear.
+/PLAN_ARGOS_XDR_GENERICO.md
+/PROMPT_CLAUDE_CODE_ARGOS_GENERICO.md
+/MEMORIA_EJECUCION_ARGOS_GENERICO.md
+
 # Helper de git filter-repo (Ronda 11): contiene el string del token ya purgado. NUNCA commitear.
 /replacements.txt
 
