@@ -8,7 +8,7 @@
 
 [![Status](https://img.shields.io/badge/status-prototipo%20F1--F6%20completo-brightgreen)](docs/ARGOS_RUNBOOK_MAESTRO.html)
 [![Contracts](https://img.shields.io/badge/argos__contracts-v1.1.0-blue)](argos_contracts/)
-[![Tests](https://img.shields.io/badge/tests-~441%20(no%20reverificado)-yellow)](docs/PROJECT_STATUS.md)
+[![CI](https://github.com/EnzoOrdonez/argos/actions/workflows/ci.yml/badge.svg)](https://github.com/EnzoOrdonez/argos/actions/workflows/ci.yml)
 [![Deadline](https://img.shields.io/badge/entrega-1%20jul%202026-red)](docs/EVALUATION_CRITERIA.md)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
