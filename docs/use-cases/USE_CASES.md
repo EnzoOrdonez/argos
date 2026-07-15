@@ -35,7 +35,7 @@ The exception is the **Canary Deception scenario** (UC-02), which targets a stro
 
 ## 2. Demo scenarios overview
 
-The exposition presents **eight demo scenarios** in narrative sequence — six núcleo (UC-01/02/03/04/06/07) + dos opcionales si sobra tiempo (UC-05/08), per el guion de grabación vigente (`GUION_GRABACION_TRACKB.html`):
+The exposition presents **eight demo scenarios** in narrative sequence — six núcleo (UC-01/02/03/04/06/07) + dos opcionales si sobra tiempo (UC-05/08), per el runbook de grabación (`docs/RUNBOOK_GRABACION_TRACKB.md`):
 
 | ID | Name | Tier | Vector | Layers triggered | Approval flow | Duration | Purpose |
 |----|------|------|--------|------------------|---------------|----------|---------|

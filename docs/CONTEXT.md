@@ -1,5 +1,7 @@
 # ARGOS
 
+> ℹ️ **Documentación histórica del curso.** Este es el doc de contexto/onboarding original (kickoff, cronograma de 14 semanas). No refleja el estado actual del proyecto — para eso ver el [`README.md`](../README.md) raíz y la bitácora `CLAUDE.md`.
+
 **Adaptive Response Guard with Orchestrated Surveillance — stack defensivo por capas con triage asistido por LLM para detección y contención automatizada de ransomware**
 
 > **Nota de rebrand:** este documento de kickoff originalmente nombraba el proyecto "SOC-in-a-Box". En la Semana 2 el sistema se renombró a **ARGOS** (acrónimo en `PROJECT_BRIEF.md`). Las referencias internas, paths de repo y diagramas se actualizaron a la nueva nomenclatura. El contenido técnico y la división de trabajo se mantienen idénticos al acuerdo de kickoff.

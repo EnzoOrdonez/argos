@@ -9,10 +9,9 @@
 [![Status](https://img.shields.io/badge/status-prototipo%20F1--F6%20completo-brightgreen)](docs/ARGOS_RUNBOOK_MAESTRO.html)
 [![Contracts](https://img.shields.io/badge/argos__contracts-v1.1.0-blue)](argos_contracts/)
 [![CI](https://github.com/EnzoOrdonez/argos/actions/workflows/ci.yml/badge.svg)](https://github.com/EnzoOrdonez/argos/actions/workflows/ci.yml)
-[![Deadline](https://img.shields.io/badge/entrega-1%20jul%202026-red)](docs/EVALUATION_CRITERIA.md)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**Activo defendido:** 🛡 PostgreSQL Production DB · **Curso:** Tópicos Avanzados de Ciberseguridad · Universidad de Lima · 2026-1
+**Activo defendido:** 🛡 PostgreSQL Production DB
 
 </div>
 
@@ -152,20 +151,6 @@ Threat model STRIDE + FMEA completo con ~50 amenazas analizadas: [`docs/architec
 
 ---
 
-## Equipo y responsabilidades
-
-> Para el detalle visual con asignación por componente: [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html)
-
-| | Integrante | Rol | Alcance principal |
-|:--:|---|---|---|
-| 🟣 | **Enzo Ordoñez** | P1 · Líder · LLM/SOAR | `argos_contracts`, Capa 4 LLM Triage (NVIDIA), motor SOAR + Tier Classifier, Approval API con JWT, notificaciones multi-canal, consola web + Streamlit, bridge/live mode, docker-compose, coordinación general |
-| 🔵 | **Sebastian Montenegro** | P2 · Ingeniero ML | Capa 2 (Isolation Forest + One-Class SVM), feature extraction, calibración de thresholds, métricas A/B/C (P/R/F1, MITRE coverage), captura forense |
-| 🟠 | **Angeles Castillo** | P3 · Detección · Engaño | Capa 1 (Sigma rules mapeadas a MITRE), Capa 3 (canary FIM + whodata), active-response Win+Linux, validación con Atomic Red Team y Caldera |
-| 🟢 | **Diego Jara** | P4 · Infraestructura · UI | Lab de 3 VMs + Wazuh manager, PostgreSQL `app_prod`/`argos_audit` con datos sintéticos, ejecución del ataque, grabación del video demo |
-| 🟡 | **Yohamin Pimentel** | Apoyo P2 · Forense | Integración forense con **Velociraptor** (`soar/response/forensics/`, recolección post-incidente), apoyo a la Capa 2 |
-
----
-
 ## Estado actual
 
 Prototipo **F1–F6 completo** (~441 tests per docs de equipo; no re-verificado en un sandbox limpio esta sesión). Leyenda: ✅ hecho (testeado) · 🟡 simulado (corre demo-safe sin lab) · 🔧 pendiente-lab (necesita las VMs).
@@ -183,7 +168,7 @@ Prototipo **F1–F6 completo** (~441 tests per docs de equipo; no re-verificado 
 | 📺 F6 · Consola web + Streamlit fallback | ✅ | `:8080` (web) / `:8501` (streamlit) · read-only |
 | 🔍 Capa 1 (Sigma) · 🍯 Capa 3 (Canary FIM) | ✅🔧 | Reglas + simuladores listos; despliegue/auditd en el lab = pendiente-lab |
 | 🏗 Lab 3 VMs + ataque real (Track A) | 🔧 | Código real (Vagrantfile + provisioning de 2/3 VMs, `vagrant validate` OK) — `vagrant up` nunca completó con éxito en la máquina de prueba (conflicto Hyper-V/VirtualBox, no es un problema de código). Diferido; Track B es el confirmado para la entrega. |
-| 🎬 Video demo + exposición (Track B) | ✅ | Docker-compose confirmado funcional y corrido en vivo. Guion vigente: [`GUION_GRABACION_TRACKB.html`](./GUION_GRABACION_TRACKB.html) · runbook: [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md) |
+| 🎬 Video demo + exposición (Track B) | ✅ | Docker-compose confirmado funcional y corrido en vivo. Runbook de grabación: [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md) |
 
 > **Manual maestro del equipo (la fuente de verdad):** [`docs/ARGOS_RUNBOOK_MAESTRO.html`](./docs/ARGOS_RUNBOOK_MAESTRO.html) · **status detallado:** [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md)
 
@@ -218,7 +203,7 @@ python scripts/demo_injector.py uc04
 > en `.env.example` (BUG-4 en `CLAUDE.md`) — el código lee esos nombres, no
 > `TELEGRAM_APPROVER_CHAT_IDS`/`TWILIO_APPROVER_PHONES`.
 
-> 📘 **Guion de grabación vigente:** [`GUION_GRABACION_TRACKB.html`](./GUION_GRABACION_TRACKB.html) · **runbook completo (troubleshooting):** [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md)
+> 📘 **Runbook de grabación (comandos + troubleshooting):** [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md)
 > 📕 **Manual maestro del equipo (estado, comandos, trampas):** [`docs/ARGOS_RUNBOOK_MAESTRO.html`](./docs/ARGOS_RUNBOOK_MAESTRO.html)
 
 <details>
@@ -259,7 +244,7 @@ Agrupadas por componente:
 
 ## Escenarios de demo
 
-Ocho escenarios end-to-end de ataque (6 núcleo + 2 opcionales) diseñados para la exposición en vivo (~13 min el set núcleo). TTPs completos, guiones de narración y criterios de éxito en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md); orden y timing exacto de grabación en [`GUION_GRABACION_TRACKB.html`](./GUION_GRABACION_TRACKB.html).
+Ocho escenarios end-to-end de ataque (6 núcleo + 2 opcionales) diseñados para la exposición en vivo (~13 min el set núcleo). TTPs completos, guiones de narración y criterios de éxito en [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md); orden y timing exacto de grabación en [`docs/RUNBOOK_GRABACION_TRACKB.md`](./docs/RUNBOOK_GRABACION_TRACKB.md).
 
 | UC | Escenario | Tier | Desenlace | Foco del demo |
 |:--:|-----------|:----:|-----------|--------------|
@@ -281,13 +266,13 @@ Ocho escenarios end-to-end de ataque (6 núcleo + 2 opcionales) diseñados para 
 | 📂 | Topic | Documento |
 |:--:|-------|-----------|
 | 📄 | Resumen 90 segundos | [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md) |
-| 👥 | Onboarding del equipo | [`docs/CONTEXT.md`](./docs/CONTEXT.md) |
+| 👥 | Contexto del proyecto *(histórico del curso)* | [`docs/CONTEXT.md`](./docs/CONTEXT.md) |
 | 🏗 | Arquitectura completa (SAD) | [`docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md`](./docs/architecture/SOLUTION_ARCHITECTURE_DOCUMENT.md) |
 | 🎨 | Flujo + asignación por integrante | [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html) · [`.drawio`](./docs/architecture/argos_flow.drawio) |
 | 📐 | Cross-team contracts spec | [`docs/architecture/CONTRACTS_SPECIFICATION.md`](./docs/architecture/CONTRACTS_SPECIFICATION.md) |
 | 🛡 | Threat model (STRIDE + FMEA) | [`docs/architecture/THREAT_MODEL.md`](./docs/architecture/THREAT_MODEL.md) |
 | 🔒 | LLM data handling + sanitization | [`docs/data-handling.md`](./docs/data-handling.md) |
-| 📋 | Rúbrica del curso + deliverables | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
+| 📋 | Rúbrica + deliverables *(histórico del curso)* | [`docs/EVALUATION_CRITERIA.md`](./docs/EVALUATION_CRITERIA.md) |
 | 📊 | Status honesto (shipped vs documentado) | [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md) |
 | 🧠 | Architecture decisions (15 ADRs) | [`docs/decisions/`](./docs/decisions/) |
 | 🎬 | Use cases & escenarios demo | [`docs/use-cases/USE_CASES.md`](./docs/use-cases/USE_CASES.md) |
@@ -345,6 +330,22 @@ argos/
 🎯 **Entrega final: 1 de julio de 2026** (fecha movida desde 28-jun, antes 13-jun): informe técnico + demo en vivo + presentación (~13 min). Decisión tomada el mismo día de entrega: se prioriza Track B (docker-compose, confirmado funcional y corrido en vivo) como demo garantizada; Track A (lab real de 3 VMs) queda diferido — `vagrant up` nunca completó con éxito (conflicto Hyper-V/VirtualBox), sin relación con la calidad del código del lab. Retomar Track A es trabajo post-entrega, sin presión de calendario.
 
 Detalle completo del estado real (verificado contra código, no solo contra READMEs) en [`CLAUDE.md`](./CLAUDE.md).
+
+---
+
+## Créditos
+
+ARGOS nació como proyecto del curso **Tópicos Avanzados de Ciberseguridad** (Universidad de Lima, 2026-1) y hoy se mantiene como pieza de portafolio open-source. Equipo original:
+
+| | Integrante | Rol | Alcance principal |
+|:--:|---|---|---|
+| 🟣 | **Enzo Ordoñez** | P1 · Líder · LLM/SOAR | `argos_contracts`, Capa 4 LLM Triage (NVIDIA), motor SOAR + Tier Classifier, Approval API con JWT, notificaciones multi-canal, consola web + Streamlit, bridge/live mode, docker-compose, coordinación general |
+| 🔵 | **Sebastian Montenegro** | P2 · Ingeniero ML | Capa 2 (Isolation Forest + One-Class SVM), feature extraction, calibración de thresholds, métricas A/B/C (P/R/F1, MITRE coverage), captura forense |
+| 🟠 | **Angeles Castillo** | P3 · Detección · Engaño | Capa 1 (Sigma rules mapeadas a MITRE), Capa 3 (canary FIM + whodata), active-response Win+Linux, validación con Atomic Red Team y Caldera |
+| 🟢 | **Diego Jara** | P4 · Infraestructura · UI | Lab de 3 VMs + Wazuh manager, PostgreSQL `app_prod`/`argos_audit` con datos sintéticos, ejecución del ataque, grabación del video demo |
+| 🟡 | **Yohamin Pimentel** | Apoyo P2 · Forense | Integración forense con **Velociraptor** (`soar/response/forensics/`, recolección post-incidente), apoyo a la Capa 2 |
+
+> Detalle visual con asignación por componente: [`docs/architecture/argos_flow.html`](./docs/architecture/argos_flow.html)
 
 ---
 

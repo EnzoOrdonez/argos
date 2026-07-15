@@ -264,6 +264,14 @@ config/host_inventory.json
 /GUIA_VIDEO_DEMO.html
 /GUIA_VIDEO_DEMO.pdf
 /ARGOS Console.html
+# Andamiaje de la entrega del curso (planes, runbooks internos, guion de grabación,
+# prompts de trabajo). Se sacan del repo público con `git rm --cached`; quedan en disco.
+/PLAN_EJECUCION_1JUL.md
+/DEMO_RUNBOOK.md
+/PROMPT_CLAUDE_CODE_1JUL.md
+/PROMPT_CLAUDE_CODE_LAB_REAL.md
+/PROMPT_CLAUDE_CODE_TRACKB.md
+/GUION_GRABACION_TRACKB.html
 
 # Auditoría interna privada (post-curso, transición a portafolio). Nunca commitear ni pushear.
 /MEMORIA_AUDITORIA_GITHUB.md

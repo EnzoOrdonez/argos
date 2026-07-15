@@ -1,5 +1,7 @@
 # EVALUATION CRITERIA — ARGOS
 
+> ℹ️ **Documentación histórica del curso.** Es la rúbrica y los deliverables del curso original, no criterios de contribución al proyecto OSS. Para el estado actual ver el [`README.md`](../README.md) raíz.
+
 | Field | Value |
 |-------|-------|
 | Document type | Course rubric — formal evaluation criteria |
