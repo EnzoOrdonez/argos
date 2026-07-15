@@ -9,13 +9,12 @@ Cubre:
 """
 import sys
 import time
-from pathlib import Path, PureWindowsPath, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
-import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "canary-generator"))
-import generator  # noqa: E402
+import generator
 
 DECEPTION_DIR = Path(__file__).parent.parent
 CONFIG_PATH = DECEPTION_DIR / "canary-generator" / "config.yaml"

@@ -19,7 +19,7 @@ NO los valores inventados del manual (outcome="execute"/"block", *_count, float)
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 import redis.asyncio as redis
@@ -76,7 +76,7 @@ async def record_approval_response(
         return incident
 
     status = _DECISION_STATUS[decision]
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     for approver in incident.approvers:
         if approver.email == email:
@@ -151,6 +151,6 @@ async def build_final_decision_if_ready(r: redis.Redis, incident_id: str) -> Inc
         if decision.outcome == "EXECUTE_ISOLATION"
         else IncidentState.REJECTED
     )
-    incident.updated_at = datetime.now(timezone.utc)
+    incident.updated_at = datetime.now(UTC)
     await save_incident(r, incident)
     return incident

@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from soar.audit.base import AuditEvent
 from soar.audit.postgres import PostgresSink
 
-_TS = datetime(2026, 6, 29, 12, 0, tzinfo=timezone.utc)
+_TS = datetime(2026, 6, 29, 12, 0, tzinfo=UTC)
 
 
 class _FakeConn:

@@ -44,7 +44,7 @@ import asyncio
 import os
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from _runtime import make_executor
 
@@ -69,7 +69,7 @@ from soar.playbooks.simulated import SimulatedExecutor
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _alert(

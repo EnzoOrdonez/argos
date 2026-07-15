@@ -41,7 +41,7 @@ class PostgresSink:
                 import psycopg
 
                 self._conn = psycopg.connect(dsn, autocommit=True)
-            except Exception as exc:  # noqa: BLE001 — sin DB el sink no-opea (fail-soft)
+            except Exception as exc:
                 logger.warning("audit sink postgres no conectó (%s); deshabilitado", exc)
                 self._conn = None
 
@@ -52,7 +52,7 @@ class PostgresSink:
             handler = getattr(self, f"_on_{event.kind}", None)
             if handler is not None:
                 handler(event)
-        except Exception as exc:  # noqa: BLE001 — audit es evidencia, no camino crítico
+        except Exception as exc:
             logger.warning(
                 "audit sink postgres falló para %s/%s: %s",
                 event.incident_id, event.kind, exc,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -64,7 +64,7 @@ def test_sanitize_context_redacts_telemetry(alert_context) -> None:
 def test_sanitize_rejects_oversized() -> None:
     ctx = AlertContext(
         incident_id="INC-2026-06-27-002",
-        created_at=datetime(2026, 6, 27, 12, 0, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 6, 27, 12, 0, 0, tzinfo=UTC),
         host=HostInfo(id="h", criticality=Criticality.STANDARD),
         alert_summary=AlertSummary(
             title="x", severity_score=0.1, triggering_layers=[Layer.LAYER_1], raw_alert_id="a"

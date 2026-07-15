@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as redis
 from redis.exceptions import ResponseError
@@ -126,7 +126,7 @@ class SOARConsumer:
         self._audit = audit
         self._triage = triage
         self._name = consumer_name
-        self._now = now_fn or (lambda: datetime.now(timezone.utc))
+        self._now = now_fn or (lambda: datetime.now(UTC))
 
     # -- plumbing ----------------------------------------------------------
 

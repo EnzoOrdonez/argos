@@ -114,10 +114,27 @@ extend-exclude = [".venv", "build", "dist", "lab/.vagrant"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "ASYNC", "S", "C4", "SIM", "RUF"]
-ignore = ["S101"]  # pytest assert OK
+ignore = [
+    "S101",   # pytest assert OK
+    "UP042",  # los enums de argos_contracts heredan de (str, Enum) a propósito: StrEnum
+              # cambia el __str__ (devuelve el valor, no 'Clase.MIEMBRO') y esos modelos
+              # se serializan/loguean cross-capa — migrar rompería el contrato v1.1.0.
+]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S", "B"]
+"**/tests/**" = ["S", "B", "E501", "RUF003"]
+# Simuladores de ataque controlados (safety-gated): subprocess y payloads largos son intencionales.
+"detection/simulators/**" = ["S", "E501"]
+# Tooling operativo, no path de runtime.
+"scripts/**" = ["E501", "ASYNC240"]
+# Seeding del lab con datos ficticios: SQL de schema constante + zip de columnas conocidas.
+"lab/**" = ["S608", "B905", "E501"]
+# El generador de canaries usa random para contenido dummy, no para cripto.
+"deception/canary-generator/**" = ["S311"]
+# El recolector forense ejecuta herramientas del sistema (Velociraptor, tar) por diseño.
+"soar/response/forensics/**" = ["S603"]
+# _S es el nombre de schema (constante de config); todos los valores van parametrizados (%(...)s).
+"soar/audit/postgres.py" = ["S608"]
 
 # La suite completa requiere todos los extras: pip install -e ".[soar,llm,dev,ui,ml]"
 # (ml/tests importa sklearn/numpy; ui/tests importa redis/streamlit — sin esos extras la

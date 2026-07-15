@@ -3,7 +3,7 @@ campos volátiles; miss delega al cliente real; JSON corrupto degrada (R-2)."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from argos_contracts.enums import Criticality, Layer, Severity
 from argos_contracts.triage import AlertContext, AlertSummary, HostInfo, TriageResponse
@@ -14,7 +14,7 @@ from llm_triage.llm_client.cached_client import CachedClient
 def _context(incident_id: str, technique: str | None) -> AlertContext:
     return AlertContext(
         incident_id=incident_id,
-        created_at=datetime(2026, 6, 29, 12, 0, tzinfo=timezone.utc),
+        created_at=datetime(2026, 6, 29, 12, 0, tzinfo=UTC),
         host=HostInfo(id="WIN-WS-07", criticality=Criticality.STANDARD),
         alert_summary=AlertSummary(
             title="variante ML",
@@ -36,7 +36,7 @@ def _response(incident_id: str, technique: str, backend: str) -> TriageResponse:
         accion_recomendada="Aislar el host y preservar el snapshot forense antes de remediar.",
         indicadores_correlacionar=["wmic", "shadowcopy"],
         llm_backend=backend,
-        generated_at=datetime(2026, 6, 29, 12, 0, tzinfo=timezone.utc),
+        generated_at=datetime(2026, 6, 29, 12, 0, tzinfo=UTC),
     )
 
 

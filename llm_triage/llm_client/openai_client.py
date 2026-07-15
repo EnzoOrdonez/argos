@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from openai import AsyncOpenAI
 
@@ -113,5 +113,5 @@ class OpenAIClient(LLMClient):
         # Campos que NO se confían al modelo: se fuerzan desde el contexto/runtime.
         data["incident_id"] = context.incident_id
         data["llm_backend"] = model
-        data["generated_at"] = datetime.now(timezone.utc).isoformat()
+        data["generated_at"] = datetime.now(UTC).isoformat()
         return TriageResponse.model_validate(data)  # valida MITRE whitelist (R-6)

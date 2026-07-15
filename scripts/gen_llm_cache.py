@@ -16,10 +16,10 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from argos_contracts.enums import Criticality, Layer, Severity
+from argos_contracts.enums import Criticality, Layer
 from argos_contracts.triage import AlertContext, AlertSummary, HostInfo
 from llm_triage.llm_client.cached_client import CachedClient
 from llm_triage.llm_client.openai_client import OpenAIClient
@@ -28,7 +28,7 @@ from llm_triage.llm_client.openai_client import OpenAIClient
 def _ctx(incident_id, technique, *, title, host, crit, score, layers) -> AlertContext:
     return AlertContext(
         incident_id=incident_id,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         host=HostInfo(id=host, criticality=crit),
         alert_summary=AlertSummary(
             title=title, technique_mitre=technique, severity_score=score,
@@ -63,7 +63,7 @@ async def main() -> int:
             path = cache.write(ctx, resp)
             print(f"[cache] {uc} {tech} -> {path.name}  "
                   f"(tecnica={resp.tecnica_mitre} conf={resp.confianza} sev={resp.severidad})")
-        except Exception as exc:  # noqa: BLE001 — reportar y seguir
+        except Exception as exc:
             failures += 1
             print(f"[cache] {uc} {tech} FALLO: {type(exc).__name__}: {exc}", file=sys.stderr)
     print(f"[cache] listo. {len(UC_CONTEXTS) - failures}/{len(UC_CONTEXTS)} ok.")

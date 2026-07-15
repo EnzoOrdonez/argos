@@ -24,7 +24,6 @@ import httpx
 
 from argos_contracts.enums import ActionType
 from argos_contracts.incident import ProposedAction
-
 from soar.playbooks.base import ExecutionResult
 
 logger = logging.getLogger(__name__)
@@ -89,7 +88,9 @@ class WazuhActiveResponseExecutor:
         self._token = token
         return token
 
-    def _put_active_response(self, agent: str, command: str, action: ProposedAction) -> httpx.Response:
+    def _put_active_response(
+        self, agent: str, command: str, action: ProposedAction
+    ) -> httpx.Response:
         token = self._token or self._authenticate()
         body: dict[str, Any] = {
             "command": command,

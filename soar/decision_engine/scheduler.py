@@ -27,7 +27,7 @@ import asyncio
 import logging
 import os
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as redis
 
@@ -124,10 +124,10 @@ class WindowScheduler:
         if not _responded(incident):
             return False
         incident.consolidation_window = ConsolidationWindow(
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             duration_seconds=self._consolidation_seconds,
         )
-        incident.updated_at = datetime.now(timezone.utc)
+        incident.updated_at = datetime.now(UTC)
         await save_incident(self._r, incident)
         self._spawn(self._consolidation(incident_id))
         return True
@@ -142,7 +142,7 @@ class WindowScheduler:
             a.status == ApproverStatus.REJECTED for a in incident.approvers
         )
         if incident.consolidation_window is not None:
-            incident.consolidation_window.ended_at = datetime.now(timezone.utc)
+            incident.consolidation_window.ended_at = datetime.now(UTC)
             incident.consolidation_window.conflict_detected = (
                 approved >= 1 and rejected >= 1
             )

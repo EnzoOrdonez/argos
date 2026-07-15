@@ -14,7 +14,6 @@ from collections.abc import Collection
 
 from argos_contracts.enums import ActionType
 from argos_contracts.incident import ProposedAction
-
 from soar.playbooks.base import ExecutionResult
 
 logger = logging.getLogger(__name__)

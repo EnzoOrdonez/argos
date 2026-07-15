@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fakeredis import FakeAsyncRedis
 
@@ -59,7 +59,7 @@ class _FakeTriage:
             runbook_aplicable="NIST SP 800-61r3, Containment",
             accion_recomendada="Aislar el host tras validar el patron de acceso.",
             llm_backend="fake",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
 
@@ -83,7 +83,7 @@ def _alert(
     return NormalizedAlert(
         alert_id=alert_id,
         source_layer=layer,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         host_id=host,
         severity_score=score,
         severity_label=severity,
@@ -246,7 +246,7 @@ async def test_alerta_post_decision_solo_se_anexa_al_audit():
 
 async def test_ids_con_patron_inc_y_contador_que_resetea_por_dia():
     r = FakeAsyncRedis(decode_responses=True)
-    clock = _Clock(datetime(2026, 6, 10, 12, 0, tzinfo=timezone.utc))
+    clock = _Clock(datetime(2026, 6, 10, 12, 0, tzinfo=UTC))
     consumer = _consumer(r, clock=clock)
 
     one = await consumer.handle_alert(
@@ -255,7 +255,7 @@ async def test_ids_con_patron_inc_y_contador_que_resetea_por_dia():
     two = await consumer.handle_alert(
         _alert(Layer.LAYER_1, host="HOST-B", score=0.4, severity=Severity.MEDIUM)
     )
-    clock.dt = datetime(2026, 6, 11, 0, 5, tzinfo=timezone.utc)
+    clock.dt = datetime(2026, 6, 11, 0, 5, tzinfo=UTC)
     three = await consumer.handle_alert(
         _alert(Layer.LAYER_1, host="HOST-C", score=0.4, severity=Severity.MEDIUM)
     )

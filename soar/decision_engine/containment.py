@@ -15,7 +15,7 @@ audit, nunca como excepción hacia el orquestador (ADR-0012 §2.4).
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as redis
 
@@ -73,7 +73,7 @@ async def apply_decision(
     if decision is None or decision.execution_status is not None:
         return incident
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if decision.outcome == "EXECUTE_ISOLATION":
         isolation = build_isolation(incident.host.id, action_id=_next_action_id(incident))

@@ -13,7 +13,7 @@ la canary-borrada SÍ emite y SÍ está en el whitelist) — validar contra el y
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from argos_contracts import (
@@ -83,14 +83,14 @@ def _parse_timestamp(raw: str) -> datetime:
     for candidate in (text, text.replace("Z", "+00:00")):
         try:
             dt = datetime.fromisoformat(candidate)
-            return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+            return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
         except ValueError:
             continue
     # Offset sin ':' que fromisoformat (<algunos casos) no toma: insertarlo.
     if len(text) >= 5 and text[-5] in "+-" and ":" not in text[-5:]:
         try:
             dt = datetime.fromisoformat(f"{text[:-2]}:{text[-2:]}")
-            return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+            return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
         except ValueError:
             pass
     raise ValueError(f"timestamp Wazuh no parseable: {raw!r}")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from fakeredis import FakeStrictRedis
@@ -25,7 +25,7 @@ from console.api import main, store
 def _incident(
     incident_id: str = "INC-2026-06-27-001", final: FinalDecision | None = None
 ) -> Incident:
-    now = datetime(2026, 6, 27, 12, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 6, 27, 12, 0, 0, tzinfo=UTC)
     return Incident(
         incident_id=incident_id,
         created_at=now,

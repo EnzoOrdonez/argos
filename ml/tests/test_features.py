@@ -1,5 +1,4 @@
 from argos_contracts.ml_score import MLFeatures
-
 from ml.features.entropy import shannon_entropy
 from ml.features.extractor import extract_ml_features
 

@@ -20,7 +20,7 @@ ADR-0006 Situacion B (production-critical no auto-ejecuta por timeout).
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as redis
 
@@ -70,7 +70,7 @@ async def close_window(r: redis.Redis, incident_id: str) -> Incident:
     if incident.final_decision is not None:
         return incident
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for approver in incident.approvers:
         if approver.status == ApproverStatus.PENDING:
             approver.status = ApproverStatus.TIMEOUT

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from argos_contracts.triage import AlertContext, TriageResponse
@@ -51,7 +51,7 @@ class CachedClient(LLMClient):
                 # Campos volátiles re-estampados en el momento de servir (no se confían
                 # a la cache), igual que openai_client.py.
                 data["incident_id"] = context.incident_id
-                data["generated_at"] = datetime.now(timezone.utc).isoformat()
+                data["generated_at"] = datetime.now(UTC).isoformat()
                 data["llm_backend"] = f"demo-cache:{getattr(self._delegate, 'backend_id', 'llm')}"
                 return TriageResponse.model_validate(data)
             except Exception as exc:  # JSON corrupto / schema inválido -> delegate (R-2)

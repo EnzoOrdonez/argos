@@ -18,7 +18,6 @@ from typing import Any
 from soar.response.forensics.manifest import build_manifest
 from soar.response.forensics.velociraptor_config import load_host_map, resolve_client_id
 
-
 DEFAULT_RANSOMWARE_TRIAGE_ARTIFACTS = [
     "Generic.Client.Info",
     "Windows.System.Pslist",

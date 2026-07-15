@@ -15,17 +15,15 @@ Run from project root:
 """
 from __future__ import annotations
 
-from soar.response.forensics.collector import collect_forensic_bundle
-from soar.response.forensics.velociraptor_collector import collect_with_velociraptor
-
 from argos_contracts.ml_score import MLFeatures
-
 from ml.evaluation.ablation import run_ablation_study
 from ml.evaluation.metrics import evaluate_binary_detection, sweep_thresholds
 from ml.evaluation.mitre import build_mitre_coverage_report
 from ml.models.ensemble import Layer2AnomalyEnsemble
 from ml.soar_adapter import ml_score_to_normalized_alert, ml_score_to_routing_signal
 from soar.decision_engine.tier_router import route
+from soar.response.forensics.collector import collect_forensic_bundle
+from soar.response.forensics.velociraptor_collector import collect_with_velociraptor
 
 
 def build_benign_windows(size: int = 100) -> list[MLFeatures]:

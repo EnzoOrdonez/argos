@@ -5,7 +5,7 @@ fake para evitar el choque respx↔ASGITransport y testear el endpoint en sí.""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from httpx import ASGITransport, AsyncClient
 
@@ -31,7 +31,7 @@ class _FakeClient:
             accion_recomendada="Aislar el host y validar el snapshot antes de restaurar.",
             indicadores_correlacionar=[],
             llm_backend="fake-test",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
 

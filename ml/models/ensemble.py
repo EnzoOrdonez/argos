@@ -6,7 +6,7 @@ This module trains two unsupervised anomaly detectors:
 - One-Class SVM
 
 Both models are trained with benign activity windows. At inference time, their
-outputs are normalized into 0.0–1.0 anomaly scores and combined into one
+outputs are normalized into 0.0-1.0 anomaly scores and combined into one
 ensemble score consumed by the SOAR tier logic.
 """
 
@@ -24,7 +24,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import OneClassSVM
 
 from argos_contracts.ml_score import MLFeatures, MLScore
-
 from ml.models.vectorizer import features_to_matrix, features_to_vector
 
 

@@ -8,7 +8,7 @@ Coverage strategy (per CONTRACTS_SPECIFICATION.md "Tests required"):
     - Roundtrip JSON serialization for the most complex model (Incident).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -45,8 +45,8 @@ from argos_contracts import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-UTC_NOW = datetime(2026, 4, 30, 15, 32, 14, tzinfo=timezone.utc)
-UTC_LATER = datetime(2026, 4, 30, 15, 33, 15, tzinfo=timezone.utc)
+UTC_NOW = datetime(2026, 4, 30, 15, 32, 14, tzinfo=UTC)
+UTC_LATER = datetime(2026, 4, 30, 15, 33, 15, tzinfo=UTC)
 NAIVE_DT = datetime(2026, 4, 30, 15, 32, 14)  # no tzinfo, used by tz-aware enforcement tests
 
 

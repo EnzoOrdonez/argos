@@ -36,7 +36,7 @@ from argos_contracts.triage import (
     TriageResponse,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022  agrupado por módulo a propósito, no alfabético
     # enums
     "Severity",
     "Tier",

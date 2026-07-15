@@ -16,7 +16,7 @@ Correr:
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import FastAPI
 
@@ -48,7 +48,7 @@ async def triage(context: AlertContext) -> TriageResponse:
             "ip de origen fuera de la red corporativa",
         ],
         llm_backend="stub-fixed",
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
     )
 
 

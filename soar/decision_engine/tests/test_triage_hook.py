@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -36,7 +36,7 @@ def _alert(technique: str = "T1078", **overrides: object) -> NormalizedAlert:
     defaults: dict[str, object] = {
         "alert_id": "alert-001",
         "source_layer": Layer.LAYER_1,
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": datetime.now(UTC),
         "host_id": "WIN-VICTIM-01",
         "severity_score": 0.8,
         "severity_label": Severity.HIGH,
@@ -56,7 +56,7 @@ def _triage_json(incident_id: str = "INC-2026-05-30-001") -> dict[str, object]:
         "accion_recomendada": "Aislar el host y validar el snapshot antes de restaurar.",
         "indicadores_correlacionar": ["acceso fuera de horario"],
         "llm_backend": "stub-fixed",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
     }
 
 

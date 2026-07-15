@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from soar.audit.base import AuditEvent, AuditSink
@@ -22,7 +22,7 @@ class AuditLogger:
 
     def emit(self, kind: str, incident_id: str, **payload: Any) -> AuditEvent:
         event = AuditEvent(
-            ts=datetime.now(timezone.utc),
+            ts=datetime.now(UTC),
             kind=kind,
             incident_id=incident_id,
             payload=payload,

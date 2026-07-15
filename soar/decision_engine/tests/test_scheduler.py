@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fakeredis import FakeAsyncRedis
 
@@ -55,7 +55,7 @@ def _vote(decision: ApproverStatus, email: str) -> ApproverState:
         email=email,
         role="approver",
         status=decision,
-        responded_at=datetime.now(timezone.utc),
+        responded_at=datetime.now(UTC),
         channel=NotificationChannelType.TELEGRAM,
     )
 
