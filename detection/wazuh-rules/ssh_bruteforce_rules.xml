@@ -1,0 +1,43 @@
+<!--
+  detection/wazuh-rules/ssh_bruteforce_rules.xml
+
+  Layer 1 — Detección de fuerza bruta SSH (MITRE T1110 / T1021.004).
+
+  ARGOS NO reimplementa el parsing de logs sshd: Wazuh ya trae reglas nativas
+  (ruleset 0095-sshd_rules) que detectan múltiples fallos de autenticación /
+  fuerza bruta (5710 usuario inexistente, 5712/5720 multiple auth failures,
+  5763 brute force sostenido). Esta regla es una regla HIJA (<if_sid>) que
+  DECORA la alerta nativa con lo que el pipeline de ARGOS necesita:
+
+    - group "argos_layer1"  -> el bridge (bridge/mapping.py::_GROUP_TO_LAYER)
+                               construye el NormalizedAlert con
+                               source_layer = Layer.LAYER_1.
+    - <mitre><id>T1110</id> -> technique_mitre = "T1110" (está en el
+                               MITRE_WHITELIST del contrato). Las reglas
+                               nativas de sshd no traen <mitre>.
+    - level="12"            -> severity_score 0.8 -> HIGH -> el Tier Router
+                               (Capa 1 sola, high-fidelity) asigna Tier 2, que
+                               REQUIERE aprobación humana (RF-3). Con el level
+                               nativo (10) caería a MEDIUM -> T3 (solo notifica).
+
+  $(srcip) queda en la descripción para que la contención downstream tenga la
+  IP atacante (HU-8).
+
+  ID 100300 en el rango de "local rules" de Wazuh (100000-119999), distinto del
+  rango canary (100100-100102). Alternativas de encadenamiento a validar contra
+  el Wazuh real en la validación end-to-end: 5712 (brute force compuesto) y/o
+  5763; 5720 ("Multiple authentication failures") es el canónico.
+-->
+<group name="syslog,sshd,argos_layer1,">
+
+  <rule id="100300" level="12">
+    <if_sid>5720</if_sid>
+    <description>ARGOS Layer 1: fuerza bruta SSH detectada desde $(srcip) (usuario objetivo: $(dstuser)) — MITRE T1110.</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <options>no_full_log</options>
+    <group>argos_layer1,authentication_failures,</group>
+  </rule>
+
+</group>

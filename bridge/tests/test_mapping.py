@@ -136,3 +136,30 @@ def test_normalize_unparseable_is_none() -> None:
     # group argos válido pero level no numérico → fail-soft None.
     raw = {"rule": {"groups": ["argos_layer1"], "level": "NaN", "mitre": {"id": []}}}
     assert mapping.normalize(raw) is None
+
+
+def test_normalize_ssh_bruteforce_alert() -> None:
+    """Contrato regla→bridge (Fase 1): la SALIDA de la regla Wazuh de fuerza bruta
+    SSH (detection/wazuh-rules/ssh_bruteforce_rules.xml — group argos_layer1,
+    mitre T1110, level 12) fluye a un NormalizedAlert L1 + T1110 + HIGH, que el
+    Tier Router (Capa 1 sola, high-fidelity) rutea a Tier 2 (aprobación, RF-3)."""
+    raw = {
+        "timestamp": "2026-07-15T09:00:00+00:00",
+        "rule": {
+            "id": "100300",
+            "level": 12,
+            "description": "ARGOS Layer 1: fuerza bruta SSH detectada desde 203.0.113.7",
+            "groups": ["syslog", "sshd", "argos_layer1", "authentication_failures"],
+            "mitre": {"id": ["T1110"]},
+        },
+        "agent": {"id": "010", "name": "web-prod-01", "ip": "10.0.0.5"},
+        "id": "ssh-bruteforce-1",
+        "data": {"srcip": "203.0.113.7"},
+    }
+    alert = mapping.normalize(raw)
+    assert alert is not None
+    assert alert.source_layer == Layer.LAYER_1
+    assert alert.technique_mitre == "T1110"
+    assert alert.severity_score == 0.8  # level 12 / 15
+    assert alert.severity_label == Severity.HIGH  # >= 0.74
+    assert alert.host_id == "web-prod-01"
