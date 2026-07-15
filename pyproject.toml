@@ -119,13 +119,12 @@ ignore = ["S101"]  # pytest assert OK
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S", "B"]
 
-# ml/tests corre aparte (deps pesadas sklearn/scipy, evita error de coleccion en envs sin [ml]):
-#   pip install -e ".[ml]" && pytest ml/tests
-# detection/deception SI van en testpaths (deps livianas: pyyaml/openpyxl en [dev]).
-# soar/response/forensics/tests: PENDIENTE definir dueño (modulo forense ajeno en namespace soar/)
-#   + alinear datetime.UTC->timezone.utc (rompe en <3.11). Ver auditoria 2026-06-24.
+# La suite completa requiere todos los extras: pip install -e ".[soar,llm,dev,ui,ml]"
+# (ml/tests importa sklearn/numpy; ui/tests importa redis/streamlit — sin esos extras la
+# coleccion falla). soar/response/forensics: modulo de recoleccion forense, se mantiene
+# junto con soar/.
 [tool.pytest.ini_options]
-testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "detection/tests", "deception/tests", "scripts/tests", "bridge/tests", "active-response/tests", "console/tests", "deploy/tests"]
+testpaths = ["argos_contracts/tests", "llm_triage/tests", "soar/decision_engine/tests", "soar/notifications/tests", "soar/approval_api/tests", "soar/playbooks/tests", "soar/audit/tests", "soar/response/forensics/tests", "detection/tests", "deception/tests", "scripts/tests", "bridge/tests", "active-response/tests", "console/tests", "deploy/tests", "ml/tests", "ui/tests"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
 

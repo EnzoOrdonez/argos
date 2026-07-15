@@ -196,8 +196,8 @@ El prototipo F1–F6 corre hoy, demo-safe, sin lab.
 ```bash
 git clone https://github.com/EnzoOrdonez/argos.git
 cd argos
-pip install -e ".[soar,llm,dev,ui]"
-pytest -q                          # ~441 tests per docs de equipo; no re-verificado en un sandbox limpio esta sesión
+pip install -e ".[soar,llm,dev,ui,ml]"
+pytest -q                          # suite completa (CI corre esto mismo en cada push/PR)
 ```
 
 **Correr el demo (Track B — docker-compose, confirmado funcional):**
