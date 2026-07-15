@@ -262,3 +262,7 @@ config/api.config.yaml
 /GUIA_VIDEO_DEMO.html
 /GUIA_VIDEO_DEMO.pdf
 /ARGOS Console.html
+
+# Auditoría interna privada (post-curso, transición a portafolio). Nunca commitear ni pushear.
+/MEMORIA_AUDITORIA_GITHUB.md
+/PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md

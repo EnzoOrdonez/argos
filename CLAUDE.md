@@ -521,6 +521,78 @@ esta vez la verificación mide exactamente la propiedad que le importa a Enzo (c
 solape de cajas), no un proxy indirecto — la confianza en el resultado es mucho más alta
 que en rondas anteriores.
 
+## Ronda 9 (13 días después de la entrega, 2026-07-14): transición a portafolio open-source
+
+Curso terminado. Enzo pidió: (1) auditar si ARGOS "cumple lo que dice" para publicarlo como
+herramienta real en GitHub (no solo demo de curso), (2) reescribir el texto del HTML de casos de uso
+en tono humano (reglas anti-detección de IA que él mismo especificó: sin em dash, sin ciertas
+palabras, variar longitud de oración, etc.), (3) corregir con rigor la tabla "ARGOS vs SIEMs
+Comerciales" — el profesor (trabaja con Palo Alto Cortex XDR) dijo que está mal, "incorpora todo",
+(4) extender esa misma verificación de honestidad a todo el resto del HTML, (5) volcar todo lo
+investigado en un memoria.md privado, no commiteado. Decisiones tomadas antes de arrancar (vía
+AskUserQuestion): diagnóstico primero (no ejecutar arreglos de código profundos sin que Enzo los
+revise), créditos del equipo en sección discreta al final del README (pendiente de ejecutar),
+portafolio open-source gratis sin intención comercial, solo lectura (no se optimiza para recibir
+PRs externos).
+
+**🔴 Hallazgo más serio de toda la sesión, más urgente que cualquier otra cosa de este archivo:**
+el repo ya está **público en GitHub ahora mismo** (verificado en vivo, no es una fecha futura) — lo
+cual significa que el `TELEGRAM_BOT_TOKEN` filtrado (Ronda 7/8) es recuperable por cualquiera desde
+hace más de dos semanas, no es un riesgo condicional. Además se encontró que la identidad real de
+una integrante del equipo (correo institucional + código de alumno) quedó expuesta en el historial
+de git bajo un usuario distinto al nombre público que usa el proyecto para ella. **Detalle completo,
+incluyendo qué hacer, en `MEMORIA_AUDITORIA_GITHUB.md` (raíz del repo, gitignored a propósito — no
+se repiten acá el email ni el username reales para no empeorar la exposición en un archivo que sí
+se commitea).** Acción pendiente de Enzo: rotar el token (@BotFather) si no lo hizo ya, y hablar con
+esa persona antes de que el repo circule más.
+
+**Trabajo ejecutado hoy (no solo diagnóstico) en `docs/use-cases/argos_use_cases_v2.html`:**
+investigación real (WebSearch) de capacidades 2026 de Microsoft Defender XDR / CrowdStrike Falcon /
+Palo Alto Cortex XDR (los 3 tienen deception nativo o vía integración, y triage/acción autónoma vía
+GenAI mucho más maduro de lo que la tabla vieja reconocía — Security Copilot, Charlotte AI,
+Cortex AgentiX); tabla comparativa corregida con esos datos (Palo Alto deception ✗→½, los 3 en
+LLM/GenAI triage ½→✓); **scorecard de "% cobertura" (100/75/75/62) eliminado por completo** — eran
+números inventados a mano, no un cálculo real, y es exactamente el tipo de comparación que un
+experto de industria rechaza; nota final "paridad funcional" reescrita a algo honesto. Todo el texto
+de prosa sustancial (hero, topología, tiers, los 8 `uc-desc`, intros de MITRE/SIEMs/síntesis)
+reescrito en tono humano. De paso se corrigieron: `argos_demo_prod` residual en CU-04 (debía ser
+`app_prod`), `gpt-4o-mini` residual en CU-07 (backend viejo, ya no se nombra un modelo específico),
+tres valores distintos para "cuántas técnicas MITRE" dentro del mismo HTML (9/Diez/6 → unificados a
+9, el real), KPIs de síntesis ejecutiva etiquetados "TARGET" cuando ya son logros confirmados
+(→ "CONFIRMADO", salvo tiempo de detección que sí es solo simulado, no medido en producción), y un
+bug de HTML preexistente (línea 1989, `<span>` cerrado con `</b>` por error de tipeo de una edición
+anterior — no introducido hoy). Verificado con `node --check` (JS) y un parser HTML real (0 errores
+de balance de tags tras los cambios). No verificado: render visual real en navegador.
+
+**Mismo patrón de sobreclaim encontrado fuera del HTML de casos de uso (diagnóstico, no corregido
+hoy):** la frase "ARGOS replica la arquitectura de [Microsoft/CrowdStrike/Palo Alto]" aparece
+prácticamente igual en README, PROJECT_BRIEF, CONTEXT, el SAD, y — más urgente — en
+`EXPOSICION_ARGOS.html:183`, la sección de Introducción que se lee en voz alta al presentar. El SAD
+y el THREAT_MODEL además describen el fallback LLM a Llama local como "testable claim, not
+aspiration" pese a que `CLAUDE.md` ya documenta que nunca se cableó, y el THREAT_MODEL tiene una
+contradicción interna real (T-030 descrito como "US-based" en una tabla y "China-based" en la sección
+de riesgos aceptados, resto de una versión más vieja nunca sincronizada).
+
+**Diagnóstico adicional de "qué falta para ser herramienta real de GitHub" (todo en
+`MEMORIA_AUDITORIA_GITHUB.md`, no ejecutado):** no existe ningún CI/CD (`.github/` no existe), pese
+a que la suite de tests ya está bien aislada de infraestructura externa (fakeredis, sin conexiones
+reales en tests) y agregar un workflow sería barato; 47 tests reales (`ml/tests`, `ui/tests`,
+`soar/response/forensics/tests`) quedan fuera de `testpaths` de `pytest.ini` sin que el README lo
+explique; `soar/inventory.py` hardcodea IPs/criticidad del lab del curso en código de producción real
+(no config), afectando directamente si un host requiere two-person rule; 8 archivos de andamiaje de
+curso quedaron en la raíz trackeados en git sin seguir el patrón de `.gitignore` que ya existe para
+sus hermanos; `docs/EVALUATION_CRITERIA.md` y `docs/CONTEXT.md` están enlazados desde el README como
+si fueran onboarding pero son, en esencia, documentos de curso. LICENSE (MIT) está correcto y
+completo, sin hallazgos. `.gitignore` en general está mejor cuidado que el promedio de un proyecto
+OSS. El conteo "69 tests" que este mismo archivo citaba para `argos_contracts/` en rondas anteriores
+está desactualizado — el conteo real verificado hoy por ejecución es **64** (el HTML ya lo tenía
+correcto).
+
+Se creó `MEMORIA_AUDITORIA_GITHUB.md` en la raíz y se agregó a `.gitignore` (verificado con Read que
+la regla quedó escrita; no se pudo confirmar con `git check-ignore` en este sandbox por el mismo
+problema de mount desincronizado ya documentado más abajo en este archivo — Enzo debería confirmar
+con `git status` en su máquina que el archivo no aparece como untracked).
+
 ## Próximos pasos priorizados
 
 **Hoy (horas):** Enzo corre `docker compose up -d` + smoke tests y sigue
@@ -756,3 +828,39 @@ un render de navegador real — Enzo debería abrirlo una vez antes de presentar
 8. Considerar limpiar el historial de git del token filtrado (`git filter-repo` o
    similar) si el repo va a hacerse público al cierre del curso (el README dice
    "público al cierre") — requiere coordinación con el equipo, no es urgente para hoy.
+
+## Ronda 10 (2026-07-15): prompt maestro para Claude Code — ejecución de la transformación OSS
+
+Tras la Ronda 9 (auditoría completa, `MEMORIA_AUDITORIA_GITHUB.md`), Enzo pidió un prompt "completo,
+auditable y proactivo" para dárselo a Claude Code (shell/git real, esta sesión de Cowork no tiene) y
+que ejecute ahí la transformación: arreglos, mejoras, manejo de errores y una interfaz visual real.
+Requisitos explícitos de Enzo: que el prompt obligue a Claude Code a revisar críticamente el plan
+propuesto (no ejecutarlo ciego), a ser proactivo buscando fallas no listadas, a auditar/testear antes
+y después de cada cambio, a dar contexto completo del proyecto, a preguntarle a él directamente ante
+cualquier contradicción en vez de asumir, y a organizar el trabajo en fases (con libertad de proponer
+más si las encuentra necesarias).
+
+Antes de escribirlo se confirmaron 3 decisiones vía AskUserQuestion:
+1. **Interfaz visual = modernizar `console/`** (FastAPI + `console/static/`, ya es la consola
+   principal, :8080), no construir algo nuevo desde cero.
+2. **`soar/`/`argos_contracts/` dejan de estar bloqueados para esta transformación** — autorización
+   general, condicionada a que cada cambio lleve tests que pasen y quede documentado. La regla vieja
+   de "nunca tocar sin permiso explícito" era para protegerlos *durante el curso*; ya no aplica tal
+   cual, pero la disciplina de tests-antes-de-aplicar sí se mantiene.
+3. **Checkpoints por fase** — Claude Code para al final de cada fase, resume, espera confirmación.
+
+Se creó **`PROMPT_CLAUDE_CODE_TRANSFORMACION_OSS.md`** (raíz, gitignored — mismo tratamiento que
+`MEMORIA_AUDITORIA_GITHUB.md`, nunca commitear/pushear) con 8 fases (0-7): auditoría propia + crítica
+del plan → seguridad/honestidad de bajo riesgo → CI/CD → tests faltantes + `soar/inventory.py`
+config-driven + BUG-1 (timeout LLM, ahora en alcance dado el punto 2 de arriba) → honestidad del resto
+de la documentación (el patrón "replica la arquitectura", más urgente en `EXPOSICION_ARGOS.html:183`,
+nunca corregido) → modernización de `console/` → limpieza cosmética/portafolio (SECURITY.md, créditos
+discretos, andamiaje suelto en `.gitignore`) → verificación final + cierre en formato "Ronda N" acá
+mismo. El prompt remite a leer `CLAUDE.md` y `MEMORIA_AUDITORIA_GITHUB.md` completos en vez de
+duplicar su contenido (evita desincronización), con líneas rojas explícitas (nunca el HTML original,
+nunca reescribir historia de git sin confirmación en el momento, nunca tocar la identidad de la
+compañera expuesta, nunca rotar secretos).
+
+**No ejecutado en esta sesión** — el propio pedido de Enzo es que la ejecución de código la haga
+Claude Code, no Cowork. Las 8 fases siguen pendientes en su totalidad. Próxima sesión (de Claude Code,
+no de acá): empezar por la Fase 0 del prompt.

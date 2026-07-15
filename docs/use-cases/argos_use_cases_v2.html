@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARGOS — Casos de Uso Operacionales</title>
+<title>ARGOS · Casos de Uso Operacionales</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;500;700;800;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
 <style>
@@ -1986,7 +1986,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
   <div class="hero-hud">
     <div class="hud-corner tl"><span>NODE.ID</span><b>ARG-01-PE</b><span>SEC.LVL</span><b>CLASSIFIED</b></div>
     <div class="hud-corner tr"><span>TGT.LOCK</span><b>ACTIVE</b><span>COORD</span><b>−12.04 / −77.04</b></div>
-    <div class="hud-corner bl"><span>FRAME</span><b>2026-1</b><span>BUILD</b><b>0x07A.0</b></div>
+    <div class="hud-corner bl"><span>FRAME</span><b>2026-1</b><span>BUILD</span><b>0x07A.0</b></div>
     <div class="hud-corner br"><span>STREAM</span><b>LIVE</b><span>LAT</span><b>4ms</b></div>
   </div>
 
@@ -2010,9 +2010,10 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
     <div class="hero-title-deco"><span class="ln"></span><span class="id">SYSTEM // 2026.05</span><span class="ln"></span></div>
     <p class="hero-sub">Adaptive Response Guard with Orchestrated Surveillance · Multi-vector XDR</p>
     <p class="hero-desc">
-      Ocho casos de uso operacionales de extremo a extremo. Cuatro capas de detección en paralelo.
-      Automatización escalonada por nivel de confianza. Un sistema que replica la arquitectura de
-      Microsoft Defender XDR, CrowdStrike Falcon y Palo Alto Cortex XDR — con stack 100% open-source.
+      Ocho casos de uso de punta a punta. Cuatro capas de detección corriendo en paralelo.
+      Automatización que responde según qué tan segura está el sistema de lo que acaba de ver.
+      Toma el patrón arquitectónico de Microsoft Defender XDR, CrowdStrike Falcon y Palo Alto Cortex XDR
+      y lo construye con stack 100% open source, a escala de laboratorio académico, no de producto comercial.
     </p>
     <div class="hero-chips">
       <span class="chip">Universidad de Lima · 2026-1</span>
@@ -2137,14 +2138,14 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
     </div>
   </div>
   <p style="font-size:11px;color:var(--text-dim);margin-top:10px;line-height:1.6;max-width:900px">
-    Plano físico (Vagrant, <code>192.168.56.0/24</code>): <code>argos-core</code> (.10) se muestra desglosado en sus 6
-    componentes reales — Wazuh Manager, Redis, SOAR, ML L2, LLM Triage y OpenSearch — conversando entre sí; ambas víctimas,
-    <code>lin-victim-01</code> (.21, PostgreSQL 17.5 + pgAudit, production-critical → exige Regla 2 Personas en CU-04/07/08)
-    y <code>windows-victim</code> (.20, Fase 1B del lab), están activas en este diagrama y ambas reciben tráfico de
-    ataque: <code>lin-victim-01</code> vía CU-04/07/08 (SQLi, SELECT masivo) y <code>windows-victim</code> vía CU-03
-    (WIN-WS-07, split-brain) y CU-05 (WIN-VICTIM-01, agent-kill/T1562.001). El plano lógico IntiBank (atacante,
-    aprobadores) existe solo en los datos y las reglas Sigma, no como red física — overlay honesto sobre la topología
-    real (<code>docs/architecture/network_diagram_v2.drawio</code>).
+    Plano físico (Vagrant, <code>192.168.56.0/24</code>): <code>argos-core</code> (.10) aparece desglosado en sus
+    6 componentes reales, Wazuh Manager, Redis, SOAR, ML L2, LLM Triage y OpenSearch, todos hablando entre sí.
+    Las dos víctimas están activas en este diagrama: <code>lin-victim-01</code> (.21, PostgreSQL 17.5 + pgAudit,
+    production-critical, exige Regla 2 Personas en CU-04/07/08) y <code>windows-victim</code> (.20, Fase 1B del lab).
+    Ambas reciben tráfico de ataque: <code>lin-victim-01</code> vía CU-04/07/08 (SQLi, SELECT masivo) y
+    <code>windows-victim</code> vía CU-03 (WIN-WS-07, split-brain) y CU-05 (WIN-VICTIM-01, agent-kill/T1562.001).
+    El plano lógico IntiBank (atacante, aprobadores) existe solo en los datos y las reglas Sigma, no como red física.
+    Es un overlay honesto sobre la topología real (<code>docs/architecture/network_diagram_v2.drawio</code>).
   </p>
 </div>
 
@@ -2168,7 +2169,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       <div class="dl-tier" style="--tc:var(--green)">
         <span class="dl-badge">T0</span>
         <span class="dl-name">CRÍTICO CONFIRMADO</span>
-        <span class="dl-desc">≥2 capas corroboran, o canary (zero-FP por diseño). Auto-ejecuta aislamiento + snapshot. Sin espera humana — notificación post-facto con botón de reversión.</span>
+        <span class="dl-desc">≥2 capas corroboran, o canary (zero-FP por diseño). Auto-ejecuta aislamiento + snapshot. Sin espera humana, solo notificación post-facto con botón de reversión.</span>
       </div>
       <div class="dl-tier" style="--tc:var(--cyan)">
         <span class="dl-badge">T1</span>
@@ -2183,13 +2184,13 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       <div class="dl-tier" style="--tc:var(--text-dim)">
         <span class="dl-badge">T3</span>
         <span class="dl-name">INFORMATIVO</span>
-        <span class="dl-desc">Señal débil o contexto insuficiente. Notifica al analista (Telegram + Discord, sin botón de acción) para revisión manual — no dispara contención.</span>
+        <span class="dl-desc">Señal débil o contexto insuficiente. Notifica al analista (Telegram + Discord, sin botón de acción) para revisión manual. No dispara contención.</span>
       </div>
     </div>
     <div class="dl-policies">
-      <span class="dl-policy"><b>Conservative-wins</b> — host estándar, acción reversible: 1 aprobación aísla, sin importar cuántos rechazos hubo (ver CU-03).</span>
-      <span class="dl-policy"><b>Two-person rule</b> — host production-critical: exige 2 aprobaciones; 1 rechazo bloquea. Nunca auto-ejecuta por timeout (ver CU-04).</span>
-      <span class="dl-policy"><b>R-2</b> — el LLM Triage (Capa 4) nunca bloquea la contención: enriquece contexto para el humano, no decide.</span>
+      <span class="dl-policy"><b>Conservative-wins:</b> host estándar, acción reversible. 1 aprobación aísla, sin importar cuántos rechazos hubo (ver CU-03).</span>
+      <span class="dl-policy"><b>Two-person rule:</b> host production-critical. Exige 2 aprobaciones; 1 rechazo bloquea. Nunca auto-ejecuta por timeout (ver CU-04).</span>
+      <span class="dl-policy"><b>R-2:</b> el LLM Triage (Capa 4) nunca bloquea la contención. Enriquece contexto para el humano, no decide.</span>
     </div>
   </div>
 
@@ -2202,9 +2203,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="live-dot">LIVE</div>
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">01</span></div>
         <div class="col-info">
-          <h3 class="uc-title">Ransomware Clásico — Estilo LockBit · Flujo Completo</h3>
+          <h3 class="uc-title">Ransomware Clásico (Estilo LockBit) · Flujo Completo</h3>
           <p class="uc-focus">Enfoque de demo: cobertura de extremo a extremo · notificación multicanal (Telegram + Discord) con email post-facto y botón de reversión</p>
-          <p class="uc-desc">Simulación del ransomware más prolífico de la última década. Las Capas 1, 2 y 3 se activan simultáneamente: Sigma detecta patrones de acceso masivo, el ensamble ML eleva el score de anomalía por encima de 0.9, y los canary files confirman el cifrado. El SOAR clasifica el incidente en T0 (confianza ≥0.95), ejecuta aislamiento automático y toma un snapshot forense. El analista recibe notificación post-facto vía Telegram + Discord + email con botón de reversión — sin alertas bloqueantes durante el incidente.</p>
+          <p class="uc-desc">Es una simulación del ransomware más prolífico de la última década. Las Capas 1, 2 y 3 se prenden casi al mismo tiempo: Sigma detecta el patrón de acceso masivo, el ensamble de ML sube el score de anomalía por encima de 0.9, y los canary files confirman que ya hubo cifrado. El SOAR clasifica el incidente en T0 (confianza igual o mayor a 0.95), aísla de forma automática y toma un snapshot forense. El analista se entera después, por Telegram, Discord y correo, con un botón para revertir. No hay ninguna alerta que bloquee nada mientras el incidente ocurre.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1486 · CIFRADO DE DATOS</span>
             <span class="mitre-chip">T1490 · INHIBICIÓN DE RECUPERACIÓN</span>
@@ -2272,9 +2273,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="live-dot">LIVE</div>
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">02</span></div>
         <div class="col-info">
-          <h3 class="uc-title">Engaño con Archivos Señuelo — Detección Ultra-Temprana</h3>
+          <h3 class="uc-title">Engaño con Archivos Señuelo · Detección Ultra-Temprana</h3>
           <p class="uc-focus">Enfoque de demo: cero archivos reales cifrados · propiedad zero-FP en acción</p>
-          <p class="uc-desc">El ataque toca un honeypot antes de llegar a los datos reales — y eso es suficiente. Un usuario legítimo nunca accede a un archivo señuelo (canary) por diseño, por lo que cualquier interacción es maliciosa por definición. Solo la Capa 3 está activa y aun así alcanza confianza T0. La detección ocurre en menos de un segundo. El sistema contiene el ransomware antes de que cifre un solo archivo de producción.</p>
+          <p class="uc-desc">El ataque toca un honeypot antes de llegar a los datos reales, y con eso basta. Un usuario legítimo jamás toca un archivo señuelo (canary) por diseño, así que cualquier interacción con uno ya es maliciosa, sin necesidad de analizar nada más. Acá solo está prendida la Capa 3, y aun así el sistema llega a confianza T0. La detección tarda menos de un segundo. El ransomware queda contenido antes de tocar un solo archivo real de producción.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1486 · CIFRADO DE DATOS</span>
             <span class="mitre-chip">T1083 · DESCUBRIMIENTO DE ARCHIVOS</span>
@@ -2286,7 +2287,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
             <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ransomware inicia reconocimiento del sistema de archivos</span></div>
             <div class="flow-item"><span class="ft">t+0.3s</span><span class="fx">FIM whodata captura el acceso al archivo señuelo estratégico</span></div>
             <div class="flow-item critical"><span class="ft">t+0.5s</span><span class="fx">Capa 3 dispara: confianza automáticamente T0 por diseño<span class="critical-tag">★ DECISIÓN</span></span></div>
-            <div class="flow-item"><span class="ft">t+1s</span><span class="fx">SOAR ejecuta aislamiento — ningún archivo real comprometido</span></div>
+            <div class="flow-item"><span class="ft">t+1s</span><span class="fx">SOAR ejecuta aislamiento, ningún archivo real comprometido</span></div>
             <div class="flow-item"><span class="ft">t+2s</span><span class="fx">Snapshot captura el proceso atacante vivo en memoria</span></div>
           </div>
         </div>
@@ -2351,8 +2352,8 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">03</span><span class="uc-star-ico">★</span></div>
         <div class="col-info">
           <h3 class="uc-title glitch-text" data-text="Variante Novedosa · ML Sola + Split-Brain">Variante Novedosa · ML Sola + Split-Brain</h3>
-          <p class="uc-focus">Enfoque de demo: la Sigma no matchea, el canary no está en el camino — solo el comportamiento delata al atacante. Cuatro aprobadores, desacuerdo real, resuelto por política.</p>
-          <p class="uc-desc">Una segunda variante del ransomware, deliberadamente distinta: usa WMIC en vez de <code>vssadmin</code>, extensiones aleatorias en vez de <code>.locked</code>, cifra a un ritmo más lento (~5.000 archivos/min) para no saltar los umbrales de firma. La Capa 1 (Sigma) se queda en silencio — por diseño. Los canaries no están en su camino — solo el ML puede verla. El ensamble Isolation Forest + OC-SVM detecta la anomalía de entropía y tasa de escritura: score 0.74, por encima del piso T2 pero lejos de la certeza de T0. El SOAR aplica throttle + snapshot de inmediato (antes de que ningún humano responda) y abre la ventana de aprobación en 4 canales. Enzo rechaza, Sebastian aprueba, Angeles aprueba — <b>conflicto detectado</b> — y Diego no responde. Al cierre de la ventana: 2 aprobaciones, 1 rechazo, 1 timeout. En un host estándar, <b>conservative-wins</b> dice que cualquier aprobación ejecuta el aislamiento, sin importar cuántos rechazos hubo.</p>
+          <p class="uc-focus">Enfoque de demo: la Sigma no matchea, el canary no está en el camino. Solo el comportamiento delata al atacante. Cuatro aprobadores, desacuerdo real, resuelto por política.</p>
+          <p class="uc-desc">Es una segunda variante del ransomware, hecha a propósito para verse distinta: usa WMIC en vez de <code>vssadmin</code>, extensiones al azar en vez de <code>.locked</code>, y cifra más despacio (unos 5.000 archivos por minuto) para no disparar los umbrales de firma. La Capa 1, Sigma, se queda callada. Es a propósito. Los canaries tampoco están en su camino, así que solo el ML puede verla venir. El ensamble de Isolation Forest y OC-SVM detecta la anomalía en entropía y tasa de escritura: score de 0.74, arriba del piso de T2 pero lejos de la certeza de T0. El SOAR aplica throttle y snapshot de inmediato, antes de que responda ningún humano, y abre la ventana de aprobación en los 4 canales. Enzo rechaza. Sebastian aprueba. Angeles aprueba, y ahí ya hay <b>conflicto</b>. Diego no responde. Al cerrarse la ventana quedan 2 aprobaciones, 1 rechazo y 1 timeout. En un host estándar, <b>conservative-wins</b> dice que basta una sola aprobación para ejecutar el aislamiento, sin importar cuántos rechazos haya.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1083 · DESCUBRIMIENTO DE ARCHIVOS (VARIANTE)</span>
             <span class="mitre-chip">T1490 · INHIBICIÓN DE RECUPERACIÓN (WMIC)</span>
@@ -2361,7 +2362,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-flow">
           <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
           <div class="flow-list">
-            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Enumeración vía PowerShell + WMIC — la Sigma no matchea este patrón</span></div>
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Enumeración vía PowerShell + WMIC, la Sigma no matchea este patrón</span></div>
             <div class="flow-item"><span class="ft">t+2s</span><span class="fx">Capa 2 (ML): entropía + tasa de escritura anómala → score 0.74</span></div>
             <div class="flow-item critical"><span class="ft">t+3s</span><span class="fx">SOAR clasifica T2 · throttle (-80% velocidad) + snapshot forense YA, antes de cualquier aprobación<span class="critical-tag">★ DECISIÓN</span></span></div>
             <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Telegram + Discord a 4 aprobadores · LLM Triage: "variante probable, técnica WMIC, confianza 0.74"</span></div>
@@ -2443,7 +2444,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-info">
           <h3 class="uc-title glitch-text" data-text="PostgreSQL en Producción · Two-Person Rule">PostgreSQL en Producción · Two-Person Rule</h3>
           <p class="uc-focus">Enfoque de demo: activo defendido + criticality=production-critical · 4 aprobadores en multi-canal · 3 outcomes posibles (execute · conflict · timeout) · throttle preventivo desde t=0</p>
-          <p class="uc-desc">El esquema PostgreSQL <code>app_prod</code> (datos de RRHH y finanzas) está marcado en Wazuh como <code>criticality=production-critical</code>. Cuando Sigma + ML detectan patrones de ataque sobre él (T1190 inyección + T1078 cuentas válidas), el SOAR clasifica T2 con regla two-person (ADR-0006) — exige al menos 2 aprobadores explícitos antes de cualquier acción irreversible. En el mismo t=0 se aplica throttle preventivo (límite de queries/s) que acota el daño durante la ventana de decisión. Tres outcomes determinísticos: <b>execute</b> con 2 approves, <b>block</b> por conflict (conservative-wins · ADR-0006) con 1+approve y 1+reject, <b>block</b> por no_quorum_timeout a t=180s. La two-person rule por diseño NO auto-ejecuta isolation por timeout — la inacción cae a bloqueo, no a contención agresiva.</p>
+          <p class="uc-desc">El esquema PostgreSQL <code>app_prod</code> (datos de RRHH y finanzas) está marcado en Wazuh como <code>criticality=production-critical</code>. Cuando Sigma y ML detectan patrones de ataque sobre él (T1190 inyección más T1078 cuentas válidas), el SOAR clasifica T2 con la regla two-person (ADR-0006): exige al menos 2 aprobadores explícitos antes de cualquier acción irreversible. En el mismo t=0 se aplica un throttle preventivo (límite de queries por segundo) que acota el daño mientras se decide. Hay tres desenlaces posibles, y son deterministas: <b>execute</b> con 2 approves, <b>block</b> por conflicto (conservative-wins, ADR-0006) con al menos 1 approve y 1 reject, o <b>block</b> por no_quorum_timeout a los 180s. La two-person rule, por diseño, nunca auto-ejecuta el aislamiento por timeout. Si nadie responde, la inacción termina en bloqueo, no en una contención agresiva.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1190 · EXPLOTACIÓN DE APP PÚBLICA</span>
             <span class="mitre-chip">T1078 · CUENTAS VÁLIDAS</span>
@@ -2453,7 +2454,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-flow">
           <p class="flow-hdr">// LÍNEA DE TIEMPO</p>
           <div class="flow-list">
-            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ataque al esquema argos_demo_prod · Sigma + ML firing · 2 capas</span></div>
+            <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Ataque al esquema app_prod · Sigma + ML firing · 2 capas</span></div>
             <div class="flow-item"><span class="ft">t+3s</span><span class="fx">SOAR clasifica T2 · target=production-critical → activa Two-Person Rule</span></div>
             <div class="flow-item"><span class="ft">t+3s</span><span class="fx">Throttle preventivo aplicado (limita queries/s del atacante) · reversible</span></div>
             <div class="flow-item"><span class="ft">t+4s</span><span class="fx">Telegram + Discord enviados a 4 aprobadores con botones [Approve][Reject]</span></div>
@@ -2557,9 +2558,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="live-dot">LIVE</div>
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">05</span></div>
         <div class="col-info">
-          <h3 class="uc-title">Ataque Sigiloso — Intento de Matar al Agente</h3>
+          <h3 class="uc-title">Ataque Sigiloso · Intento de Matar al Agente</h3>
           <p class="uc-focus">Enfoque de demo: resiliencia (R-04) · "el silencio del agente ES la señal" · aislamiento a nivel de red incluso sin el agente vivo</p>
-          <p class="uc-desc">El atacante, ya con privilegios elevados, intenta silenciar la defensa antes de cifrar: detiene el servicio del agente Wazuh (<code>Stop-Service WazuhSvc</code>). Pero el evento de detención se envía en tiempo real, antes de que el agente muera — la Capa 1 lo captura igual. Segundos después, el heartbeat deja de llegar y la regla nativa 502 ("agente desconectado") dispara. En este escenario, además, un canary sigue activo en la Capa 3 — así que aunque el agente quedara ciego, la trampa igual lo atrapa. La combinación (stop-service + silencio + canary) es zero-FP: el SOAR aísla a nivel de red sin depender de que el agente siga vivo para ejecutar la orden.</p>
+          <p class="uc-desc">El atacante ya tiene privilegios elevados e intenta silenciar la defensa antes de cifrar: detiene el servicio del agente Wazuh (<code>Stop-Service WazuhSvc</code>). Pero el evento de detención sale en tiempo real, justo antes de que el agente muera, así que la Capa 1 lo captura igual. Segundos después el heartbeat deja de llegar y la regla nativa 502 ("agente desconectado") dispara. En paralelo hay un canary activo en la Capa 3: aunque el agente quedara ciego, la trampa lo atrapa de todos modos. Esa combinación, stop-service más silencio más canary, es zero-FP. El SOAR aísla a nivel de red sin necesitar que el agente siga vivo para ejecutar la orden.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1562.001 · DESHABILITAR HERRAMIENTAS</span>
           </div>
@@ -2569,7 +2570,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
           <div class="flow-list">
             <div class="flow-item"><span class="ft">t+0s</span><span class="fx">Escalación de privilegios asumida · atacante ejecuta <code>Stop-Service WazuhSvc -Force</code></span></div>
             <div class="flow-item critical"><span class="ft">t+0s</span><span class="fx">Capa 1 captura el evento de stop-service ANTES de que el agente muera (envío en tiempo real)<span class="critical-tag">★ DECISIÓN</span></span></div>
-            <div class="flow-item"><span class="ft">t+5s</span><span class="fx">Canary (Capa 3) sigue activo en paralelo — corrobora independientemente</span></div>
+            <div class="flow-item"><span class="ft">t+5s</span><span class="fx">Canary (Capa 3) sigue activo en paralelo, corrobora aparte</span></div>
             <div class="flow-item"><span class="ft">t+60-90s</span><span class="fx">Heartbeat no llega · regla nativa 502 "agente desconectado" dispara</span></div>
             <div class="flow-item critical"><span class="ft">t+90s</span><span class="fx">SOAR clasifica T0 (stop-service + canary = zero-FP) → aislamiento de red<span class="critical-tag">★ DECISIÓN</span></span></div>
             <div class="flow-item"><span class="ft">t+91s</span><span class="fx">Aislamiento ejecuta a nivel de red aunque el agente ya no reporte</span></div>
@@ -2630,9 +2631,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="live-dot">LIVE</div>
         <div class="col-num"><span class="uc-code">CU</span><span class="uc-num">06</span></div>
         <div class="col-info">
-          <h3 class="uc-title">DDoS contra el Servicio de Aplicación — T1 Auto-Throttle</h3>
+          <h3 class="uc-title">DDoS contra el Servicio de Aplicación · T1 Auto-Throttle</h3>
           <p class="uc-focus">Enfoque de demo: vector multi-capa más allá del ransomware · acción reversible automática · sin HITL · degradación de servicio mitigada en segundos</p>
-          <p class="uc-desc">Atacante externo lanza un SYN flood (hping3) y/o slow HTTP POST (slowhttptest) contra el puerto público del servicio que protege la base de datos. La Capa 1 (Sigma de red sobre eventos Wazuh) detecta la tasa anómala y eleva una alerta con severity=HIGH. El SOAR clasifica T1 (no T0: la técnica T1498/T1499 no está en la whitelist AUTO_T0 y solo una capa firing) y aplica rate-limit + iptables DROP sobre la IP origen — acción reversible que expira a los 5 min sin reincidencia. El servicio recupera disponibilidad en menos de 25 s. Si el flood persiste, la regla se renueva idempotentemente. Notificación informativa a Telegram + Discord.</p>
+          <p class="uc-desc">Un atacante externo lanza un SYN flood (hping3), o un slow HTTP POST (slowhttptest), contra el puerto público del servicio que protege la base de datos. La Capa 1 (Sigma de red sobre eventos Wazuh) detecta la tasa anómala y sube una alerta con severity=HIGH. El SOAR clasifica T1, no T0: la técnica T1498/T1499 no está en la whitelist AUTO_T0 y solo dispara una capa. Aplica rate-limit más iptables DROP sobre la IP origen, una acción reversible que expira a los 5 minutos si no hay reincidencia. El servicio recupera disponibilidad en menos de 25 segundos. Si el flood sigue, la regla se renueva sola. Va una notificación informativa a Telegram y Discord.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1498 · DDOS DE RED</span>
             <span class="mitre-chip">T1499 · DDOS DE ENDPOINT</span>
@@ -2727,7 +2728,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-info">
           <h3 class="uc-title">SELECT Masivo Benigno · False Positive con HITL Cancellation</h3>
           <p class="uc-focus">Enfoque de demo: el caso más sofisticado · ML acierta-pero-equivocadamente · LLM Triage genera contexto · aprobadores cancelan contención · zero pérdida de productividad para analista legítima</p>
-          <p class="uc-desc">Una analista legítima ejecuta <code>SELECT * FROM payroll</code> a las 3:14 AM (reporte mensual). Devuelve ~200k filas en horario no laboral. ML clasifica como anómalo (rows_returned outlier + hora_atípica) y Sigma firing por patrón de uso inusual sobre tabla sensible. SOAR clasifica T2 con two-person rule (target es production-critical). En t=0 se aplica throttle preventivo que RALENTIZA la query (sin bloquearla). LLM Triage (gpt-4o-mini con RAG sobre historial del usuario) genera reasoning explícito: "Patrón coincide con reporte mensual de payroll. Usuario tiene acceso consistente. No hay signals de exfiltración." Aprobadores leen el contexto, presionan [Reject], throttle rollback, analista termina query con 5-10s extra. Audit log marca <code>false_positive=true</code>. Demuestra que ARGOS detecta sin destruir productividad.</p>
+          <p class="uc-desc">Una analista legítima corre <code>SELECT * FROM payroll</code> a las 3:14 AM, para el reporte mensual. Son casi 200 mil filas, en un horario que nadie esperaría. El ML la marca como anómala (outlier en filas devueltas más hora rara) y Sigma dispara por el patrón de uso inusual sobre una tabla sensible. El SOAR clasifica T2 con la regla de two-person (el target es production-critical). En t=0 se aplica un throttle preventivo que ralentiza la query, sin bloquearla. El LLM Triage, con RAG sobre el historial de la usuaria, arma un razonamiento explícito: el patrón coincide con el reporte mensual de payroll, la usuaria tiene acceso consistente, no hay señales de exfiltración. Los aprobadores leen ese contexto y le dan [Reject]. El throttle se revierte y la analista termina su query con 5 a 10 segundos extra de espera. El audit log queda marcado como <code>false_positive=true</code>. Es el caso que muestra que ARGOS detecta sin arruinarle el día a nadie.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1078 · CUENTAS VÁLIDAS (FP)</span>
             <span class="mitre-chip">T1213 · DATOS DE REPOSITORIOS</span>
@@ -2798,7 +2799,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
           </div>
           <div class="cu07-side">
             <div class="cu07-llm" id="cu07Llm">
-              <span class="hdr">// LLM TRIAGE · gpt-4o-mini · RAG</span>
+              <span class="hdr">// LLM TRIAGE · RAG</span>
               <div id="cu07LlmContent"></div>
             </div>
             <div class="cu07-approvers">
@@ -2825,7 +2826,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
         <div class="col-info">
           <h3 class="uc-title">SQL Injection (sqlmap) · Bonus / Nice-to-have</h3>
           <p class="uc-focus">Enfoque de demo: vector aplicación web · sqlmap automatizado · si hay tiempo en la presentación; sino se menciona como capacidad</p>
-          <p class="uc-desc">Atacante usa <code>sqlmap</code> contra una webapp dummy (DVWA o similar) que sirve como frontend de la base PostgreSQL defendida. sqlmap enumera bases, tablas, columnas. La Capa 1 (Sigma DB sobre pgAudit) detecta patrones de inyección típica (UNION SELECT, COMMENT bypass, tautologías). La Capa 2 ML corrobora con query rate anómalo. SOAR clasifica T2 (target production-critical → two-person rule, como en UC-04). Mismo flujo HITL: throttle preventivo + 4 aprobadores + 60s consolidation + 180s timeout. Outcome esperado: 2 aprobadores aprueban (la firma sqlmap es inequívoca) → isolate del IP origen + bloqueo del endpoint vulnerable a nivel web server.</p>
+          <p class="uc-desc">El atacante usa <code>sqlmap</code> contra una webapp de prueba (DVWA o similar) que sirve de frontend a la base PostgreSQL defendida. sqlmap enumera bases, tablas y columnas. La Capa 1 (Sigma sobre pgAudit) detecta los patrones típicos de inyección: UNION SELECT, bypass por comentario, tautologías. La Capa 2 corrobora con una tasa de queries anómala. El SOAR clasifica T2 (target production-critical, two-person rule, igual que en CU-04). Es el mismo flujo HITL: throttle preventivo, 4 aprobadores, 60s de consolidación, 180s de timeout. El desenlace esperado es que 2 aprobadores digan que sí, porque la firma de sqlmap no deja dudas, y eso dispara aislar la IP de origen más bloquear el endpoint vulnerable en el servidor web.</p>
           <div class="mitre-row">
             <span class="mitre-chip">T1190 · EXPLOTACIÓN DE APP PÚBLICA</span>
             <span class="mitre-chip">T1213 · DATOS DE REPOSITORIOS</span>
@@ -2907,15 +2908,15 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
   <span class="sm-num">04 / 07</span>
   <span class="sm-name">COBERTURA MITRE ATT&amp;CK</span>
   <span class="sm-bar"></span>
-  <span class="sm-meta">9 técnicas mapeadas a 6 casos</span>
+  <span class="sm-meta">9 técnicas mapeadas a 8 casos</span>
 </div>
 <div class="anim-divider"></div>
 <div class="mitre-section reveal" id="mitreSection">
   <p class="sec-tag">// COBERTURA MITRE ATT&amp;CK</p>
   <h2 class="sec-title" style="font-size:clamp(22px,3vw,36px);margin-bottom:14px">Matriz de Técnicas Cubiertas<span class="sec-title-deco"></span></h2>
   <p style="font-size:13px;font-weight:300;color:var(--text);max-width:760px;line-height:1.65;margin-bottom:8px">
-    Nueve técnicas del marco MITRE ATT&amp;CK mapeadas contra los cinco escenarios principales + UC-08 nice-to-have.
-    La intensidad de cada celda refleja el número de casos de uso que invocan la técnica.
+    Nueve técnicas del marco MITRE ATT&amp;CK, mapeadas contra los 8 casos de uso (6 núcleo y 2 opcionales).
+    Entre más oscura la celda, más casos de uso invocan esa técnica.
   </p>
   <div class="mitre-grid" id="mitreGrid">
     <div class="mitre-cell" style="--c-mitre: var(--red); --cov-w: 50%; --cov-pct: .5">
@@ -3060,9 +3061,11 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
   <p class="sec-tag">// PARIDAD CON EL ESTADO DEL ARTE</p>
   <h2 class="sec-title" style="font-size:clamp(22px,3vw,36px);margin-bottom:14px">ARGOS vs SIEMs Comerciales<span class="sec-title-deco"></span></h2>
   <p class="siem-intro">
-    Comparación funcional entre ARGOS y las tres plataformas XDR/SIEM más adoptadas en el mercado corporativo.
-    Las capacidades evaluadas son las mismas que definen la arquitectura de ARGOS. El costo se expresa en escala relativa
-    de licenciamiento anual por endpoint, no en cifras absolutas.
+    Comparación de qué capacidades tiene cada plataforma, no de qué tan madura o probada es cada una.
+    Microsoft Defender XDR, CrowdStrike Falcon y Palo Alto Cortex XDR corren en producción sobre millones
+    de endpoints, con años de tuning y equipos dedicados detrás. ARGOS es un prototipo de laboratorio.
+    Un ✓ acá significa "existe la pieza arquitectónica", no "está al mismo nivel de madurez, escala o soporte".
+    El costo se expresa en escala relativa de licenciamiento anual por endpoint, no en cifras absolutas.
   </p>
   <div class="siem-table-wrap">
     <table class="siem-table">
@@ -3095,14 +3098,14 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
           <td class="col-argos"><span class="siem-check yes">✓</span></td>
           <td><span class="siem-check part" title="Parcial · vía 3rd-party">½</span></td>
           <td><span class="siem-check part" title="Add-on Falcon Identity">½</span></td>
-          <td><span class="siem-check no">✗</span></td>
+          <td><span class="siem-check part" title="Decoys nativos de red/usuario/archivo en Cortex XDR">½</span></td>
         </tr>
         <tr>
-          <td><b>Capa 4 · LLM Triage + RAG</b><span>Enriquecimiento contextual de alertas</span></td>
+          <td><b>Capa 4 · LLM / GenAI triage</b><span>ARGOS: solo enriquece, nunca decide (R-2)</span></td>
           <td class="col-argos"><span class="siem-check yes">✓</span></td>
-          <td><span class="siem-check part" title="Security Copilot · costo extra">½</span></td>
-          <td><span class="siem-check part" title="Charlotte AI · costo extra">½</span></td>
-          <td><span class="siem-check no">✗</span></td>
+          <td><span class="siem-check yes" title="Security Copilot: triage autónomo, incluido en E5">✓</span></td>
+          <td><span class="siem-check yes" title="Charlotte AI: ~40-60% de alertas T1 sin humano, según CrowdStrike">✓</span></td>
+          <td><span class="siem-check yes" title="Cortex AgentiX (ex-XSOAR): agentes prebuilt + 1000+ integraciones">✓</span></td>
         </tr>
         <tr>
           <td><b>SOAR escalonado por confianza</b><span>T0 / T1 / T2 / T3 por nivel</span></td>
@@ -3143,35 +3146,12 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
     </table>
   </div>
 
-  <!-- Scorecard final -->
-  <div class="siem-totals" id="siemTotals">
-    <div class="siem-total argos">
-      <div class="st-name">ARGOS</div>
-      <div class="st-score" data-target="100">0</div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);letter-spacing:1.5px;margin-top:2px">% COBERTURA</div>
-      <div class="st-bar-wrap"><div class="st-bar" style="--bw: 100%"></div></div>
-    </div>
-    <div class="siem-total def">
-      <div class="st-name">DEFENDER XDR</div>
-      <div class="st-score" data-target="75">0</div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);letter-spacing:1.5px;margin-top:2px">% COBERTURA</div>
-      <div class="st-bar-wrap"><div class="st-bar" style="--bw: 75%"></div></div>
-    </div>
-    <div class="siem-total cs">
-      <div class="st-name">FALCON</div>
-      <div class="st-score" data-target="75">0</div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);letter-spacing:1.5px;margin-top:2px">% COBERTURA</div>
-      <div class="st-bar-wrap"><div class="st-bar" style="--bw: 75%"></div></div>
-    </div>
-    <div class="siem-total cortex">
-      <div class="st-name">CORTEX XDR</div>
-      <div class="st-score" data-target="62">0</div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);letter-spacing:1.5px;margin-top:2px">% COBERTURA</div>
-      <div class="st-bar-wrap"><div class="st-bar" style="--bw: 62%"></div></div>
-    </div>
-  </div>
-  <p style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-top:12px;text-align:right">
-    ★ ARGOS alcanza paridad funcional con un costo de licenciamiento de cero
+  <p style="font-size:12.5px;font-weight:300;color:var(--text);max-width:820px;line-height:1.7;margin-top:18px">
+    Esta tabla compara presencia de capacidades, no calidad de ejecución. Microsoft, CrowdStrike y Palo Alto
+    llevan años corriendo en producción, con telemetría a escala de millones de endpoints y equipos enteros
+    sosteniendo cada pieza. ARGOS las tiene todas, pero en un prototipo de laboratorio, sin ese respaldo,
+    y a costo de licenciamiento cero. Eso es lo que hay para mostrar acá: no que le gane a estas plataformas,
+    sino que el mismo patrón arquitectónico se puede construir con herramientas abiertas.
   </p>
 </div>
 
@@ -3293,8 +3273,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
   <p class="sec-tag">// LO QUE EL PROYECTO ENTREGA</p>
   <h2 class="sec-title" style="font-size:clamp(22px,3vw,36px);margin-bottom:14px">Indicadores Clave<span class="sec-title-deco"></span></h2>
   <p style="font-size:13px;font-weight:300;color:var(--text);max-width:760px;line-height:1.65">
-    Resumen ejecutivo de los entregables operacionales y técnicos de ARGOS.
-    Todos los indicadores están respaldados por los escenarios anteriores y el código publicado.
+    Resumen de los entregables técnicos de ARGOS. La mayoría de estos números salen de código real
+    y verificable en el repo. El tiempo de detección es el único que viene de las simulaciones, no de
+    una medición en producción, porque el lab de 3 VMs todavía no terminó de levantar.
   </p>
   <div class="kpi-grid">
     <div class="kpi-card" style="--c-kpi: var(--green)">
@@ -3305,7 +3286,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       </div>
       <div class="kpi-num"><span class="kpi-count" data-target="8">0</span></div>
       <div class="kpi-label">Escenarios operacionales</div>
-      <div class="kpi-sub">END-TO-END · TARGET</div>
+      <div class="kpi-sub">END-TO-END · CONFIRMADO</div>
       <div class="kpi-spark"><svg viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M 0 18 L 20 14 L 40 10 L 60 8 L 80 5 L 100 3"/></svg></div>
     </div>
 
@@ -3317,7 +3298,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       </div>
       <div class="kpi-num"><span class="kpi-count" data-target="4">0</span></div>
       <div class="kpi-label">Capas de detección paralelas</div>
-      <div class="kpi-sub">+ NÚCLEO SOAR · TARGET</div>
+      <div class="kpi-sub">+ NÚCLEO SOAR · CONFIRMADO</div>
       <div class="kpi-spark"><svg viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M 0 20 L 25 5 L 50 15 L 75 8 L 100 12"/></svg></div>
     </div>
 
@@ -3327,9 +3308,9 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </div>
-      <div class="kpi-num"><span class="kpi-count" data-target="6">0</span></div>
+      <div class="kpi-num"><span class="kpi-count" data-target="9">0</span></div>
       <div class="kpi-label">Técnicas MITRE ATT&amp;CK</div>
-      <div class="kpi-sub">COBERTURA MAPEADA · TARGET</div>
+      <div class="kpi-sub">COBERTURA MAPEADA · CONFIRMADO</div>
       <div class="kpi-spark"><svg viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M 0 12 L 17 14 L 33 8 L 50 16 L 67 6 L 83 18 L 100 10"/></svg></div>
     </div>
 
@@ -3341,7 +3322,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       </div>
       <div class="kpi-num"><span class="kpi-count" data-target="64">0</span></div>
       <div class="kpi-label">Pruebas de contrato</div>
-      <div class="kpi-sub">TARGET · DEFINIDO</div>
+      <div class="kpi-sub">CONFIRMADO</div>
       <div class="kpi-spark"><svg viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M 0 22 L 20 22 L 30 4 L 40 4 L 60 4 L 70 22 L 100 22"/></svg></div>
     </div>
 
@@ -3353,7 +3334,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
       </div>
       <div class="kpi-num"><span class="kpi-pre">&lt;</span><span class="kpi-count" data-target="10">0</span><span class="kpi-suf">s</span></div>
       <div class="kpi-label">Tiempo de detección</div>
-      <div class="kpi-sub">T0 · AUTOMÁTICO · TARGET</div>
+      <div class="kpi-sub">T0 · AUTOMÁTICO · SIMULADO</div>
       <div class="kpi-spark"><svg viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M 0 4 L 20 6 L 40 16 L 60 20 L 80 22 L 100 22"/></svg></div>
     </div>
 
@@ -3373,7 +3354,7 @@ body.no-webgl .flow3d-stage .no-webgl { display: block; }
   <!-- Línea de cierre estilo terminal -->
   <div style="margin-top:32px;padding:18px 22px;border:1px solid var(--border2);background:linear-gradient(135deg,rgba(0,255,179,.04),rgba(0,212,255,.04));display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between">
     <div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--green2)">
-      ▸ ARGOS · PARIDAD FUNCIONAL CON SIEMs COMERCIALES (TARGET) · COSTO DE LICENCIA $0
+      ▸ ARGOS · MISMO PATRÓN ARQUITECTÓNICO DE UN XDR COMERCIAL, A ESCALA DE LABORATORIO · COSTO DE LICENCIA $0
     </div>
     <div style="font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--text-dim)">
       BUILD 0x07A.0 · DOC FREEZE · SEMANA 7
@@ -5340,7 +5321,7 @@ const STAGE = {
   const labelDefs = [
     { key: 'soar',   pos: function(){ return soar.position.clone().add(new THREE.Vector3(0, 0.65, 0)); },   color: '#ff4d6a', label: 'SOAR', sub: '', badge: '', cls: '' },
     { key: 'lin',    pos: function(){ return linVictim.position.clone().add(new THREE.Vector3(0, 1.1, 0)); }, color: '#ff4d6a', label: 'LIN-VICTIM-01', sub: '.21 · PRODUCTION-CRITICAL', badge: '🔒 PostgreSQL + pgAudit · Regla 2 Personas', cls: 'critical' },
-    { key: 'win',    pos: function(){ return winVictim.position.clone().add(new THREE.Vector3(0, 1.1, 0)); }, color: '#00fff0', label: 'WINDOWS-VICTIM', sub: '.20 · STANDARD', badge: '◐ Fase 1B del lab — diferida hoy', cls: 'note' },
+    { key: 'win',    pos: function(){ return winVictim.position.clone().add(new THREE.Vector3(0, 1.1, 0)); }, color: '#00fff0', label: 'WINDOWS-VICTIM', sub: '.20 · STANDARD', badge: '◐ Fase 1B del lab · diferida hoy', cls: 'note' },
     { key: 'atk',    pos: function(){ return attacker.position.clone().add(new THREE.Vector3(0, 0.85, 0)); }, color: '#ff4d6a', label: 'ATACANTE', sub: '198.51.100.0/24 · lógico', badge: '', cls: 'attacker' },
     { key: 'apr',    pos: function(){ return approvers.position.clone().add(new THREE.Vector3(0, 0.8, 0)); }, color: '#00d4ff', label: 'APROBADORES', sub: 'HITL · lógico', badge: 'Telegram · Discord · Twilio', cls: '' },
     { key: 'wazuh',  pos: function(){ return wazuh.position.clone().add(new THREE.Vector3(0, 0.55, 0)); }, color: '#00d4ff', label: 'WAZUH MGR', cls: 'minor' },
