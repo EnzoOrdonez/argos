@@ -106,4 +106,4 @@ Snapshot detallado en [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
 ## Licencia
 
-MIT — copyright Enzo Ordoñez Flores (ver `LICENSE`). Repositorio privado durante el curso, público al cierre.
+MIT — copyright Enzo Ordoñez Flores (ver `LICENSE`). Repositorio público en GitHub desde julio de 2026.

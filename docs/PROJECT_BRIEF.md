@@ -48,7 +48,7 @@ Wazuh · OpenSearch · Sigma · Sysmon · auditd · Atomic Red Team · Caldera �
 - **Approval Workflow Console** mostrando decisiones en tiempo real durante el demo.
 - **Métricas:** time-to-detect, archivos afectados antes de contención, false positive rate, MITRE coverage matrix, P/R/F1 por capa, latencia de aprobación humana.
 - **Bonus killer:** 2-4 reglas Sigma aceptadas en `SigmaHQ/sigma` upstream con autoría verificable.
-- **Repo público al cierre del curso** con README enterprise-grade + vídeo demo de 3min.
+- **Repo público en GitHub** (público desde julio de 2026) con README enterprise-grade + vídeo demo de 3min.
 
 ## Resiliencia y manejo de fallos
 

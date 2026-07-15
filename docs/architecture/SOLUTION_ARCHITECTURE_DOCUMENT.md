@@ -498,7 +498,7 @@ For the complete analysis of ~40 identified threats and failure modes with likel
 
 - Lab network isolated from corporate/home networks during attack runs.
 - API keys stored in `.env` files, never committed (`.gitignore` enforced).
-- Repository private during the course, public after grading.
+- Repository public on GitHub since July 2026 (private during the course).
 - Wazuh manager on isolated subnet; no inbound from victim subnet beyond agent port (1514).
 
 ### 13.2 Reproducibility

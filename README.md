@@ -350,7 +350,7 @@ Detalle completo del estado real (verificado contra código, no solo contra READ
 
 ## Licencia
 
-MIT — © 2026 Enzo Ordoñez. Repositorio privado durante el curso; público al cierre.
+MIT — © 2026 Enzo Ordoñez Flores and ARGOS project contributors (ver [`LICENSE`](./LICENSE)). Repositorio público en GitHub desde julio de 2026.
 
 ---
 
