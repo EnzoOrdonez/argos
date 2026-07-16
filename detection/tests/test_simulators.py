@@ -14,6 +14,7 @@ import pytest
 SIMULATORS_DIR = Path(__file__).parent.parent / "simulators"
 sys.path.insert(0, str(SIMULATORS_DIR))
 
+import ssh_bruteforce_controlled  # noqa: E402
 import uc01_lockbit_like  # noqa: E402
 import uc06_ddos_controlled  # noqa: E402
 import uc08_sqli_controlled  # noqa: E402
@@ -144,3 +145,51 @@ def test_uc08_cli_default_mode_does_not_execute() -> None:
     assert result.returncode == 0
     assert "Modo 'solo mostrar'" in result.stdout
     assert "sqlmap" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# SSH brute-force (T1110) — Fase 6-PREP
+# ---------------------------------------------------------------------------
+
+def test_ssh_rejects_unreplaced_placeholder() -> None:
+    with pytest.raises(SystemExit):
+        ssh_bruteforce_controlled._validate_target("<TARGET_SSH_HOST>")
+
+
+def test_ssh_rejects_known_public_ip() -> None:
+    with pytest.raises(SystemExit):
+        ssh_bruteforce_controlled._validate_target("8.8.8.8")
+
+
+def test_ssh_rejects_global_public_ip() -> None:
+    with pytest.raises(SystemExit):
+        ssh_bruteforce_controlled._validate_target("93.184.216.34")
+
+
+def test_ssh_accepts_private_target() -> None:
+    # IP privada: no debe lanzar (es un host de prueba interno válido)
+    ssh_bruteforce_controlled._validate_target("10.0.0.10")
+
+
+def test_ssh_accepts_lab_hostname() -> None:
+    ssh_bruteforce_controlled._validate_target("target-sshd")
+
+
+def test_ssh_hydra_command_shape() -> None:
+    cmd = ssh_bruteforce_controlled.build_hydra_command("10.0.0.10", "labuser", "/wl.txt", 22, 4)
+    assert cmd[0] == "hydra"
+    assert "-l" in cmd and "labuser" in cmd
+    assert "-P" in cmd and "/wl.txt" in cmd
+    assert "-f" in cmd  # para al primer acierto
+    assert "ssh://10.0.0.10:22" in cmd
+
+
+def test_ssh_cli_default_mode_does_not_execute() -> None:
+    result = subprocess.run(
+        [sys.executable, str(SIMULATORS_DIR / "ssh_bruteforce_controlled.py"),
+         "--target", "10.0.0.10"],
+        capture_output=True, text=True, encoding="utf-8", timeout=10,
+    )
+    assert result.returncode == 0
+    assert "Modo 'solo mostrar'" in result.stdout
+    assert "hydra" in result.stdout  # el comando se imprime, no se ejecuta
