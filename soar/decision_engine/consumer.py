@@ -118,6 +118,7 @@ class SOARConsumer:
         triage: TriageClient | None = None,
         consumer_name: str = "soar-1",
         now_fn: Callable[[], datetime] | None = None,
+        require_approval: bool = False,
     ) -> None:
         self._r = r
         self._executor = executor
@@ -127,6 +128,10 @@ class SOARConsumer:
         self._triage = triage
         self._name = consumer_name
         self._now = now_fn or (lambda: datetime.now(UTC))
+        # RF-4: safety rail explícito. Con require_approval, NINGÚN tier auto-ejecuta
+        # sin aprobación humana (ni siquiera T0/T1) — control de primera clase, no
+        # emergente de la matemática de tiers. Default False = comportamiento histórico.
+        self._require_approval = require_approval
 
     # -- plumbing ----------------------------------------------------------
 
@@ -304,6 +309,9 @@ class SOARConsumer:
         if self._waits_human(incident):
             return await self._act_waiting(incident, signal, escalation=escalation)
         if incident.tier in (Tier.T0, Tier.T1):
+            if self._require_approval:
+                # RF-4: el rail explícito fuerza aprobación humana incluso en T0/T1.
+                return await self._act_waiting(incident, signal, escalation=escalation)
             return await self._act_auto(incident)
         # T3: solo notificacion informativa (ADR-0003).
         await save_incident(self._r, incident)

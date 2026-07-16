@@ -72,12 +72,17 @@ class WindowScheduler:
         consolidation_seconds: int | None = None,
         t2_timeout_seconds: int | None = None,
         voice_escalation_seconds: int = VOICE_ESCALATION_SECONDS,
+        require_approval: bool = False,
     ) -> None:
         self._r = r
         self._notifier = notifier
         self._audit = audit
         self._on_decision = on_decision
         self._sleep = sleep
+        # RF-4: con el rail explícito ON, el failsafe de timeout NO auto-aísla a un
+        # host estándar sin votos (segundo camino de auto-ejecución sin humano);
+        # sigue esperando como un production-critical. Default False = histórico.
+        self._require_approval = require_approval
         self._consolidation_seconds = consolidation_seconds or int(
             os.environ.get("APPROVAL_CONSOLIDATION_WINDOW_SECONDS", "60")
         )
@@ -168,13 +173,16 @@ class WindowScheduler:
             return  # Ya decidido: el timer no hace nada.
         if _responded(incident):
             return  # Hay votos: la ventana de consolidacion manda.
-        if incident.host.criticality == Criticality.PRODUCTION_CRITICAL:
-            # ADR-0006 Sit.B: sin auto-execute por timeout; throttle activo.
-            self._emit(
-                "timeout_wait",
-                incident_id,
-                reason="production-critical espera 2do aprobador, throttle activo",
+        if incident.host.criticality == Criticality.PRODUCTION_CRITICAL or self._require_approval:
+            # ADR-0006 Sit.B (production-critical) o RF-4 (rail explícito ON): sin
+            # auto-execute por timeout; throttle activo, sigue esperando al humano.
+            reason = (
+                "rail require_approval: espera aprobacion humana, throttle activo"
+                if self._require_approval
+                and incident.host.criticality != Criticality.PRODUCTION_CRITICAL
+                else "production-critical espera 2do aprobador, throttle activo"
             )
+            self._emit("timeout_wait", incident_id, reason=reason)
             return
         incident = await close_window(self._r, incident_id)
         await self._notify_decision(incident)
