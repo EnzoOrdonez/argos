@@ -2,8 +2,21 @@
 
 from __future__ import annotations
 
+import json
+
+import pytest
+
 from argos_contracts import Layer, Severity
 from bridge import mapping
+
+
+@pytest.fixture(autouse=True)
+def _reset_group_map_cache():
+    """Cada test arranca y termina con el cache del group-map limpio, así el env
+    de un test no bleedea al siguiente (los tests de default asumen unset)."""
+    mapping.reset_group_map_cache()
+    yield
+    mapping.reset_group_map_cache()
 
 
 def _canary_modified() -> dict:
@@ -163,3 +176,54 @@ def test_normalize_ssh_bruteforce_alert() -> None:
     assert alert.severity_score == 0.8  # level 12 / 15
     assert alert.severity_label == Severity.HIGH  # >= 0.74
     assert alert.host_id == "web-prod-01"
+
+
+# -- group map config-driven (Fase 2, RF-2/HU-7) ------------------------------
+
+
+def test_group_map_default_when_unset(monkeypatch) -> None:
+    """Sin ARGOS_BRIDGE_GROUP_MAP: los 2 defaults; native sshd sigue en None."""
+    monkeypatch.delenv("ARGOS_BRIDGE_GROUP_MAP", raising=False)
+    assert mapping.source_layer_from_groups(["argos_layer1"]) == Layer.LAYER_1
+    assert mapping.source_layer_from_groups(["argos_layer3"]) == Layer.LAYER_3
+    assert mapping.source_layer_from_groups(["syslog", "sshd"]) is None
+
+
+def test_group_map_from_file_adds_group(monkeypatch, tmp_path) -> None:
+    """Un archivo puede mapear un grupo nativo de Wazuh a una capa (config, no código)."""
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps({"authentication_failures": "layer_1"}), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    assert mapping.source_layer_from_groups(["authentication_failures"]) == Layer.LAYER_1
+
+
+def test_group_map_replaces_defaults(monkeypatch, tmp_path) -> None:
+    """El archivo REEMPLAZA (no merge): sin argos_layer1 en el archivo, ya no matchea."""
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps({"otro_grupo": "layer_2"}), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    assert mapping.source_layer_from_groups(["otro_grupo"]) == Layer.LAYER_2
+    assert mapping.source_layer_from_groups(["argos_layer1"]) is None
+
+
+def test_group_map_invalid_layer_is_fail_loud(monkeypatch, tmp_path) -> None:
+    """Capa inválida → ValueError al cargar (no silenciar toda la detección)."""
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps({"grupo": "layer_9"}), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    with pytest.raises(ValueError, match="capa inválida"):
+        mapping.load_group_map()
+
+
+def test_group_map_not_a_dict_is_fail_loud(monkeypatch, tmp_path) -> None:
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps(["no", "es", "objeto"]), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    with pytest.raises(ValueError, match="objeto JSON"):
+        mapping.load_group_map()
+
+
+def test_group_map_missing_file_is_fail_loud(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(tmp_path / "no_existe.json"))
+    with pytest.raises(FileNotFoundError):
+        mapping.load_group_map()
