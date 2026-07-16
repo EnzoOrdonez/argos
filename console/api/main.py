@@ -13,13 +13,14 @@ import os
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from argos_contracts.alert import NormalizedAlert
 from argos_contracts.incident import Incident
 from console.api import audit, store
+from console.api.auth import require_auth
 
 _STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -40,7 +41,7 @@ async def health() -> dict[str, Any]:
         return {"ok": True, "redis": False}
 
 
-@app.get("/api/incidents", response_model=list[Incident])
+@app.get("/api/incidents", response_model=list[Incident], dependencies=[Depends(require_auth)])
 async def list_incidents() -> list[Incident]:
     try:
         client = store.get_client(_redis_url())
@@ -49,7 +50,11 @@ async def list_incidents() -> list[Incident]:
         raise HTTPException(status_code=503, detail=f"Redis no disponible: {exc}") from exc
 
 
-@app.get("/api/incidents/{incident_id}", response_model=Incident)
+@app.get(
+    "/api/incidents/{incident_id}",
+    response_model=Incident,
+    dependencies=[Depends(require_auth)],
+)
 async def get_incident(incident_id: str) -> Incident:
     try:
         client = store.get_client(_redis_url())
@@ -61,7 +66,11 @@ async def get_incident(incident_id: str) -> Incident:
     return incident
 
 
-@app.get("/api/incidents/{incident_id}/alerts", response_model=list[NormalizedAlert])
+@app.get(
+    "/api/incidents/{incident_id}/alerts",
+    response_model=list[NormalizedAlert],
+    dependencies=[Depends(require_auth)],
+)
 async def burst_alerts(incident_id: str) -> list[NormalizedAlert]:
     """Ráfaga multi-capa correlacionada (Redis `corr:alerts:{id}`). [] si expiró (TTL)."""
     try:
@@ -71,7 +80,7 @@ async def burst_alerts(incident_id: str) -> list[NormalizedAlert]:
         raise HTTPException(status_code=503, detail=f"Redis no disponible: {exc}") from exc
 
 
-@app.get("/api/incidents/{incident_id}/audit")
+@app.get("/api/incidents/{incident_id}/audit", dependencies=[Depends(require_auth)])
 async def audit_timeline(incident_id: str) -> dict[str, Any]:
     """Timeline evento-por-evento desde Postgres. Subsistema opcional: nunca 503.
 
@@ -84,8 +93,10 @@ async def audit_timeline(incident_id: str) -> dict[str, Any]:
     return {"available": True, "events": events}
 
 
-@app.get("/")
+@app.get("/", dependencies=[Depends(require_auth)])
 async def index() -> FileResponse:
+    # Gateado para que el navegador muestre el diálogo Basic al cargar la consola;
+    # una vez autenticado, el fetch del SPA a /api/* lleva las credenciales.
     return FileResponse(str(_STATIC / "index.html"))
 
 
