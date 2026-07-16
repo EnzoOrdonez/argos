@@ -27,16 +27,18 @@ from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.containment import apply_decision
 from soar.decision_engine.scheduler import WindowScheduler
-from soar.playbooks.simulated import SimulatedExecutor
+from soar.playbooks.factory import make_executor
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.redis = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
-    # Composicion Fase 3 (ADR-0013): audit fail-soft, executor simulado por
-    # defecto (el real se conmuta en la integracion con el lab) y los relojes.
+    # Composicion Fase 3 (ADR-0013): audit fail-soft, executor conmutado por
+    # ARGOS_EXECUTOR (default simulated; wazuh = active-response real) y los relojes.
+    # Antes hardcodeaba SimulatedExecutor -> la ejecucion de la decision final por
+    # voto nunca era real; ahora honra el env, igual que el daemon consumer (Fase 5a).
     app.state.audit = AuditLogger([MemorySink()])
-    app.state.executor = SimulatedExecutor()
+    app.state.executor = make_executor()
     app.state.scheduler = WindowScheduler(app.state.redis, audit=app.state.audit)
     # ADR-0010 §4.4: con ARGOS_JWT_SECRET (o JWT_SECRET) en el entorno, los
     # callbacks exigen JWT firmado y single-use; sin secreto, modo legacy.

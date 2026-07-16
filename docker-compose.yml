@@ -64,6 +64,25 @@ services:
       timeout: 3s
       retries: 5
 
+  # Daemon consumer: drena events:normalized (bridge -> Redis) y corre el tier router +
+  # respuesta. Sin este proceso, el bridge publica pero NADIE consume (blocker Fase 0).
+  # ARGOS_REQUIRE_APPROVAL=true por defecto: ninguna contención se auto-ejecuta sin humano.
+  soar-consumer:
+    <<: *argos-image
+    command: python -m soar.decision_engine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      ARGOS_EXECUTOR: ${ARGOS_EXECUTOR:-simulated}
+      ARGOS_AUDIT_SQL_DSN: postgresql://${POSTGRES_USER:-argos}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-argos_audit}
+      ARGOS_REQUIRE_APPROVAL: ${ARGOS_REQUIRE_APPROVAL:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
   console:
     <<: *argos-image
     command: uvicorn console.api.main:app --host 0.0.0.0 --port 8080
