@@ -87,6 +87,9 @@ services:
     <<: *argos-image
     command: uvicorn console.api.main:app --host 0.0.0.0 --port 8080
     restart: unless-stopped
+    # env_file para CONSOLE_BASIC_USER/PASS (auth de la consola, RF-7). Sin esas dos
+    # variables la consola corre sin auth; con ellas gatea `/` y `/api/*`.
+    env_file: .env
     environment:
       REDIS_URL: redis://redis:6379/0
       # Habilita el card de timeline (lee argos_audit). Sin esto la consola sigue OK, solo Redis.
@@ -122,17 +125,44 @@ services:
       timeout: 3s
       retries: 5
 
-  # --- Camino real: solo con `--profile real`. Requiere Wazuh manager en la VM core. ---
+  # --- Wazuh manager (manager-only, Perfil A: sin indexer/dashboard). Solo `--profile real`.
+  #     Produce alerts.json en el volumen compartido `wazuh-alerts` que el bridge tail-ea.
+  #     Enrola agentes por 1514/1515; expone la API (55000) para el active-response real del
+  #     SOAR (WazuhActiveResponseExecutor -> PUT /active-response). El registro de comandos AR
+  #     en ossec.conf + el deploy de los AR bin al agente se hacen en la validación real
+  #     (ver docs/INSTALL_SSH_VECTOR.md); la regla SSH de Fase 1 ya va montada acá. ---
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.9.2
+    profiles: ["real"]
+    restart: unless-stopped
+    hostname: wazuh-manager
+    ports:
+      - "1514:1514"    # comunicación de agentes
+      - "1515:1515"    # enrolamiento (authd)
+      - "55000:55000"  # API del manager (la usa el executor real del SOAR)
+    volumes:
+      - wazuh-alerts:/var/ossec/logs/alerts   # compartido con el bridge (lee :ro)
+      # Regla SSH brute-force de Fase 1 (T1110) como local rules del manager.
+      - ./detection/wazuh-rules/ssh_bruteforce_rules.xml:/var/ossec/etc/rules/local_rules.xml:ro
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  # --- Camino real: solo con `--profile real`. Lee el alerts.json que produce
+  #     el wazuh-manager (volumen compartido `wazuh-alerts`). ---
   bridge:
     <<: *argos-image
     profiles: ["real"]
     command: python -m bridge --alerts-path /var/ossec/logs/alerts/alerts.json --redis-url redis://redis:6379/0
     restart: unless-stopped
     volumes:
-      - /var/ossec/logs/alerts:/var/ossec/logs/alerts:ro   # alerts.json del Wazuh manager (host core)
+      - wazuh-alerts:/var/ossec/logs/alerts:ro   # alerts.json del wazuh-manager (volumen compartido)
     depends_on:
       redis:
         condition: service_healthy
+      wazuh-manager:
+        condition: service_started
 
   # --- Consola de respaldo (Streamlit): solo con `--profile fallback`. ---
   streamlit:
@@ -149,3 +179,4 @@ services:
 
 volumes:
   argos-pgdata:
+  wazuh-alerts:   # alerts.json compartido wazuh-manager -> bridge (profile real)

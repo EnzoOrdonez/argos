@@ -61,3 +61,33 @@ def test_no_hardcoded_secrets() -> None:
     # OPENAI_API_KEY nunca inline: viaja por env_file
     assert not re.search(r"OPENAI_API_KEY\s*:\s*\S", text)
     assert any("env_file" in service for service in _load()["services"].values())
+
+
+def test_soar_consumer_service_present() -> None:
+    """El daemon consumer (blocker Fase 0) corre como servicio propio en el profile default."""
+    consumer = _load()["services"]["soar-consumer"]
+    assert consumer["command"] == "python -m soar.decision_engine"
+    assert consumer["environment"]["ARGOS_REQUIRE_APPROVAL"] == "${ARGOS_REQUIRE_APPROVAL:-true}"
+    assert "profiles" not in consumer  # default profile: siempre corre
+
+
+def test_wazuh_manager_manager_only_real_profile() -> None:
+    mgr = _load()["services"]["wazuh-manager"]
+    assert mgr["profiles"] == ["real"]
+    assert mgr["image"].startswith("wazuh/wazuh-manager")
+
+
+def test_manager_and_bridge_share_alerts_volume() -> None:
+    services = _load()["services"]
+
+    def _mounts_shared(svc: dict) -> bool:
+        return any("wazuh-alerts:/var/ossec/logs/alerts" in v for v in svc.get("volumes", []))
+
+    assert _mounts_shared(services["wazuh-manager"])
+    assert _mounts_shared(services["bridge"])
+    assert "wazuh-alerts" in _load()["volumes"]
+
+
+def test_console_loads_env_file_for_basic_auth() -> None:
+    """CONSOLE_BASIC_* llegan al servicio console vía env_file (Fase 4/5b)."""
+    assert _load()["services"]["console"]["env_file"] == ".env"
