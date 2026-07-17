@@ -6,6 +6,7 @@ import pytest
 
 from argos_contracts.enums import ActionType
 from soar.playbooks.builders import (
+    build_block_ip,
     build_isolation,
     build_kill,
     build_snapshot,
@@ -57,3 +58,11 @@ def test_throttle_defaults_sin_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("THROTTLE_IO_PRIORITY", raising=False)
     action = build_throttle("WIN-VICTIM-01", action_id="act-001")
     assert action.parameters == {"cpu_percent_limit": 10, "io_priority": "idle"}
+
+
+def test_build_block_ip_lleva_la_srcip_en_parameters():
+    action = build_block_ip("web-prod-01", action_id="act-001", src_ip="203.0.113.7")
+    assert action.type == ActionType.BLOCK_IP
+    assert action.target == "web-prod-01"  # target = host; la IP va en parameters
+    assert action.parameters == {"src_ip": "203.0.113.7"}
+    assert action.reversible is True  # se des-dropea la regla

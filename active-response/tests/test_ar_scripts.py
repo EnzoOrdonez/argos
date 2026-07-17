@@ -18,6 +18,12 @@ _ACTIONS = [
     "argos-snapshot",
     "argos-kill",
 ]
+# block-ip / unblock-ip: contención quirúrgica del vector SSH (T1110). Solo Linux
+# (iptables): sin equivalente Windows por ahora → fuera de _ACTIONS (que exige ambos OS).
+_LINUX_ONLY = [
+    "argos-block-ip",
+    "argos-unblock-ip",
+]
 
 
 def test_all_linux_scripts_present() -> None:
@@ -74,9 +80,28 @@ _BASH = _working_bash()
 
 @pytest.mark.skipif(_BASH is None, reason="bash funcional no disponible (CI Linux lo corre)")
 def test_linux_scripts_pass_bash_syntax() -> None:
-    for action in _ACTIONS:
+    for action in _ACTIONS + _LINUX_ONLY:
         script = _AR / "linux" / f"{action}.sh"
         result = subprocess.run(
             [_BASH, "-n", str(script)], capture_output=True, text=True
         )
         assert result.returncode == 0, f"{script.name}: {result.stderr}"
+
+
+def test_block_ip_linux_scripts_present() -> None:
+    for action in _LINUX_ONLY:
+        assert (_AR / "linux" / f"{action}.sh").is_file()
+
+
+def test_block_ip_drops_srcip_and_aborts_without_it() -> None:
+    """block-ip dropea SOLO la IP atacante (no un block-all) y aborta si no vino IP."""
+    text = (_AR / "linux" / "argos-block-ip.sh").read_text(encoding="utf-8")
+    assert "-s \"$SRC_IP\" -j DROP" in text  # dropea la IP de origen específica
+    assert "src_ip" in text                   # lee la IP del alert del SOAR
+    assert "abort" in text and "exit 1" in text  # sin IP -> no hace nada a ciegas
+
+
+def test_unblock_ip_reverts_the_block() -> None:
+    text = (_AR / "linux" / "argos-unblock-ip.sh").read_text(encoding="utf-8")
+    assert "iptables -D INPUT" in text  # borra la regla de bloqueo
+    assert "argos-block-ip" in text     # opera sobre las reglas etiquetadas del block-ip

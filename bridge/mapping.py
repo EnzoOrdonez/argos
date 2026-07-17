@@ -186,6 +186,18 @@ def _process_info(audit: dict[str, Any]) -> dict[str, Any] | None:
     return info or None
 
 
+def _network_info(data: dict[str, Any]) -> dict[str, Any] | None:
+    """IP de origen del atacante (`data.srcip` de la alerta Wazuh) → `network_info`.
+
+    La contención quirúrgica (block-ip / HU-8) necesita esta IP downstream: sin esto
+    la srcip solo sobrevivía enterrada en `raw_alert.raw_data`, sin campo de acceso
+    directo. Solo se emite cuando la alerta trae srcip (auth failures SSH la traen)."""
+    src_ip = data.get("srcip")
+    if not src_ip:
+        return None
+    return {"src_ip": str(src_ip)}
+
+
 def _wazuh_alert(raw: dict[str, Any], rule: dict[str, Any], agent: dict[str, Any],
                  level: int, timestamp: datetime) -> WazuhAlert | None:
     """Reconstruye el WazuhAlert del contrato para la traza forense. Opcional: si no
@@ -222,6 +234,7 @@ def normalize(raw: dict[str, Any]) -> NormalizedAlert | None:
 
         level = int(rule.get("level", 0))
         agent = raw.get("agent") or {}
+        data = raw.get("data") or {}
         score = severity_score_from_level(level, layer)
         timestamp = _parse_timestamp(raw.get("timestamp", ""))
         mitre_ids = list((rule.get("mitre") or {}).get("id") or [])
@@ -236,8 +249,9 @@ def normalize(raw: dict[str, Any]) -> NormalizedAlert | None:
             severity_label=severity_label_from_score(score),
             technique_mitre=technique_from_mitre_ids(mitre_ids),
             triggering_rule=rule.get("description"),
-            process_info=_process_info((raw.get("data") or {}).get("audit") or {}),
+            process_info=_process_info(data.get("audit") or {}),
             file_info=_file_info(raw.get("syscheck") or {}),
+            network_info=_network_info(data),
             raw_alert=_wazuh_alert(raw, rule, agent, level, timestamp),
         )
     except (ValueError, KeyError, TypeError) as exc:

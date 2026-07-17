@@ -84,6 +84,7 @@ def test_normalize_canary_modified() -> None:
     assert alert.host_id == "WIN-VICTIM-01"
     assert alert.host_ip == "10.0.0.21"
     assert alert.file_info == {"path": "/canary/x.xlsx", "event": "modified"}
+    assert alert.network_info is None  # sin srcip en la alerta → sin network_info
     assert alert.process_info is not None
     assert alert.process_info["process_id"] == "4321"
     assert alert.process_info["user"] == "attacker"
@@ -176,6 +177,9 @@ def test_normalize_ssh_bruteforce_alert() -> None:
     assert alert.severity_score == 0.8  # level 12 / 15
     assert alert.severity_label == Severity.HIGH  # >= 0.74
     assert alert.host_id == "web-prod-01"
+    # La IP atacante (data.srcip) llega como network_info: la necesita la
+    # contención quirúrgica downstream (block-ip / HU-8).
+    assert alert.network_info == {"src_ip": "203.0.113.7"}
 
 
 # -- group map config-driven (Fase 2, RF-2/HU-7) ------------------------------

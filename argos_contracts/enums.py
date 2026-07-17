@@ -79,6 +79,7 @@ class ActionType(str, Enum):
     PROCESS_KILL = "process_kill"
     DISK_SNAPSHOT = "disk_snapshot"
     PROCESS_THROTTLE = "process_throttle"
+    BLOCK_IP = "block_ip"  # dropea una IP de origen (block-ip quirúrgico, vs aislar el host)
     NOTIFICATION = "notification"
 
 

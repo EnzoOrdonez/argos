@@ -7,7 +7,7 @@ import pytest
 import respx
 
 from argos_contracts.enums import ActionType
-from soar.playbooks.builders import build_isolation, build_throttle
+from soar.playbooks.builders import build_block_ip, build_isolation, build_throttle
 from soar.playbooks.wazuh import WazuhActiveResponseExecutor
 
 BASE = "https://wazuh.test:55000"
@@ -113,6 +113,42 @@ def test_revert_de_isolation_usa_comando_unisolate(respx_mock: respx.Router):
 
     commands = [json.loads(call.request.content)["command"] for call in ar.calls]
     assert commands == ["argos-isolate", "argos-unisolate"]
+
+
+@respx.mock
+def test_block_ip_manda_srcip_y_comando_correcto(respx_mock: respx.Router):
+    """block-ip: el PUT usa el comando argos-block-ip y lleva la IP atacante en
+    alert.data.argos.src_ip (el script AR la lee de ahí para el iptables DROP)."""
+    _mock_auth(respx_mock)
+    ar = respx_mock.put(f"{BASE}/active-response").respond(200, json=_ar_payload())
+    import json
+
+    action = build_block_ip("web-prod-01", action_id="act-001", src_ip="203.0.113.7")
+    result = _executor().run(action)
+
+    assert result.ok
+    body = json.loads(ar.calls.last.request.content)
+    assert body["command"] == "argos-block-ip"
+    assert body["alert"]["data"]["argos"]["src_ip"] == "203.0.113.7"
+    assert ar.calls.last.request.url.params["agents_list"] == "web-prod-01"
+
+
+@respx.mock
+def test_revert_de_block_ip_usa_comando_unblock_ip(respx_mock: respx.Router):
+    _mock_auth(respx_mock)
+    ar = respx_mock.put(f"{BASE}/active-response").respond(200, json=_ar_payload())
+    executor = _executor()
+    block = build_block_ip("web-prod-01", action_id="act-001", src_ip="203.0.113.7")
+    executor.run(block)
+
+    result = executor.revert(block)
+
+    assert result.ok
+    assert executor.applied == {}
+    import json
+
+    commands = [json.loads(call.request.content)["command"] for call in ar.calls]
+    assert commands == ["argos-block-ip", "argos-unblock-ip"]
 
 
 @respx.mock
