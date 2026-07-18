@@ -82,3 +82,20 @@ def build_kill(
         reversible=True,
         parameters=parameters,
     )
+
+
+def build_block_ip(host_id: str, *, action_id: str, src_ip: str) -> ProposedAction:
+    """Dropea la IP atacante en el host (iptables / netsh), sin aislar el host entero.
+
+    Alternativa quirúrgica a `build_isolation` para vectores con IP de origen (p.ej.
+    fuerza bruta SSH, T1110): bloquea solo al atacante y deja el resto del tráfico del
+    host intacto. La IP viaja en `parameters["src_ip"]` → el executor la entrega al
+    script AR (`alert.data.argos.src_ip`). `reversible=True` (se des-dropea la regla).
+    """
+    return ProposedAction(
+        id=action_id,
+        type=ActionType.BLOCK_IP,
+        target=host_id,
+        reversible=True,
+        parameters={"src_ip": src_ip},
+    )

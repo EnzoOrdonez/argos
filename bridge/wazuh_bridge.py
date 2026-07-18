@@ -15,7 +15,7 @@ from pathlib import Path
 
 import redis
 
-from bridge.mapping import normalize
+from bridge.mapping import load_group_map, normalize
 from soar.decision_engine.consumer import STREAM
 
 logger = logging.getLogger(__name__)
@@ -80,6 +80,9 @@ def _rotated(path: Path, inode: int, position: int) -> bool:
 
 def run(path: Path, redis_url: str, *, stop: StopFn | None = None) -> int:
     """Loop principal del bridge. Devuelve cuántas alertas publicó (para tests/daemon)."""
+    # Fail-loud al arrancar si ARGOS_BRIDGE_GROUP_MAP apunta a un archivo malformado
+    # (un mapeo roto silenciaría toda la detección) — no a mitad del tail.
+    load_group_map()
     client = redis.Redis.from_url(redis_url, decode_responses=True)
     published = 0
     for raw in iter_alert_dicts(tail_lines(path, stop=stop)):

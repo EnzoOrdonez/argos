@@ -12,8 +12,11 @@ la canary-borrada SÍ emite y SÍ está en el whitelist) — validar contra el y
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from argos_contracts import (
@@ -26,21 +29,89 @@ from argos_contracts import (
 
 logger = logging.getLogger(__name__)
 
-# group de la regla Wazuh → capa de detección (ADR-0014 §2.1).
-_GROUP_TO_LAYER: dict[str, Layer] = {
+# group de la regla Wazuh → capa de detección (ADR-0014 §2.1). Defaults embebidos;
+# ARGOS_BRIDGE_GROUP_MAP puede apuntar a un JSON {"grupo": "layer_1"} que los
+# REEMPLAZA (no merge, mismo contrato que ARGOS_HOST_INVENTORY) — así agregar una
+# regla nueva es config, no código (RF-2/HU-7).
+_ENV_VAR = "ARGOS_BRIDGE_GROUP_MAP"
+
+_DEFAULT_GROUP_TO_LAYER: dict[str, Layer] = {
     "argos_layer1": Layer.LAYER_1,  # Sigma (conversión Sigma→Wazuh: dependencia P3)
     "argos_layer3": Layer.LAYER_3,  # canary (deception/wazuh-rules/canary_rules.xml)
 }
+
+# Mapeo efectivo cacheado (defaults embebidos o el archivo de ARGOS_BRIDGE_GROUP_MAP).
+_effective_group_map: dict[str, Layer] | None = None
 
 # Override documentado en detection/mitre-mapping.yaml:47-60: T1213 no está en
 # MITRE_WHITELIST v1.1.0; se mapea a la técnica de Collection más cercana que sí está.
 _TECHNIQUE_OVERRIDES: dict[str, str] = {"T1213": "T1005"}
 
 
+def _load_from_file(path: Path) -> dict[str, Layer]:
+    """Carga el mapeo group→layer desde un JSON {"grupo": "layer_1"}. Fail-loud.
+
+    Un mapeo roto que dejara de reconocer los grupos argos silenciaría TODA la
+    detección (normalize() descarta lo que no mapea), así que cualquier problema
+    revienta al arrancar el bridge, no a mitad del tail.
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"ARGOS_BRIDGE_GROUP_MAP apunta a un archivo inexistente: {path}")
+
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"El mapeo de grupos debe ser un objeto JSON (grupo -> capa): {path}")
+
+    group_map: dict[str, Layer] = {}
+    for group, layer_value in raw.items():
+        group_text = str(group).strip()
+        if not group_text:
+            raise ValueError(f"grupo vacío en {path}")
+        try:
+            group_map[group_text] = Layer(str(layer_value).strip())
+        except ValueError as exc:
+            valid = [member.value for member in Layer]
+            raise ValueError(
+                f"capa inválida para el grupo '{group_text}' en {path}: "
+                f"{layer_value!r} (esperado uno de {valid})"
+            ) from exc
+
+    return group_map
+
+
+def load_group_map() -> dict[str, Layer]:
+    """Resuelve y cachea el mapeo group→layer efectivo.
+
+    Con `ARGOS_BRIDGE_GROUP_MAP` seteado, carga ese JSON (fail-loud, REEMPLAZA los
+    defaults); si no, usa `_DEFAULT_GROUP_TO_LAYER`. Idempotente. Llamar una vez al
+    arrancar el bridge para que una config malformada explote en el boot.
+    """
+    global _effective_group_map
+    if _effective_group_map is None:
+        path = os.environ.get(_ENV_VAR)
+        if path:
+            _effective_group_map = _load_from_file(Path(path))
+            logger.info(
+                "mapeo de grupos del bridge cargado desde %s (%d entradas)",
+                path,
+                len(_effective_group_map),
+            )
+        else:
+            _effective_group_map = _DEFAULT_GROUP_TO_LAYER
+    return _effective_group_map
+
+
+def reset_group_map_cache() -> None:
+    """Resetea el cache (seam de test tras cambiar ARGOS_BRIDGE_GROUP_MAP)."""
+    global _effective_group_map
+    _effective_group_map = None
+
+
 def source_layer_from_groups(groups: list[str]) -> Layer | None:
     """Primera capa argos encontrada en los groups, o None (alerta ajena al proyecto)."""
+    group_map = load_group_map()
     for group in groups:
-        layer = _GROUP_TO_LAYER.get(group.strip())
+        layer = group_map.get(group.strip())
         if layer is not None:
             return layer
     return None
@@ -115,6 +186,18 @@ def _process_info(audit: dict[str, Any]) -> dict[str, Any] | None:
     return info or None
 
 
+def _network_info(data: dict[str, Any]) -> dict[str, Any] | None:
+    """IP de origen del atacante (`data.srcip` de la alerta Wazuh) → `network_info`.
+
+    La contención quirúrgica (block-ip / HU-8) necesita esta IP downstream: sin esto
+    la srcip solo sobrevivía enterrada en `raw_alert.raw_data`, sin campo de acceso
+    directo. Solo se emite cuando la alerta trae srcip (auth failures SSH la traen)."""
+    src_ip = data.get("srcip")
+    if not src_ip:
+        return None
+    return {"src_ip": str(src_ip)}
+
+
 def _wazuh_alert(raw: dict[str, Any], rule: dict[str, Any], agent: dict[str, Any],
                  level: int, timestamp: datetime) -> WazuhAlert | None:
     """Reconstruye el WazuhAlert del contrato para la traza forense. Opcional: si no
@@ -151,6 +234,7 @@ def normalize(raw: dict[str, Any]) -> NormalizedAlert | None:
 
         level = int(rule.get("level", 0))
         agent = raw.get("agent") or {}
+        data = raw.get("data") or {}
         score = severity_score_from_level(level, layer)
         timestamp = _parse_timestamp(raw.get("timestamp", ""))
         mitre_ids = list((rule.get("mitre") or {}).get("id") or [])
@@ -165,8 +249,9 @@ def normalize(raw: dict[str, Any]) -> NormalizedAlert | None:
             severity_label=severity_label_from_score(score),
             technique_mitre=technique_from_mitre_ids(mitre_ids),
             triggering_rule=rule.get("description"),
-            process_info=_process_info((raw.get("data") or {}).get("audit") or {}),
+            process_info=_process_info(data.get("audit") or {}),
             file_info=_file_info(raw.get("syscheck") or {}),
+            network_info=_network_info(data),
             raw_alert=_wazuh_alert(raw, rule, agent, level, timestamp),
         )
     except (ValueError, KeyError, TypeError) as exc:

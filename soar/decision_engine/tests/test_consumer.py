@@ -332,3 +332,57 @@ def test_build_signal_funde_capas_con_noisy_or():
     assert signal.corroboration_confidence is not None
     assert abs(signal.corroboration_confidence - 0.985) < 1e-9
     assert signal.contributing_alert_ids == ("a-1", "a-2")
+
+
+# -- Safety rail explícito (RF-4, Gate 1: consumer._act) ----------------------
+
+
+async def test_require_approval_rail_blocks_t0_auto_execute():
+    """Con require_approval=True, un T0 (canary) que la matemática de tiers
+    auto-ejecutaría (cf. test_fast_path_canary_va_directo_a_t0) queda esperando
+    aprobación humana. El rail es un control explícito, no emergente del tier."""
+    r = FakeAsyncRedis(decode_responses=True)
+    executor, notifier, scheduler = SimulatedExecutor(), _FakeNotifier(), _FakeScheduler()
+    consumer = SOARConsumer(
+        r,
+        executor=executor,
+        notifier=notifier,
+        scheduler=scheduler,
+        require_approval=True,
+    )
+
+    incident = await consumer.handle_alert(
+        _alert(Layer.LAYER_3, score=0.97, severity=Severity.CRITICAL, technique=None)
+    )
+
+    assert incident.tier == Tier.T0  # la matemática de tiers no cambia
+    assert incident.state == IncidentState.AWAITING_APPROVAL  # el rail forzó la espera
+    assert incident.final_decision is None  # NO auto-ejecutó
+    # las acciones protectoras pre-aprobación (throttle) igual corren
+    assert (ActionType.PROCESS_THROTTLE, "WIN-VICTIM-01") in executor.applied
+    assert scheduler.t2_started == [incident.incident_id]
+
+
+async def test_require_approval_rail_blocks_t1_auto_execute():
+    """Gate 1 cubre T1 también: L1+L2 corroborado (noisy-OR ≥ 0.80) en host
+    estándar daría T1 auto-execute; con el rail queda AWAITING_APPROVAL."""
+    r = FakeAsyncRedis(decode_responses=True)
+    executor, notifier, scheduler = SimulatedExecutor(), _FakeNotifier(), _FakeScheduler()
+    consumer = SOARConsumer(
+        r,
+        executor=executor,
+        notifier=notifier,
+        scheduler=scheduler,
+        require_approval=True,
+    )
+
+    await consumer.handle_alert(
+        _alert(Layer.LAYER_1, score=0.85, severity=Severity.HIGH, alert_id="l1")
+    )
+    incident = await consumer.handle_alert(
+        _alert(Layer.LAYER_2, score=0.9, severity=Severity.HIGH, alert_id="l2")
+    )
+
+    assert incident.tier == Tier.T1  # corroboración fuerte
+    assert incident.state == IncidentState.AWAITING_APPROVAL
+    assert incident.final_decision is None  # el rail bloqueó el auto-execute de T1

@@ -24,7 +24,7 @@ from argos_contracts.incident import Incident
 from soar.approval_api.handlers import load_incident, save_incident
 from soar.audit.logger import AuditLogger
 from soar.playbooks.base import ExecutionResult, ResponseExecutor
-from soar.playbooks.builders import build_isolation, build_kill
+from soar.playbooks.builders import build_block_ip, build_isolation, build_kill
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,21 @@ logger = logging.getLogger(__name__)
 # (el snapshot se conserva como evidencia; su revert es no-op igual).
 _PROTECTIVE_REVERT_TYPES = (ActionType.PROCESS_THROTTLE,)
 
+# Acciones de contencion que un REVERTED des-hace (aislar/bloquear son reversibles).
+_CONTAINMENT_REVERT_TYPES = (ActionType.HOST_ISOLATION, ActionType.BLOCK_IP)
+
 
 def _next_action_id(incident: Incident) -> str:
     return f"act-{len(incident.proposed_actions) + 1:03d}"
+
+
+def _attacker_ip(incident: Incident) -> str | None:
+    """IP de origen del atacante si la alerta la trae (`network_info.src_ip`).
+
+    La pobló el bridge desde `data.srcip` de la alerta Wazuh. Presente en vectores
+    con IP de origen (fuerza bruta SSH); ausente en los basados en host/proceso."""
+    src_ip = (incident.alert.network_info or {}).get("src_ip")
+    return str(src_ip) if src_ip else None
 
 
 def _combined_status(results: list[ExecutionResult]) -> str:
@@ -76,12 +88,25 @@ async def apply_decision(
     now = datetime.now(UTC)
 
     if decision.outcome == "EXECUTE_ISOLATION":
-        isolation = build_isolation(incident.host.id, action_id=_next_action_id(incident))
-        incident.proposed_actions.append(isolation)
-        kill = build_kill(incident.host.id, action_id=_next_action_id(incident))
-        incident.proposed_actions.append(kill)
-        incident.state = IncidentState.EXECUTING
-        results = [executor.run(isolation), executor.run(kill)]
+        attacker_ip = _attacker_ip(incident)
+        if attacker_ip is not None:
+            # Vector con IP de origen (brute-force SSH): contencion quirurgica.
+            # Se dropea SOLO al atacante; el host sigue operativo (no se aisla ni
+            # se mata proceso: el ofensor es remoto, no hay pid local).
+            block = build_block_ip(
+                incident.host.id, action_id=_next_action_id(incident), src_ip=attacker_ip
+            )
+            incident.proposed_actions.append(block)
+            incident.state = IncidentState.EXECUTING
+            results = [executor.run(block)]
+        else:
+            # Sin IP de origen: contencion por host (aislar + matar proceso).
+            isolation = build_isolation(incident.host.id, action_id=_next_action_id(incident))
+            incident.proposed_actions.append(isolation)
+            kill = build_kill(incident.host.id, action_id=_next_action_id(incident))
+            incident.proposed_actions.append(kill)
+            incident.state = IncidentState.EXECUTING
+            results = [executor.run(isolation), executor.run(kill)]
         for result in results:
             _audit_result(audit, incident_id, "executed", result)
         decision.execution_status = _combined_status(results)  # type: ignore[assignment]
@@ -99,10 +124,10 @@ async def apply_decision(
         )  # type: ignore[assignment]
         # El estado (REJECTED) ya lo fijo quien escribio la decision.
 
-    else:  # REVERTED: des-aislar (boton "Revert if false alarm", ADR-0003)
+    else:  # REVERTED: des-aislar / des-bloquear (boton "Revert if false alarm", ADR-0003)
         results = []
         for action in incident.proposed_actions:
-            if action.type == ActionType.HOST_ISOLATION:
+            if action.type in _CONTAINMENT_REVERT_TYPES:
                 result = executor.revert(action)
                 results.append(result)
                 _audit_result(audit, incident_id, "reverted", result)

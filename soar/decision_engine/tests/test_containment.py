@@ -2,22 +2,52 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from fakeredis import FakeAsyncRedis
 
-from argos_contracts.enums import ActionType, Criticality, IncidentState, Tier
+from argos_contracts.alert import NormalizedAlert
+from argos_contracts.enums import (
+    ActionType,
+    Criticality,
+    IncidentState,
+    Layer,
+    Severity,
+    Tier,
+)
 from argos_contracts.incident import FinalDecision
 from argos_contracts.triage import HostInfo
 from soar.approval_api.handlers import save_incident
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.containment import apply_decision
-from soar.playbooks.builders import build_snapshot, build_throttle
+from soar.playbooks.builders import build_block_ip, build_snapshot, build_throttle
 from soar.playbooks.simulated import SimulatedExecutor
 
 
 def _standard_host() -> HostInfo:
     return HostInfo(
         id="WIN-VICTIM-01", criticality=Criticality.STANDARD, ip="10.0.0.21", os="Win11"
+    )
+
+
+def _ssh_host() -> HostInfo:
+    return HostInfo(
+        id="web-prod-01", criticality=Criticality.STANDARD, ip="10.0.0.5", os="Ubuntu 24.04"
+    )
+
+
+def _alert_with_srcip(src_ip: str) -> NormalizedAlert:
+    """NormalizedAlert de un brute-force SSH: lleva la IP atacante en network_info."""
+    return NormalizedAlert(
+        alert_id="ssh-bf-1",
+        source_layer=Layer.LAYER_1,
+        timestamp=datetime.now(UTC),
+        host_id="web-prod-01",
+        severity_score=0.8,
+        severity_label=Severity.HIGH,
+        technique_mitre="T1110",
+        network_info={"src_ip": src_ip},
     )
 
 
@@ -47,6 +77,53 @@ async def test_execute_isolation_corre_isolation_y_kill(make_incident):
     assert (ActionType.HOST_ISOLATION, "WIN-VICTIM-01") in executor.applied
     assert (ActionType.PROCESS_KILL, "WIN-VICTIM-01") in executor.applied
     assert memory.kinds() == ["action_executed", "action_executed"]
+
+
+async def test_execute_isolation_con_ip_atacante_bloquea_solo_la_ip(make_incident):
+    """Vector con IP de origen (brute-force SSH): la contención es quirúrgica —
+    block-ip de la IP atacante, SIN aislar el host ni matar proceso (HU-8)."""
+    r = FakeAsyncRedis(decode_responses=True)
+    incident = make_incident(
+        tier=Tier.T2, host=_ssh_host(), alert=_alert_with_srcip("203.0.113.7")
+    )
+    incident.final_decision = _decision("EXECUTE_ISOLATION")
+    await save_incident(r, incident)
+    executor, memory = SimulatedExecutor(), MemorySink()
+
+    result = await apply_decision(
+        r, incident.incident_id, executor=executor, audit=AuditLogger([memory])
+    )
+
+    assert result.state == IncidentState.EXECUTED
+    assert result.final_decision is not None
+    assert result.final_decision.execution_status == "success"
+    # Solo block-ip; NO host isolation ni kill (el host sigue operativo).
+    assert (ActionType.BLOCK_IP, "web-prod-01") in executor.applied
+    assert (ActionType.HOST_ISOLATION, "web-prod-01") not in executor.applied
+    assert (ActionType.PROCESS_KILL, "web-prod-01") not in executor.applied
+    assert len(result.proposed_actions) == 1
+    assert result.proposed_actions[0].parameters == {"src_ip": "203.0.113.7"}
+    assert memory.kinds() == ["action_executed"]
+
+
+async def test_reverted_des_bloquea_la_ip(make_incident):
+    """REVERTED sobre un incidente con block-ip: des-bloquea la IP atacante."""
+    r = FakeAsyncRedis(decode_responses=True)
+    executor = SimulatedExecutor()
+    block = build_block_ip("web-prod-01", action_id="act-001", src_ip="203.0.113.7")
+    executor.run(block)
+    incident = make_incident(
+        tier=Tier.T2, host=_ssh_host(), proposed_actions=[block]
+    )
+    incident.final_decision = FinalDecision(
+        outcome="REVERTED", policy_applied="auto-execute", rationale="falsa alarma"
+    )
+    await save_incident(r, incident)
+
+    result = await apply_decision(r, incident.incident_id, executor=executor)
+
+    assert result.state == IncidentState.REVERTED
+    assert (ActionType.BLOCK_IP, "web-prod-01") not in executor.applied
 
 
 async def test_apply_decision_es_idempotente(make_incident):

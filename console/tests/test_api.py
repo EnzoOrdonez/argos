@@ -179,3 +179,45 @@ async def test_audit_available_false_when_reader_disabled(monkeypatch, fake) -> 
     body = resp.json()
     assert body["available"] is False
     assert body["events"] == []
+
+
+# -- Autenticación HTTP Basic (RF-7/HU-6) -------------------------------------
+
+
+async def _get_auth(path: str, *, auth=None):
+    transport = ASGITransport(app=main.app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        return await client.get(path, auth=auth)
+
+
+async def test_api_requires_basic_auth_when_configured(fake, monkeypatch) -> None:
+    monkeypatch.setenv("CONSOLE_BASIC_USER", "admin")
+    monkeypatch.setenv("CONSOLE_BASIC_PASS", "s3cr3t")
+    # sin credenciales → 401 con reto Basic
+    unauth = await _get_auth("/api/incidents")
+    assert unauth.status_code == 401
+    assert unauth.headers["www-authenticate"].lower().startswith("basic")
+    # credenciales incorrectas → 401
+    bad = await _get_auth("/api/incidents", auth=("admin", "wrong"))
+    assert bad.status_code == 401
+    # credenciales correctas → 200
+    inc = _incident()
+    fake.set(f"incident:{inc.incident_id}", inc.model_dump_json())
+    ok = await _get_auth("/api/incidents", auth=("admin", "s3cr3t"))
+    assert ok.status_code == 200
+
+
+async def test_index_gated_but_health_open_when_auth_configured(fake, monkeypatch) -> None:
+    monkeypatch.setenv("CONSOLE_BASIC_USER", "admin")
+    monkeypatch.setenv("CONSOLE_BASIC_PASS", "s3cr3t")
+    assert (await _get_auth("/")).status_code == 401  # / gateado → diálogo Basic
+    assert (await _get_auth("/health")).status_code == 200  # liveness siempre abierto
+
+
+async def test_api_open_when_auth_not_configured(fake, monkeypatch) -> None:
+    monkeypatch.delenv("CONSOLE_BASIC_USER", raising=False)
+    monkeypatch.delenv("CONSOLE_BASIC_PASS", raising=False)
+    inc = _incident()
+    fake.set(f"incident:{inc.incident_id}", inc.model_dump_json())
+    # sin credencial configurada: auth deshabilitada (dev localhost) → 200
+    assert (await _get_auth("/api/incidents")).status_code == 200

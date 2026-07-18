@@ -2,8 +2,21 @@
 
 from __future__ import annotations
 
+import json
+
+import pytest
+
 from argos_contracts import Layer, Severity
 from bridge import mapping
+
+
+@pytest.fixture(autouse=True)
+def _reset_group_map_cache():
+    """Cada test arranca y termina con el cache del group-map limpio, así el env
+    de un test no bleedea al siguiente (los tests de default asumen unset)."""
+    mapping.reset_group_map_cache()
+    yield
+    mapping.reset_group_map_cache()
 
 
 def _canary_modified() -> dict:
@@ -71,6 +84,7 @@ def test_normalize_canary_modified() -> None:
     assert alert.host_id == "WIN-VICTIM-01"
     assert alert.host_ip == "10.0.0.21"
     assert alert.file_info == {"path": "/canary/x.xlsx", "event": "modified"}
+    assert alert.network_info is None  # sin srcip en la alerta → sin network_info
     assert alert.process_info is not None
     assert alert.process_info["process_id"] == "4321"
     assert alert.process_info["user"] == "attacker"
@@ -136,3 +150,84 @@ def test_normalize_unparseable_is_none() -> None:
     # group argos válido pero level no numérico → fail-soft None.
     raw = {"rule": {"groups": ["argos_layer1"], "level": "NaN", "mitre": {"id": []}}}
     assert mapping.normalize(raw) is None
+
+
+def test_normalize_ssh_bruteforce_alert() -> None:
+    """Contrato regla→bridge (Fase 1): la SALIDA de la regla Wazuh de fuerza bruta
+    SSH (detection/wazuh-rules/ssh_bruteforce_rules.xml — group argos_layer1,
+    mitre T1110, level 12) fluye a un NormalizedAlert L1 + T1110 + HIGH, que el
+    Tier Router (Capa 1 sola, high-fidelity) rutea a Tier 2 (aprobación, RF-3)."""
+    raw = {
+        "timestamp": "2026-07-15T09:00:00+00:00",
+        "rule": {
+            "id": "100300",
+            "level": 12,
+            "description": "ARGOS Layer 1: fuerza bruta SSH detectada desde 203.0.113.7",
+            "groups": ["syslog", "sshd", "argos_layer1", "authentication_failures"],
+            "mitre": {"id": ["T1110"]},
+        },
+        "agent": {"id": "010", "name": "web-prod-01", "ip": "10.0.0.5"},
+        "id": "ssh-bruteforce-1",
+        "data": {"srcip": "203.0.113.7"},
+    }
+    alert = mapping.normalize(raw)
+    assert alert is not None
+    assert alert.source_layer == Layer.LAYER_1
+    assert alert.technique_mitre == "T1110"
+    assert alert.severity_score == 0.8  # level 12 / 15
+    assert alert.severity_label == Severity.HIGH  # >= 0.74
+    assert alert.host_id == "web-prod-01"
+    # La IP atacante (data.srcip) llega como network_info: la necesita la
+    # contención quirúrgica downstream (block-ip / HU-8).
+    assert alert.network_info == {"src_ip": "203.0.113.7"}
+
+
+# -- group map config-driven (Fase 2, RF-2/HU-7) ------------------------------
+
+
+def test_group_map_default_when_unset(monkeypatch) -> None:
+    """Sin ARGOS_BRIDGE_GROUP_MAP: los 2 defaults; native sshd sigue en None."""
+    monkeypatch.delenv("ARGOS_BRIDGE_GROUP_MAP", raising=False)
+    assert mapping.source_layer_from_groups(["argos_layer1"]) == Layer.LAYER_1
+    assert mapping.source_layer_from_groups(["argos_layer3"]) == Layer.LAYER_3
+    assert mapping.source_layer_from_groups(["syslog", "sshd"]) is None
+
+
+def test_group_map_from_file_adds_group(monkeypatch, tmp_path) -> None:
+    """Un archivo puede mapear un grupo nativo de Wazuh a una capa (config, no código)."""
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps({"authentication_failures": "layer_1"}), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    assert mapping.source_layer_from_groups(["authentication_failures"]) == Layer.LAYER_1
+
+
+def test_group_map_replaces_defaults(monkeypatch, tmp_path) -> None:
+    """El archivo REEMPLAZA (no merge): sin argos_layer1 en el archivo, ya no matchea."""
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps({"otro_grupo": "layer_2"}), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    assert mapping.source_layer_from_groups(["otro_grupo"]) == Layer.LAYER_2
+    assert mapping.source_layer_from_groups(["argos_layer1"]) is None
+
+
+def test_group_map_invalid_layer_is_fail_loud(monkeypatch, tmp_path) -> None:
+    """Capa inválida → ValueError al cargar (no silenciar toda la detección)."""
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps({"grupo": "layer_9"}), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    with pytest.raises(ValueError, match="capa inválida"):
+        mapping.load_group_map()
+
+
+def test_group_map_not_a_dict_is_fail_loud(monkeypatch, tmp_path) -> None:
+    cfg = tmp_path / "group_map.json"
+    cfg.write_text(json.dumps(["no", "es", "objeto"]), encoding="utf-8")
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(cfg))
+    with pytest.raises(ValueError, match="objeto JSON"):
+        mapping.load_group_map()
+
+
+def test_group_map_missing_file_is_fail_loud(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("ARGOS_BRIDGE_GROUP_MAP", str(tmp_path / "no_existe.json"))
+    with pytest.raises(FileNotFoundError):
+        mapping.load_group_map()

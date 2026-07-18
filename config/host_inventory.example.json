@@ -1,12 +1,7 @@
 {
-  "LIN-VICTIM-01": {
-    "criticality": "production_critical",
-    "ip": "192.168.56.21",
-    "os": "Debian 12"
-  },
-  "WIN-VICTIM-01": {
+  "my-linux-server": {
     "criticality": "standard",
-    "ip": "192.168.56.20",
-    "os": "Windows 10"
+    "ip": "10.0.0.10",
+    "os": "Ubuntu Server 24.04"
   }
 }

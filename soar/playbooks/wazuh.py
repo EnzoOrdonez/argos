@@ -34,12 +34,14 @@ DEFAULT_RUN_COMMANDS: dict[ActionType, str] = {
     ActionType.DISK_SNAPSHOT: "argos-snapshot",
     ActionType.HOST_ISOLATION: "argos-isolate",
     ActionType.PROCESS_KILL: "argos-kill",
+    ActionType.BLOCK_IP: "argos-block-ip",
 }
 # Reverts con comando AR propio. Snapshot y kill no tienen revert remoto:
 # snapshot es no-op (§7.6) y un kill no se "des-mata".
 DEFAULT_REVERT_COMMANDS: dict[ActionType, str] = {
     ActionType.PROCESS_THROTTLE: "argos-unthrottle",
     ActionType.HOST_ISOLATION: "argos-unisolate",
+    ActionType.BLOCK_IP: "argos-unblock-ip",
 }
 
 

@@ -131,6 +131,33 @@ async def test_t2_timeout_production_critical_espera_sin_auto_execute(make_incid
     assert spy.incidents == []
 
 
+async def test_require_approval_blocks_t2_timeout_failsafe(make_incident):
+    """Rail airtight (RF-4, Gate 2): con require_approval, el failsafe de timeout
+    NO auto-aísla a un host estándar sin votos — a diferencia del comportamiento
+    default (test_t2_timeout_sin_votos_host_estandar_aplica_failsafe), que sí cierra
+    con EXECUTE_ISOLATION. Segundo camino de auto-ejecución sin humano, gateado."""
+    r = FakeAsyncRedis(decode_responses=True)
+    incident = make_incident(tier=Tier.T2, host=_standard_host())
+    await save_incident(r, incident)
+    memory, spy, sleep = MemorySink(), _DecisionSpy(), _InstantSleep()
+    scheduler = WindowScheduler(
+        r,
+        audit=AuditLogger([memory]),
+        on_decision=spy,
+        sleep=sleep,
+        require_approval=True,
+    )
+
+    await scheduler.start_t2_timeout(incident.incident_id)
+
+    final = await load_incident(r, incident.incident_id)
+    assert final.final_decision is None  # el rail bloqueó el failsafe
+    assert final.state == IncidentState.AWAITING_APPROVAL
+    assert memory.kinds() == ["timeout_wait"]
+    assert spy.incidents == []
+    assert sleep.delays == [180]
+
+
 async def test_t2_timeout_con_decision_previa_no_hace_nada(make_incident):
     r = FakeAsyncRedis(decode_responses=True)
     incident = make_incident(tier=Tier.T2, host=_standard_host())
