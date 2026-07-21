@@ -22,6 +22,7 @@ import sys
 import redis.asyncio as redis
 
 from argos_contracts.incident import Incident
+from soar.approval_api.callback_state import RedisCallbackStateSink
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.consumer import SOARConsumer
@@ -43,16 +44,62 @@ def _env_flag(name: str, default: bool) -> bool:
 
 
 def _build_notifier() -> NotificationService:
-    """Canales reales solo si hay credenciales en el entorno (fail-soft)."""
+    """Compone canales completos; una configuracion parcial falla al arrancar."""
     channels: list[NotificationChannel] = []
+    state_sink: RedisCallbackStateSink | None = None
+
+    def callback_state() -> RedisCallbackStateSink:
+        nonlocal state_sink
+        if state_sink is None:
+            state_sink = RedisCallbackStateSink(
+                os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+            )
+        return state_sink
+
     if os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID"):
+        from soar.approval_api.jwt_signer import ApprovalSigner
+        from soar.approval_api.webhook_auth import (
+            TelegramWebhookAuth,
+            WebhookConfigurationError,
+        )
         from soar.notifications.channels.telegram import TelegramChannel
 
-        channels.append(TelegramChannel())
+        signer = ApprovalSigner.from_env()
+        telegram_auth = TelegramWebhookAuth.from_env()
+        if signer is None or telegram_auth is None:
+            raise WebhookConfigurationError(
+                "Telegram notifications with approval buttons require authenticated callbacks"
+            )
+        store = callback_state()
+        channels.append(
+            TelegramChannel(
+                signer=signer,
+                token_sink=store.store_telegram_token,
+            )
+        )
     if os.environ.get("DISCORD_WEBHOOK_URL"):
         from soar.notifications.channels.discord import DiscordChannel
 
         channels.append(DiscordChannel())
+    if os.environ.get("TWILIO_ACCOUNT_SID") or os.environ.get("TWILIO_AUTH_TOKEN"):
+        from soar.approval_api.webhook_auth import (
+            TwilioWebhookAuth,
+            WebhookConfigurationError,
+        )
+        from soar.notifications.channels.twilio_voice import TwilioVoiceChannel
+
+        twilio_auth = TwilioWebhookAuth.from_env()
+        if twilio_auth is None:
+            raise WebhookConfigurationError(
+                "Twilio voice approvals require authenticated callbacks"
+            )
+        store = callback_state()
+        channels.append(
+            TwilioVoiceChannel(
+                public_base_url=twilio_auth.public_base_url,
+                request_sink=store.store_twilio_request,
+            )
+        )
     return NotificationService(channels)
 
 
