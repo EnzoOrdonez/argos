@@ -69,12 +69,12 @@ def _format(incident: Incident) -> str:
 
 def _inline_keyboard(
     incident_id: str,
-    jti_approve: str | None = None,
-    jti_reject: str | None = None,
+    jti_approve: str,
+    jti_reject: str,
 ) -> dict[str, object]:
-    """Sin jtis: formato legacy de Fase 2. Con jtis: `accion:incident:jti`."""
-    approve = f"approve:{incident_id}" + (f":{jti_approve}" if jti_approve else "")
-    reject = f"reject:{incident_id}" + (f":{jti_reject}" if jti_reject else "")
+    """Build signed, server-side token references. Legacy buttons are forbidden."""
+    approve = f"approve:{incident_id}:{jti_approve}"
+    reject = f"reject:{incident_id}:{jti_reject}"
     return {
         "inline_keyboard": [
             [
@@ -114,14 +114,13 @@ class TelegramChannel(NotificationChannel):
         self._token_sink = token_sink
 
     def _signed_keyboard(self, incident_id: str) -> dict[str, object]:
-        if self._signer is None:
-            return _inline_keyboard(incident_id)
-        approver = f"telegram:{self._chat_id}"
+        if self._signer is None or self._token_sink is None:
+            raise RuntimeError("authenticated Telegram approvals are not configured")
+        approver = f"telegram-chat:{self._chat_id}"
         token_a, jti_a = self._signer.sign_approval(incident_id, approver, "approve")
         token_r, jti_r = self._signer.sign_approval(incident_id, approver, "reject")
-        if self._token_sink is not None:
-            self._token_sink(jti_a, token_a, self._signer.ttl_seconds)
-            self._token_sink(jti_r, token_r, self._signer.ttl_seconds)
+        self._token_sink(jti_a, token_a, self._signer.ttl_seconds)
+        self._token_sink(jti_r, token_r, self._signer.ttl_seconds)
         return _inline_keyboard(incident_id, jti_a, jti_r)
 
     def dispatch(self, incident: Incident) -> DispatchResult:
@@ -131,11 +130,11 @@ class TelegramChannel(NotificationChannel):
             "text": _format(incident),
             "parse_mode": "MarkdownV2",
         }
-        # Botones cuando hay espera humana (T2 o two-person, ADR-0013 §7.9).
-        # `requires_approval` se DERIVA; no es un campo del Incident en v1.1.0.
-        if _needs_buttons(incident):
-            body["reply_markup"] = self._signed_keyboard(incident.incident_id)
         try:
+            # Botones cuando hay espera humana (T2 o two-person, ADR-0013 §7.9).
+            # `requires_approval` se DERIVA; no es un campo del Incident en v1.1.0.
+            if _needs_buttons(incident):
+                body["reply_markup"] = self._signed_keyboard(incident.incident_id)
             response = self._client.post(_API.format(token=self._token), json=body)
             response.raise_for_status()
             payload = response.json()
@@ -149,10 +148,17 @@ class TelegramChannel(NotificationChannel):
             return DispatchResult(
                 channel=self.channel_type, success=True, latency_ms=_elapsed_ms(started)
             )
-        except httpx.HTTPError as exc:
+        except httpx.HTTPError:
             return DispatchResult(
                 channel=self.channel_type,
                 success=False,
                 latency_ms=_elapsed_ms(started),
-                error=f"http: {exc}",
+                error="Telegram provider request failed",
+            )
+        except Exception as exc:
+            return DispatchResult(
+                channel=self.channel_type,
+                success=False,
+                latency_ms=_elapsed_ms(started),
+                error=f"Telegram approval state failed: {type(exc).__name__}",
             )

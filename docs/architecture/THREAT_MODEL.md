@@ -326,6 +326,23 @@ Future expansions (out of scope for v1.0):
 
 ---
 
+### 9.1 Approval callback control status (2026-07-20)
+
+ADR-0016 implements the previously planned controls for T-063, T-068 and
+T-069: Telegram callbacks require the provider secret, an allowlisted
+individual user, the expected chat and a signed single-use token. Telegram
+Incident mutation, versioned receipt creation and JTI deletion commit
+atomically, so a failed commit remains retryable and a confirmed vote rejects
+replay. Twilio callbacks require the official provider signature, an outbound CallSid bound
+to the incident through a pre-call correlation, and an atomic versioned vote
+receipt. Incident mutation and receipt commit together; post-vote effects use
+a durable lease so controlled failures are retryable. Callback state is
+TTL-bound in Redis and state-store failure blocks call creation or voting.
+Residual risks include compromised provider accounts/devices, Redis
+availability, lack of rate limiting, a crash after an external effect but
+before receipt completion, and the absence of OIDC subject binding and ARGOS
+RBAC; those controls remain required before production readiness.
+
 ## 10. Change log
 
 | Version | Date | Change | Author |
@@ -337,6 +354,8 @@ Future expansions (out of scope for v1.0):
 | 1.4 | Week 7 calendar | P-002 mitigation updated to reflect reality: removed "Friday demo" (practice not adopted), kept Monday standup + cross-layer code review + per-module READMEs. Risk score unchanged at High because removed mitigation was aspirational. | P1 |
 | 1.5 | 2026-05-24 | Cleanup pass: T-030 actualizado (riesgo H→M tras cambio a OpenAI US-based + Llama local fallback per ADR-0001 v2); F-001 sincronizado al failover OpenAI→Llama local. T-070 añadido (Discord webhook leak) per ADR-0007 v2. Owner actualizado a Enzo Ordoñez Flores. | P1 |
 | 1.6 | 2026-07-15 | Honesty pass (transición OSS): T-030 reconciliado a ADR-0001 v3 (backend real NVIDIA NIM, jurisdicción US — se elimina la contradicción "US-based" vs "China-based" heredada de v1); F-001 y R-8 dejan de describir el failover a Llama local como automático (está diseñado pero diferido/no cableado); la sesión red-team "Week 13" se marca como no realizada (el lab nunca arrancó end-to-end). | P1 |
+| 1.7 | 2026-07-20 | ADR-0016 records authenticated Telegram and Twilio callbacks, Redis-backed replay controls, and the remaining OIDC/RBAC and rate-limit gaps. | Security architecture |
+| 1.8 | 2026-07-20 | Telegram JTI consumption moved into the atomic Incident/receipt transaction; transient failure, replay and real-Redis concurrency verified. | Security architecture |
 
 ---
 

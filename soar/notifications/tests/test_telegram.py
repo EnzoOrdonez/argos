@@ -26,6 +26,14 @@ def _channel(**kwargs: object) -> TelegramChannel:
     )
 
 
+def _signed_channel(**kwargs: object) -> TelegramChannel:
+    return _channel(
+        signer=ApprovalSigner(secret="s3cret-de-test-0123456789abcdef-32B+"),
+        token_sink=lambda _jti, _token, _ttl: None,
+        **kwargs,
+    )
+
+
 def _standard_host() -> HostInfo:
     return HostInfo(
         id="WIN-VICTIM-01", criticality=Criticality.STANDARD, ip="10.0.0.21", os="Win11"
@@ -46,9 +54,9 @@ def test_format_uses_contract_fields(make_incident):
 
 
 def test_inline_keyboard_has_approve_and_reject():
-    btns = _inline_keyboard("INC-2026-05-30-001")["inline_keyboard"][0]
-    assert btns[0]["callback_data"] == "approve:INC-2026-05-30-001"
-    assert btns[1]["callback_data"] == "reject:INC-2026-05-30-001"
+    btns = _inline_keyboard("INC-2026-05-30-001", "a1", "r1")["inline_keyboard"][0]
+    assert btns[0]["callback_data"] == "approve:INC-2026-05-30-001:a1"
+    assert btns[1]["callback_data"] == "reject:INC-2026-05-30-001:r1"
 
 
 def test_dispatch_success_no_buttons_for_t0_standard(make_incident):
@@ -67,7 +75,7 @@ def test_dispatch_t1_production_critical_lleva_botones(make_incident):
     """ADR-0013 §7.9: botones por espera humana, no por tier. UC-04 = T1+critico."""
     with respx.mock:
         route = respx.post(_URL).mock(return_value=httpx.Response(200, json={"ok": True}))
-        _channel().dispatch(make_incident(tier=Tier.T1))  # host default: critico
+        _signed_channel().dispatch(make_incident(tier=Tier.T1))
     body = json.loads(route.calls.last.request.content)
     assert "reply_markup" in body
 
@@ -98,7 +106,7 @@ def test_dispatch_con_signer_manda_jti_corto_y_persiste_tokens(make_incident):
 def test_dispatch_t2_includes_inline_keyboard(make_incident):
     with respx.mock:
         route = respx.post(_URL).mock(return_value=httpx.Response(200, json={"ok": True}))
-        r = _channel().dispatch(make_incident(tier=Tier.T2))
+        r = _signed_channel().dispatch(make_incident(tier=Tier.T2))
     assert r.success is True
     body = json.loads(route.calls.last.request.content)
     cb = body["reply_markup"]["inline_keyboard"][0][0]["callback_data"]
@@ -110,7 +118,7 @@ def test_dispatch_telegram_not_ok_is_failure(make_incident):
         respx.post(_URL).mock(
             return_value=httpx.Response(200, json={"ok": False, "description": "chat not found"})
         )
-        r = _channel().dispatch(make_incident(tier=Tier.T0))
+        r = _channel().dispatch(make_incident(tier=Tier.T0, host=_standard_host()))
     assert r.success is False
     assert "chat not found" in (r.error or "")
 
@@ -118,6 +126,25 @@ def test_dispatch_telegram_not_ok_is_failure(make_incident):
 def test_dispatch_http_error_is_contained(make_incident):
     with respx.mock:
         respx.post(_URL).mock(return_value=httpx.Response(500))
-        r = _channel().dispatch(make_incident(tier=Tier.T0))
+        r = _channel().dispatch(make_incident(tier=Tier.T0, host=_standard_host()))
     assert r.success is False
-    assert "http" in (r.error or "")
+    assert r.error == "Telegram provider request failed"
+    assert "test-token" not in r.error
+
+
+def test_dispatch_state_failure_is_contained_without_sending(make_incident):
+    def failing_sink(jti: str, token: str, ttl: int) -> None:
+        raise RuntimeError("sensitive provider endpoint detail")
+
+    signer = ApprovalSigner(secret="s3cret-de-test-0123456789abcdef-32B+")
+    with respx.mock:
+        route = respx.post(_URL).mock(
+            return_value=httpx.Response(200, json={"ok": True})
+        )
+        r = _channel(signer=signer, token_sink=failing_sink).dispatch(
+            make_incident(tier=Tier.T2)
+        )
+    assert r.success is False
+    assert r.error == "Telegram approval state failed: RuntimeError"
+    assert "sensitive" not in r.error
+    assert route.call_count == 0

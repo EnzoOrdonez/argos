@@ -10,18 +10,16 @@ single-use, atado al `incident_id`. El snippet de 600s en ADR-0010 es
 ilustrativo; la política de token la fija ADR-0006.
 
 Telegram limita `callback_data` a 64 bytes, así que el botón lleva
-`accion:incident_id:jti` (~37 bytes) y el token completo vive en Redis
-(`jwt:tok:{jti}`, TTL = exp). El callback lo resuelve y CONSUME con GETDEL:
-un `jti` usado desaparece y el replay muere ahí (T-063 del threat model).
+`accion:incident_id:jti` (~37 bytes) y el token completo vive en Redis. El
+callback valida el token bajo WATCH y confirma conjuntamente el Incident, el
+recibo durable y la eliminación del JTI (T-063 del threat model).
 
-Secreto: `ARGOS_JWT_SECRET` (nombre de ADR-0010 §4.4) con fallback al
-`JWT_SECRET` que `.env.example` define desde la semana 1. Nunca commiteado.
-Sin secreto configurado el API opera en modo legacy sin firma (Fase 2).
+Clave de firma: `ARGOS_JWT_SECRET` (nombre de ADR-0010 §4.4). Nunca commiteada.
+Sin un secreto robusto el canal de Telegram no puede emitir ni aceptar votos.
 """
 
 from __future__ import annotations
 
-import logging
 import os
 import secrets
 import time
@@ -31,7 +29,7 @@ from typing import Any, Literal
 import jwt
 import redis.asyncio as redis
 
-logger = logging.getLogger(__name__)
+from soar.approval_api.callback_state import TELEGRAM_TOKEN_KEY
 
 # RFC 7518 §3.2: la clave HMAC para HS256 debe medir al menos el tamano del
 # hash (32 bytes). Por debajo se degrada la resistencia a fuerza bruta.
@@ -43,7 +41,11 @@ DEFAULT_EXPIRATION_MINUTES = 5  # ADR-0006 §política JWT
 
 Decision = Literal["approve", "reject"]
 
-_TOKEN_KEY = "jwt:tok:{jti}"  # noqa: S105  plantilla de clave Redis, no un secreto
+_KNOWN_PLACEHOLDERS = {
+    "replace-with-random-256-bit-secret",
+    "change-me",
+    "changeme",
+}
 
 
 class TokenInvalid(Exception):  # noqa: N818  nombre público estable (lo capturan otras capas)
@@ -57,16 +59,18 @@ class ApprovalSigner:
 
     def __post_init__(self) -> None:
         if len(self.secret.encode()) < MIN_SECRET_BYTES:
-            logger.warning(
-                "ARGOS_JWT_SECRET mide %d bytes; RFC 7518 §3.2 pide >= %d para HS256",
-                len(self.secret.encode()),
-                MIN_SECRET_BYTES,
+            raise ValueError(
+                f"ARGOS_JWT_SECRET must be at least {MIN_SECRET_BYTES} bytes"
             )
+        if self.secret.strip().lower() in _KNOWN_PLACEHOLDERS:
+            raise ValueError("ARGOS_JWT_SECRET cannot use a known placeholder")
+        if self.expiration_minutes <= 0:
+            raise ValueError("JWT_EXPIRATION_MINUTES must be positive")
 
     @classmethod
     def from_env(cls) -> ApprovalSigner | None:
-        """Signer desde el entorno, o None (modo legacy) si no hay secreto."""
-        secret = os.environ.get("ARGOS_JWT_SECRET") or os.environ.get("JWT_SECRET")
+        """Signer desde el entorno, o None para mantener el canal deshabilitado."""
+        secret = os.environ.get("ARGOS_JWT_SECRET")
         if not secret:
             return None
         minutes = int(
@@ -96,7 +100,12 @@ class ApprovalSigner:
         return jwt.encode(payload, self.secret, algorithm=ALGORITHM), jti
 
     def verify_approval(
-        self, token: str, *, expected_incident: str, expected_decision: str
+        self,
+        token: str,
+        *,
+        expected_incident: str,
+        expected_decision: str,
+        expected_subject: str | None = None,
     ) -> dict[str, Any]:
         """Valida firma, algoritmo (solo HS256), exp, iss y el binding al
         incidente y la decisión del botón. Lanza TokenInvalid si algo no calza."""
@@ -107,7 +116,15 @@ class ApprovalSigner:
                 algorithms=[ALGORITHM],
                 issuer=ISSUER,
                 options={
-                    "require": ["exp", "iat", "iss", "sub", "jti"],
+                    "require": [
+                        "exp",
+                        "iat",
+                        "iss",
+                        "sub",
+                        "jti",
+                        "incident_id",
+                        "decision",
+                    ],
                 },
             )
         except jwt.InvalidTokenError as exc:
@@ -116,14 +133,11 @@ class ApprovalSigner:
             raise TokenInvalid("incident_id no coincide con el boton")
         if payload.get("decision") != expected_decision:
             raise TokenInvalid("decision no coincide con el boton")
+        if expected_subject is not None and payload.get("sub") != expected_subject:
+            raise TokenInvalid("sub no coincide con el chat autorizado")
         return payload
 
 
 async def store_token(r: redis.Redis, jti: str, token: str, ttl_seconds: int) -> None:
     """Guarda el token completo resoluble server-side (TTL = exp)."""
-    await r.set(_TOKEN_KEY.format(jti=jti), token, ex=ttl_seconds)
-
-
-async def consume_token(r: redis.Redis, jti: str) -> str | None:
-    """Resuelve y CONSUME el token (GETDEL): single-use, el replay no existe."""
-    return await r.getdel(_TOKEN_KEY.format(jti=jti))
+    await r.set(TELEGRAM_TOKEN_KEY.format(jti=jti), token, ex=ttl_seconds)
