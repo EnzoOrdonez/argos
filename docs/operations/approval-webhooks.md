@@ -39,11 +39,22 @@ the signed TwiML callback consumes it and creates the CallSid binding.
 
 ## Deferred gates
 
-- PR-01B owns executor idempotency and crash recovery.
+PR-01A was implemented by PR #11 and merged into `main` as
+`074c0be945b6755df2184b75eb4829b054fa9266`. The identifiers below are planned
+work streams, not evidence that remote pull requests already exist:
+
+- PR-01B1 owns fail-closed executor selection by deployment environment.
+- PR-01B2 owns the durable execution journal and abandoned-effect reconciliation.
+- PR-01B3 owns Wazuh/endpoint idempotency and Windows/Linux recovery validation.
 - PR-R01 owns PostgresSink connection timeout and lifecycle.
 - PR-Q01 owns the general mypy baseline.
 - PR-SC01 owns Pillow/setuptools remediation.
 - PR-D01 owns the complete Twilio dispatch outbox.
+
+PR #11 CI validated the isolated callback behavior on Python 3.11 and 3.12,
+Ruff, and `mypy argos_contracts`. It did not exercise live Telegram/Twilio
+provider credentials, a real Wazuh response chain, or Windows/Linux
+containment. Treat those as explicit E2E gates, not implied support.
 
 ## Safe rollback
 

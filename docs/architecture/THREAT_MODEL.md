@@ -5,13 +5,13 @@
 | Field | Value |
 |-------|-------|
 | Document type | Threat Model + Failure Mode Analysis (FMEA) + Risk Register |
-| Version | 1.3 |
-| Status | Baseline · Approved at Kickoff · Updated with ADR-0007 threats + W7 audit pass |
+| Version | 1.9 |
+| Status | Living baseline · Updated through PR #11 and ADR-0016 |
 | Methodology | STRIDE (security) + FMEA (reliability) + Project Risk Register |
 | Course | Tópicos Avanzados de Ciberseguridad · 2026-1 |
 | Owner | P1 (Enzo Ordoñez Flores) |
 | Reviewers | P2, P3, P4 |
-| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `argos_flow.html` (flujo + ownership), ADRs 0001-0008 |
+| Related | `SOLUTION_ARCHITECTURE_DOCUMENT.md`, `argos_flow.html` (flujo + ownership), ADRs 0001-0008 and ADR-0016 |
 
 ---
 
@@ -126,13 +126,13 @@ The introduction of email-based approval flow (ADR-0003) and multi-recipient not
 | T-060 | Approval token (JWT) | Attacker intercepts approval email and uses the token to approve a malicious action or reject contention of their own attack | M | H | **High** | JWT signed with rotating secret, expiration 5 minutes, single-use (token invalidated after first response), TLS-only delivery, conservative-wins policy ensures single rejection cannot block contention if at least one approver also approves | Medium — accept residual: full mitigation requires email transport security beyond our control |
 | T-061 | Email delivery | Attacker spoofs approval response by sending fake email to approval API endpoint | M | H | **High** | Approval API only accepts requests via the JWT-tokenized URL, not via email reply parsing; URL hits HTTPS endpoint with token validation | Low |
 | T-062 | Compromised approver authentication on any notification channel | Attacker with access to one approver's authenticated session (email mailbox in v1 design / Telegram session / Slack workspace / Twilio phone) votes "reject" on legitimate threats | M | M | Medium | Conservative-wins (ADR-0006) — single reject cannot block contention if any other approver approves; audit log shows each individual vote with the source channel; suspicious pattern of rejects from one identity becomes detectable. **Note (Semana 7):** ADR-0007 degraded email to post-facto-only, so the email-mailbox vector for this threat is mitigated structurally. Primary attack surface today is Telegram session hijack — see T-067 (SIM-swap), T-069 (bot token leak). | Low — intentional design choice; channel diversification (ADR-0007) further reduces single-channel compromise impact |
-| T-063 | Token replay | Attacker captures token from past email and replays it on new incident | L | M | Low | Tokens bound to specific incident_id; reused tokens rejected; tokens expire after 5 min absolute time | Negligible |
-| T-064 | Defensive DoS via rejection flooding | Attacker triggers many T2/T3 alerts and floods approver inbox to delay legitimate responses | L | M | Low | Per-incident dedup by alert hash; rate limit on email sends per minute; T2/T3 with no response after timeout escalates to conservative auto-execute (ADR-0003) | Low |
+| T-063 | Approval token replay | Attacker captures a Telegram approval token and replays it, including after a transient persistence failure or against a different incident | L | H | Medium | JWT is signed, expires, and is bound to one incident. Redis watches the JTI while validating it; Incident mutation, a versioned vote receipt, and JTI deletion commit atomically. Failed commits leave the JTI retryable; a confirmed receipt rejects replay and concurrent double mutation | Low — Redis availability is required and blocks voting when unavailable |
+| T-064 | Defensive DoS via approval flooding | Attacker triggers many T2/T3 alerts and floods approval channels to delay legitimate responses | M | M | Medium | Per-incident state and approval windows limit duplicate mutation. With `ARGOS_REQUIRE_APPROVAL=true`, timeout does not auto-execute containment; production policy requires this rail. Endpoint and channel rate limiting is not implemented yet | Medium — notification flooding and resource exhaustion remain until rate limits and quotas are added |
 | T-065 | Phishing of approvers | Attacker sends fake "approval needed" email tricking approver to click malicious link mimicking ARGOS | M | H | High | Approval emails sent only from designated `argos-noreply@` domain, links only to internal ARGOS dashboard URL (verifiable), training note in onboarding for approvers, optional DKIM/SPF strict | Medium — phishing always partially residual |
 | T-066 | Audit log tampering | Attacker modifies decision audit log to hide that they rejected a contention | L | H | Medium | Audit log written to OpenSearch with append-only index settings, sequence numbers, daily snapshot to immutable storage | Low |
 | T-067 | SIM-swap del aprobador | Atacante toma control del número telefónico del aprobador (vía social engineering al carrier o port-out) y aprueba/rechaza vía Telegram (re-login con SMS), Twilio voice, o re-establece sesión en cualquier canal vinculado al teléfono | L | H | Medium | Conservative-wins (ADR-0006) protege contra rechazos malintencionados; detectar nueva sesión Telegram con notificación cruzada por ntfy y Slack al aprobador legítimo; idealmente, exigir al aprobador habilitar 2FA app-based en sus canales (no SMS) | Medium — fuera del control técnico del sistema; mitigación principal es educación + multi-canal |
-| T-068 | Caller-ID spoofing al webhook Twilio | Atacante llama al endpoint Twilio simulando ser el aprobador (ANI spoofing) y emite DTMF para aprobar/rechazar contención falsa | L | H | Medium | Aceptar callbacks DTMF únicamente cuando estén correlacionados con una llamada *saliente activa* iniciada por ARGOS (correlation_id en la sesión Twilio); nunca aceptar inbound calls como votos válidos; rate-limit por número origen | Low |
-| T-069 | Compromise del bot Telegram (token leakage) | Atacante con el bot token puede leer mensajes del bot y aprobar en nombre del bot, o suplantar al bot en chats nuevos | L | H | Medium | Bot token en secreto rotable (`.env` con permisos 0600 en v1, Vault en producción); el bot únicamente *envía* mensajes, las respuestas se validan contra `chat_id` esperado del aprobador (no contra el remitente del callback); rotación inmediata si se sospecha leak | Low |
+| T-068 | Forged Twilio callback / caller identity | Attacker submits DTMF directly or tampers with the callback URL/body to approve or reject containment | M | H | **High** | Validate `X-Twilio-Signature` against the exact configured public URL and form body; persist a random pre-call correlation before dispatch; atomically bind its signed TwiML callback to the outbound CallSid; accept one versioned vote receipt per bound CallSid | Medium — provider-account compromise, missing rate limits, and dispatch duplication remain separate risks |
+| T-069 | Telegram bot or approver compromise | Attacker with the bot token or an approver session attempts to submit a forged vote | M | H | **High** | Keep the bot token outside git; require Telegram's webhook secret, expected chat, an explicit allowlist of individual sender IDs, and the signed single-use incident token; rotate credentials on suspected compromise | Medium — a compromised allowlisted user/device remains authorized until removed or rotated; OIDC/RBAC are pending |
 
 ---
 
@@ -207,7 +207,7 @@ Reliability failures — no adversary required. Numbered F-NNN.
 | ID | Failure mode | Effect | Detection | Mitigation | Degradation |
 |----|--------------|--------|-----------|------------|-------------|
 | F-050 | Decision Engine crashes mid-incident | Containment doesn't trigger | Service heartbeat, alert on miss | systemd auto-restart, persistent queue (Redis) survives crash, on restart processes queued alerts | Brief delay, alerts not lost |
-| F-051 | Containment playbook fails (e.g., iptables command errors) | Host not isolated despite alert | Playbook logs return code, alert on failure | Playbooks idempotent; retry once; escalate to manual on second failure | Manual containment fallback |
+| F-051 | Containment playbook fails or the worker crashes around an external effect | Host may remain uncontained, or an effect may be attempted again after restart | Execution result, audit event, and callback effects lease | Logical incident/receipt guards prevent duplicate vote mutation, but durable executor idempotency and abandoned-effect reconciliation remain planned as PR-01B1/PR-01B2/PR-01B3 work. Do not blindly retry an ambiguous external effect | Fail closed and escalate ambiguous execution to manual recovery until durable reconciliation is implemented |
 | F-052 | Race: attack progresses faster than detection chain | Files encrypted before isolation | Time-to-detect metric tracked per incident | Capa 3 (canary) gives ultra-early signal; isolation playbook completes <5s after trigger; **for T2/T3 with human approval, proactive throttle during countdown bounds damage** | Documented limitation; minimum theoretical TTD ~3-5s; throttle effectiveness target ≥90% of files preserved during T2 countdown |
 
 ---
@@ -326,7 +326,7 @@ Future expansions (out of scope for v1.0):
 
 ---
 
-### 9.1 Approval callback control status (2026-07-20)
+### 9.1 Approval callback control status (2026-07-21)
 
 ADR-0016 implements the previously planned controls for T-063, T-068 and
 T-069: Telegram callbacks require the provider secret, an allowlisted
@@ -343,6 +343,14 @@ availability, lack of rate limiting, a crash after an external effect but
 before receipt completion, and the absence of OIDC subject binding and ARGOS
 RBAC; those controls remain required before production readiness.
 
+PR #11 merged the ADR-0016 implementation into `main` as merge commit
+`074c0be945b6755df2184b75eb4829b054fa9266` from implementation commit
+`11d945aa04ce278099b832ac39b34ff2a846ff5b`. Its GitHub CI checks passed on
+Python 3.11, Python 3.12, Ruff, and the incrementally scoped
+`mypy argos_contracts` check. This is not provider or endpoint E2E validation:
+no production Telegram/Twilio credentials, real Wazuh response chain, or
+Windows/Linux containment action was exercised by that CI run.
+
 ## 10. Change log
 
 | Version | Date | Change | Author |
@@ -356,6 +364,7 @@ RBAC; those controls remain required before production readiness.
 | 1.6 | 2026-07-15 | Honesty pass (transición OSS): T-030 reconciliado a ADR-0001 v3 (backend real NVIDIA NIM, jurisdicción US — se elimina la contradicción "US-based" vs "China-based" heredada de v1); F-001 y R-8 dejan de describir el failover a Llama local como automático (está diseñado pero diferido/no cableado); la sesión red-team "Week 13" se marca como no realizada (el lab nunca arrancó end-to-end). | P1 |
 | 1.7 | 2026-07-20 | ADR-0016 records authenticated Telegram and Twilio callbacks, Redis-backed replay controls, and the remaining OIDC/RBAC and rate-limit gaps. | Security architecture |
 | 1.8 | 2026-07-20 | Telegram JTI consumption moved into the atomic Incident/receipt transaction; transient failure, replay and real-Redis concurrency verified. | Security architecture |
+| 1.9 | 2026-07-22 | Reconciled T-063/T-064/T-068/T-069 and F-051 with merged PR #11; recorded the executor-idempotency, rate-limit, identity, and E2E validation gaps without treating planned work as implemented. | Security architecture |
 
 ---
 
