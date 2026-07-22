@@ -1,41 +1,57 @@
-"""Factory del ResponseExecutor, conmutado por `ARGOS_EXECUTOR` (ADR-0015 §2.1).
+"""Fail-closed response-executor selection (ADR-0017).
 
-Vive en el paquete `soar` (no en `scripts/`) para que el daemon consumer
-(`python -m soar.decision_engine`) lo use sin importar de `scripts/`. `scripts/_runtime.py`
-lo re-exporta para no duplicar. Default `simulated` (demo-safe); `wazuh` usa el
-active-response real y degrada a simulated con warning si falta la config de Wazuh.
+The factory lives in ``soar`` so every operational entrypoint shares the same
+environment policy. Explicit non-live demos may instantiate ``SimulatedExecutor``
+directly without using this factory.
 """
 
 from __future__ import annotations
 
-import logging
 import os
 
 from soar.playbooks.base import ResponseExecutor
 
-logger = logging.getLogger(__name__)
+_ENVIRONMENTS = {"development", "test", "staging", "production"}
+_EXECUTORS = {"simulated", "wazuh"}
+_LIVE_ENVIRONMENTS = {"staging", "production"}
+_WAZUH_REQUIRED = ("WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD")
+
+
+class ExecutorConfigurationError(RuntimeError):
+    """The response executor cannot be selected safely from runtime configuration."""
 
 
 def make_executor() -> ResponseExecutor:
-    """SimulatedExecutor por defecto; WazuhActiveResponseExecutor con
-    `ARGOS_EXECUTOR=wazuh`. Degrada a simulated si el real no se puede construir."""
-    mode = os.environ.get("ARGOS_EXECUTOR", "simulated").strip().lower()
-    if mode == "wazuh":
-        try:
-            from soar.playbooks.wazuh import WazuhActiveResponseExecutor
+    """Build the explicitly selected executor or reject unsafe configuration."""
+    environment = os.environ.get("ENVIRONMENT", "").strip().lower()
+    if not environment:
+        raise ExecutorConfigurationError("ENVIRONMENT must be configured explicitly")
+    if environment not in _ENVIRONMENTS:
+        raise ExecutorConfigurationError("unsupported ENVIRONMENT value")
 
-            return WazuhActiveResponseExecutor()
-        except KeyError as exc:  # falta WAZUH_API_URL/USER/PASSWORD en el entorno
-            logger.warning(
-                "ARGOS_EXECUTOR=wazuh pero falta %s en el entorno; uso simulated", exc
-            )
-        except Exception as exc:  # cualquier fallo construyendo el real -> degradar
-            logger.warning(
-                "no pude crear WazuhActiveResponseExecutor (%s); uso simulated", exc
-            )
-    elif mode != "simulated":
-        logger.warning("ARGOS_EXECUTOR=%r desconocido; uso simulated", mode)
+    mode = os.environ.get("ARGOS_EXECUTOR", "").strip().lower()
+    if not mode:
+        raise ExecutorConfigurationError("ARGOS_EXECUTOR must be configured explicitly")
+    if mode not in _EXECUTORS:
+        raise ExecutorConfigurationError("unsupported ARGOS_EXECUTOR value")
+    if mode == "simulated" and environment in _LIVE_ENVIRONMENTS:
+        raise ExecutorConfigurationError(
+            f"ARGOS_EXECUTOR=simulated is not allowed in ENVIRONMENT={environment}"
+        )
 
-    from soar.playbooks.simulated import SimulatedExecutor
+    if mode == "simulated":
+        from soar.playbooks.simulated import SimulatedExecutor
 
-    return SimulatedExecutor()
+        return SimulatedExecutor()
+
+    missing = [name for name in _WAZUH_REQUIRED if not os.environ.get(name, "").strip()]
+    if missing:
+        raise ExecutorConfigurationError(
+            "missing required Wazuh configuration: " + ", ".join(missing)
+        )
+    try:
+        from soar.playbooks.wazuh import WazuhActiveResponseExecutor
+
+        return WazuhActiveResponseExecutor()
+    except Exception:
+        raise ExecutorConfigurationError("Wazuh executor initialization failed") from None

@@ -52,13 +52,14 @@ from soar.playbooks.factory import make_executor
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    executor = make_executor()
     app.state.redis = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
     # Composicion Fase 3 (ADR-0013): audit fail-soft, executor conmutado por
-    # ARGOS_EXECUTOR (default simulated; wazuh = active-response real) y los relojes.
+    # ENVIRONMENT + ARGOS_EXECUTOR (selección explícita; ADR-0017) y los relojes.
     # Antes hardcodeaba SimulatedExecutor -> la ejecucion de la decision final por
     # voto nunca era real; ahora honra el env, igual que el daemon consumer (Fase 5a).
     app.state.audit = AuditLogger([MemorySink()])
-    app.state.executor = make_executor()
+    app.state.executor = executor
     app.state.scheduler = WindowScheduler(app.state.redis, audit=app.state.audit)
     # Approval providers are disabled unless all authenticity controls exist.
     app.state.signer = ApprovalSigner.from_env()

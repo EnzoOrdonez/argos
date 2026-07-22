@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
 from fakeredis import FakeAsyncRedis
 
 from argos_contracts.alert import NormalizedAlert
@@ -13,7 +14,14 @@ from soar.decision_engine import __main__ as daemon
 from soar.decision_engine.consumer import GROUP, STREAM, SOARConsumer
 from soar.decision_engine.scheduler import WindowScheduler
 from soar.decision_engine.triage_hook import TriageClient
+from soar.playbooks.factory import ExecutorConfigurationError
 from soar.playbooks.simulated import SimulatedExecutor
+
+
+@pytest.fixture(autouse=True)
+def explicit_test_executor(monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
 
 
 def _t3_alert() -> NormalizedAlert:
@@ -31,7 +39,6 @@ def _t3_alert() -> NormalizedAlert:
 
 
 def test_build_consumer_wires_collaborators(monkeypatch) -> None:
-    monkeypatch.delenv("ARGOS_EXECUTOR", raising=False)
     monkeypatch.delenv("ARGOS_AUDIT_SQL_DSN", raising=False)
     monkeypatch.delenv("ARGOS_REQUIRE_APPROVAL", raising=False)
     r = FakeAsyncRedis(decode_responses=True)
@@ -72,12 +79,26 @@ def test_build_consumer_require_approval_off_by_env(monkeypatch) -> None:
     assert consumer._scheduler._require_approval is False
 
 
-def test_build_consumer_wazuh_without_config_degrades(monkeypatch) -> None:
+def test_build_consumer_wazuh_without_config_fails_closed(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_EXECUTOR", "wazuh")
     for var in ("WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD"):
         monkeypatch.delenv(var, raising=False)
-    consumer = daemon.build_consumer(FakeAsyncRedis(decode_responses=True))
-    assert isinstance(consumer._executor, SimulatedExecutor)  # degradó, no crasheó
+    with pytest.raises(ExecutorConfigurationError):
+        daemon.build_consumer(FakeAsyncRedis(decode_responses=True))
+
+
+def test_invalid_executor_fails_before_postgres_initialization(monkeypatch) -> None:
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
+    monkeypatch.setenv("ARGOS_AUDIT_SQL_DSN", "postgresql://unused")
+
+    def must_not_initialize(_dsn: str) -> None:
+        raise AssertionError("PostgresSink initialized before executor validation")
+
+    monkeypatch.setattr("soar.audit.postgres.PostgresSink", must_not_initialize)
+
+    with pytest.raises(ExecutorConfigurationError):
+        daemon.build_consumer(FakeAsyncRedis(decode_responses=True))
 
 
 async def test_amain_once_processes_and_returns(monkeypatch) -> None:
@@ -90,3 +111,16 @@ async def test_amain_once_processes_and_returns(monkeypatch) -> None:
 
     pending = await r.xpending(STREAM, GROUP)
     assert pending["pending"] == 0  # el entry se procesó y ackeó
+
+
+async def test_amain_rejects_invalid_executor_before_opening_redis(monkeypatch) -> None:
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
+
+    def must_not_open_redis(*_args, **_kwargs):
+        raise AssertionError("Redis opened before executor validation")
+
+    monkeypatch.setattr(daemon.redis, "from_url", must_not_open_redis)
+
+    with pytest.raises(ExecutorConfigurationError):
+        await daemon.amain(once=True)

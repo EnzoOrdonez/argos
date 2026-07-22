@@ -31,6 +31,7 @@ from soar.decision_engine.scheduler import WindowScheduler
 from soar.decision_engine.triage_hook import TriageClient
 from soar.notifications.base import NotificationChannel
 from soar.notifications.service import NotificationService
+from soar.playbooks.base import ResponseExecutor
 from soar.playbooks.factory import make_executor
 
 logger = logging.getLogger(__name__)
@@ -103,11 +104,15 @@ def _build_notifier() -> NotificationService:
     return NotificationService(channels)
 
 
-def build_consumer(r: redis.Redis) -> SOARConsumer:
+def build_consumer(
+    r: redis.Redis, *, executor: ResponseExecutor | None = None
+) -> SOARConsumer:
     """Compone el consumer vivo con todos sus colaboradores reales.
 
     `require_approval` (ARGOS_REQUIRE_APPROVAL, default ON) se pasa al MISMO valor al
     consumer (gatea `_act`) y al scheduler (gatea el failsafe de timeout)."""
+    if executor is None:
+        executor = make_executor()
     require_approval = _env_flag("ARGOS_REQUIRE_APPROVAL", True)
 
     sinks = [MemorySink()]
@@ -118,7 +123,6 @@ def build_consumer(r: redis.Redis) -> SOARConsumer:
         sinks.append(PostgresSink(dsn))
     audit = AuditLogger(sinks)
 
-    executor = make_executor()
     notifier = _build_notifier()
 
     async def _on_decision(incident: Incident) -> None:
@@ -147,6 +151,7 @@ def build_consumer(r: redis.Redis) -> SOARConsumer:
 
 async def amain(r: redis.Redis | None = None, *, once: bool = False) -> None:
     """Loop del daemon. `r`/`once` son seams de test (fakeredis + once=True no cuelga)."""
+    executor = make_executor()
     close = False
     if r is None:
         r = redis.from_url(
@@ -154,7 +159,7 @@ async def amain(r: redis.Redis | None = None, *, once: bool = False) -> None:
             decode_responses=True,
         )
         close = True
-    consumer = build_consumer(r)
+    consumer = build_consumer(r, executor=executor)
     logger.info("soar-consumer: drenando events:normalized")
     try:
         await consumer.run(once=once)

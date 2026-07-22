@@ -38,9 +38,14 @@ def test_postgres_pinned_to_17_5() -> None:
     assert _load()["services"]["postgres"]["image"] == "postgres:17.5-bookworm"
 
 
-def test_argos_executor_defaults_simulated() -> None:
-    soar = _load()["services"]["soar"]
-    assert soar["environment"]["ARGOS_EXECUTOR"] == "${ARGOS_EXECUTOR:-simulated}"
+def test_runtime_environment_and_executor_are_required_for_soar_services() -> None:
+    services = _load()["services"]
+    for name in ("soar", "soar-consumer"):
+        environment = services[name]["environment"]
+        assert environment["ENVIRONMENT"] == "${ENVIRONMENT:?set ENVIRONMENT in .env}"
+        assert environment["ARGOS_EXECUTOR"] == (
+            "${ARGOS_EXECUTOR:?set ARGOS_EXECUTOR in .env}"
+        )
 
 
 def test_core_services_have_healthchecks() -> None:

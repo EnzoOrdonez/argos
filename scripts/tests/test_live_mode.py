@@ -6,10 +6,12 @@ smoke `--in-process` (se corre aparte)."""
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import _runtime
 import demo_injector
 import live_approve
+import pytest
 from fakeredis import FakeAsyncRedis
 
 from argos_contracts.alert import NormalizedAlert
@@ -27,8 +29,15 @@ from soar.approval_api.handlers import load_incident, save_incident
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.scheduler import WindowScheduler
+from soar.playbooks.factory import ExecutorConfigurationError
 from soar.playbooks.simulated import SimulatedExecutor
 from soar.playbooks.wazuh import WazuhActiveResponseExecutor
+
+
+@pytest.fixture(autouse=True)
+def explicit_test_executor(monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
 
 
 async def _instant_sleep(_seconds: float) -> None:
@@ -151,18 +160,20 @@ async def test_cast_vote_conservative_reject_waits_window() -> None:
     assert result.final_decision.policy_applied == "conservative-wins"
 
 
-# -- make_executor() conmuta por ARGOS_EXECUTOR (fail-soft) --------------------
+# -- make_executor() valida ENVIRONMENT + ARGOS_EXECUTOR (fail-closed) ---------
 
-def test_make_executor_default_is_simulated(monkeypatch) -> None:
+def test_make_executor_without_mode_fails_closed(monkeypatch) -> None:
     monkeypatch.delenv("ARGOS_EXECUTOR", raising=False)
-    assert isinstance(_runtime.make_executor(), SimulatedExecutor)
+    with pytest.raises(ExecutorConfigurationError):
+        _runtime.make_executor()
 
 
-def test_make_executor_wazuh_without_config_degrades(monkeypatch) -> None:
+def test_make_executor_wazuh_without_config_fails_closed(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_EXECUTOR", "wazuh")
     for key in ("WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD"):
         monkeypatch.delenv(key, raising=False)
-    assert isinstance(_runtime.make_executor(), SimulatedExecutor)
+    with pytest.raises(ExecutorConfigurationError):
+        _runtime.make_executor()
 
 
 def test_make_executor_wazuh_with_config(monkeypatch) -> None:
@@ -173,6 +184,32 @@ def test_make_executor_wazuh_with_config(monkeypatch) -> None:
     assert isinstance(_runtime.make_executor(), WazuhActiveResponseExecutor)
 
 
-def test_make_executor_unknown_degrades(monkeypatch) -> None:
+def test_make_executor_unknown_fails_closed(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_EXECUTOR", "bogus")
-    assert isinstance(_runtime.make_executor(), SimulatedExecutor)
+    with pytest.raises(ExecutorConfigurationError):
+        _runtime.make_executor()
+
+
+async def test_live_approve_validates_executor_before_opening_redis(monkeypatch) -> None:
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
+
+    def must_not_open_redis(*_args, **_kwargs):
+        raise AssertionError("Redis opened before executor validation")
+
+    monkeypatch.setattr(live_approve.aioredis, "from_url", must_not_open_redis)
+    with pytest.raises(ExecutorConfigurationError):
+        await live_approve.run(SimpleNamespace(redis_url="redis://must-not-open"))
+
+
+def test_live_demo_validates_executor_before_postgres(monkeypatch) -> None:
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
+    monkeypatch.setenv("ARGOS_AUDIT_SQL_DSN", "postgresql://unused")
+
+    def must_not_initialize(_dsn: str) -> None:
+        raise AssertionError("PostgresSink initialized before executor validation")
+
+    monkeypatch.setattr("soar.audit.postgres.PostgresSink", must_not_initialize)
+    with pytest.raises(ExecutorConfigurationError):
+        demo_injector.build_runtime(object(), live=True)
