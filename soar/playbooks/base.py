@@ -10,18 +10,21 @@ Su `status` usa los mismos valores que `ExecutionStatus` del contrato
 (`success|failed|partial`) para que el orquestador lo copie directo a
 `FinalDecision.execution_status` (ADR-0012 §7.1).
 
-Invariantes que los executors deben cumplir (ADR-0012 §2.4 + §7):
-- Idempotencia: re-ejecutar una acción ya aplicada es no-op success.
-- Fail-soft: un fallo se reporta en el resultado, nunca como excepción
-  que tumbe al orquestador.
+Invariantes que los executors deben cumplir (ADR-0012 §2.4 + ADR-0018):
+- La identidad durable se propaga a toda ejecución externa.
+- Un resultado sin recibo verificable es parcial/ambiguo, nunca success.
+- La deduplicación lógica pertenece al journal; no se promete exactly-once.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from argos_contracts.incident import ProposedAction
+
+if TYPE_CHECKING:
+    from soar.execution.identity import ExecutionIdentity
 
 ResultStatus = Literal["success", "failed", "partial"]
 
@@ -43,6 +46,16 @@ class ExecutionResult:
 class ResponseExecutor(Protocol):
     """Quien materializa una `ProposedAction` sobre el entorno (ADR-0012 §2.5)."""
 
-    def run(self, action: ProposedAction) -> ExecutionResult: ...
+    def run(
+        self,
+        action: ProposedAction,
+        *,
+        execution: ExecutionIdentity | None = None,
+    ) -> ExecutionResult: ...
 
-    def revert(self, action: ProposedAction) -> ExecutionResult: ...
+    def revert(
+        self,
+        action: ProposedAction,
+        *,
+        execution: ExecutionIdentity | None = None,
+    ) -> ExecutionResult: ...

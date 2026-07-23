@@ -14,7 +14,12 @@ from soar.playbooks.base import ResponseExecutor
 _ENVIRONMENTS = {"development", "test", "staging", "production"}
 _EXECUTORS = {"simulated", "wazuh"}
 _LIVE_ENVIRONMENTS = {"staging", "production"}
-_WAZUH_REQUIRED = ("WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD")
+_WAZUH_REQUIRED = (
+    "WAZUH_API_URL",
+    "WAZUH_API_USER",
+    "WAZUH_API_PASSWORD",
+    "WAZUH_AGENT_MAP",
+)
 
 
 class ExecutorConfigurationError(RuntimeError):

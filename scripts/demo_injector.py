@@ -144,11 +144,11 @@ def _scenarios() -> dict[str, Scenario]:
             expected_policy="auto-execute",
         ),
         "uc03": Scenario(
-            description="Variante novedosa (ML sola, T2) -> split-brain -> conservative-wins",
+            description="Variante novedosa (ML sola, T2) -> snapshot irreversible -> two-person",
             alerts=[
                 # Capa 2 sola, score 0.74 (= L2_ALONE_T2_MIN_SCORE) -> T2.
                 # Tecnica T1083 (whitelisted, NO en AUTO_T0) para no caer en T0 fast-path.
-                # Host STANDARD (desconocido -> STANDARD) -> conservative-wins, no two-person.
+                # El snapshot forense es irreversible: activa two-person incluso en host standard.
                 _alert(Layer.LAYER_2, "WIN-WS-07", score=0.74,
                        severity=Severity.HIGH, technique="T1083",
                        alert_id="uc03-ml", rule="iforest-ocsvm-entropy"),
@@ -161,8 +161,9 @@ def _scenarios() -> dict[str, Scenario]:
             ],
             pending=["telegram:p4"],
             use_window=True,
-            expected_outcome="EXECUTE_ISOLATION",
-            expected_policy="conservative-wins",
+            expected_outcome="NO_ACTION",
+            expected_policy="two-person-rule",
+            expected_state="rejected",
         ),
         "uc04": Scenario(
             description="Ataque a la DB IntiBank (two-person rule, 2 aprueban)",
@@ -190,8 +191,9 @@ def _scenarios() -> dict[str, Scenario]:
                        severity=Severity.CRITICAL, technique=None,
                        alert_id="uc05-canary", rule="canary-fim-whodata"),
             ],
+            votes=[("telegram:soc-lead", "approve"), ("telegram:ir", "approve")],
             expected_outcome="EXECUTE_ISOLATION",
-            expected_policy="auto-execute",
+            expected_policy="two-person-rule",
         ),
         "uc06": Scenario(
             description="DDoS volumetrico (T1498): fast-path a T0",
@@ -230,8 +232,9 @@ def _scenarios() -> dict[str, Scenario]:
                        severity=Severity.HIGH, technique="T1190",
                        alert_id="uc08-ml", rule="request-pattern-anomaly"),
             ],
+            votes=[("telegram:soc-lead", "approve"), ("telegram:web-owner", "approve")],
             expected_outcome="EXECUTE_ISOLATION",
-            expected_policy="auto-execute",
+            expected_policy="two-person-rule",
         ),
     }
 

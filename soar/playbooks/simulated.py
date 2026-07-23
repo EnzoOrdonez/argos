@@ -11,10 +11,14 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Collection
+from typing import TYPE_CHECKING
 
 from argos_contracts.enums import ActionType
 from argos_contracts.incident import ProposedAction
 from soar.playbooks.base import ExecutionResult
+
+if TYPE_CHECKING:
+    from soar.execution.identity import ExecutionIdentity
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +54,12 @@ class SimulatedExecutor:
         logger.info("[simulated] %s %s -> %s", op, result.action_id, result.status)
         return result
 
-    def run(self, action: ProposedAction) -> ExecutionResult:
+    def run(
+        self,
+        action: ProposedAction,
+        *,
+        execution: ExecutionIdentity | None = None,
+    ) -> ExecutionResult:
         started = time.monotonic()
         if action.type in self._fail_on:
             return self._record(
@@ -94,7 +103,12 @@ class SimulatedExecutor:
             ),
         )
 
-    def revert(self, action: ProposedAction) -> ExecutionResult:
+    def revert(
+        self,
+        action: ProposedAction,
+        *,
+        execution: ExecutionIdentity | None = None,
+    ) -> ExecutionResult:
         started = time.monotonic()
         if action.type in self._fail_revert_on:
             return self._record(

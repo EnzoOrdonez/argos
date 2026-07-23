@@ -93,7 +93,12 @@ def test_build_consumer_require_approval_off_by_env(monkeypatch) -> None:
 
 def test_build_consumer_wazuh_without_config_fails_closed(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_EXECUTOR", "wazuh")
-    for var in ("WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD"):
+    for var in (
+        "WAZUH_API_URL",
+        "WAZUH_API_USER",
+        "WAZUH_API_PASSWORD",
+        "WAZUH_AGENT_MAP",
+    ):
         monkeypatch.delenv(var, raising=False)
     with pytest.raises(ExecutorConfigurationError):
         daemon.build_consumer(FakeAsyncRedis(decode_responses=True))

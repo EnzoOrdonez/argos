@@ -58,7 +58,10 @@ def test_unknown_or_empty_executor_mode_is_rejected(
         make_executor()
 
 
-@pytest.mark.parametrize("missing_name", ["WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD"])
+@pytest.mark.parametrize(
+    "missing_name",
+    ["WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD", "WAZUH_AGENT_MAP"],
+)
 def test_wazuh_missing_credentials_fails_closed(
     monkeypatch: pytest.MonkeyPatch, missing_name: str
 ) -> None:
@@ -67,6 +70,7 @@ def test_wazuh_missing_credentials_fails_closed(
     monkeypatch.setenv("WAZUH_API_URL", "https://wazuh.lab:55000")
     monkeypatch.setenv("WAZUH_API_USER", "argos")
     monkeypatch.setenv("WAZUH_API_PASSWORD", "placeholder")
+    monkeypatch.setenv("WAZUH_AGENT_MAP", '{"asset-001":"001"}')
     monkeypatch.delenv(missing_name)
 
     with pytest.raises(ExecutorConfigurationError, match=missing_name):
@@ -82,6 +86,7 @@ def test_wazuh_constructor_failure_is_sanitized_and_never_falls_back(
     monkeypatch.setenv("WAZUH_API_URL", "https://wazuh.invalid:55000")
     monkeypatch.setenv("WAZUH_API_USER", "argos")
     monkeypatch.setenv("WAZUH_API_PASSWORD", sensitive_value)
+    monkeypatch.setenv("WAZUH_AGENT_MAP", '{"asset-001":"001"}')
 
     def fail_to_construct() -> None:
         raise RuntimeError(f"constructor included {sensitive_value}")
@@ -115,6 +120,7 @@ def test_wazuh_executor_is_available_in_every_environment(
     monkeypatch.setenv("WAZUH_API_URL", "https://wazuh.lab:55000")
     monkeypatch.setenv("WAZUH_API_USER", "argos")
     monkeypatch.setenv("WAZUH_API_PASSWORD", "placeholder")
+    monkeypatch.setenv("WAZUH_AGENT_MAP", '{"asset-001":"001"}')
     executor = make_executor()
     assert isinstance(executor, WazuhActiveResponseExecutor)
     executor._client.close()

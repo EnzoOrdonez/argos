@@ -9,9 +9,9 @@ Catálogo y momento de disparo (ADR-0012 §2.2):
   Situación B (~25.000 archivos/min a ~100-500 con el throttle).
 - isolation (+ kill): al resolverse EXECUTE_ISOLATION.
 
-`reversible=True` en los cuatro, per tabla de reversibilidad de ADR-0003 y
-ADR-0012 §7.3 (kill cuenta como reversible: el servicio se relanza). Así
-`requires_two_person()` se activa solo por criticidad del host, no por acción.
+Throttle/isolation/block-ip conservan intención reversible, sujeta a capturar
+estado previo y validarla en PR-01B3b. Snapshot y kill son irreversibles: un
+rollback no puede borrar evidencia ni restaurar un proceso terminado.
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ def build_snapshot(host_id: str, *, action_id: str) -> ProposedAction:
         id=action_id,
         type=ActionType.DISK_SNAPSHOT,
         target=host_id,
-        reversible=True,  # revert es no-op: el snapshot no se "des-toma" (ADR-0012 §7.6)
+        reversible=False,
         parameters={},
     )
 
@@ -79,7 +79,7 @@ def build_kill(
         id=action_id,
         type=ActionType.PROCESS_KILL,
         target=host_id,
-        reversible=True,
+        reversible=False,
         parameters=parameters,
     )
 
