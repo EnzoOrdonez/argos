@@ -29,7 +29,13 @@ async def _run_uc03() -> tuple:
     scenario = demo_injector._scenarios()["uc03"]
     incident_id = await demo_injector.inject_scenario(r, scenario, consumer)
     await demo_injector.drive_window_scenario(
-        r, incident_id, scenario, scheduler=scheduler, executor=executor, audit=audit
+        r,
+        incident_id,
+        scenario,
+        scheduler=scheduler,
+        executor=executor,
+        journal=consumer._journal,
+        audit=audit,
     )
     incident = await load_incident(r, incident_id)
     return incident, executor

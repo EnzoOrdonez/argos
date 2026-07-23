@@ -29,6 +29,8 @@ from soar.decision_engine.consumer import SOARConsumer
 from soar.decision_engine.containment import apply_decision
 from soar.decision_engine.scheduler import WindowScheduler
 from soar.decision_engine.triage_hook import TriageClient
+from soar.execution.journal import ResponseExecutionJournal
+from soar.execution.postgres import execution_journal_from_env
 from soar.notifications.base import NotificationChannel
 from soar.notifications.service import NotificationService
 from soar.playbooks.base import ResponseExecutor
@@ -105,7 +107,10 @@ def _build_notifier() -> NotificationService:
 
 
 def build_consumer(
-    r: redis.Redis, *, executor: ResponseExecutor | None = None
+    r: redis.Redis,
+    *,
+    executor: ResponseExecutor | None = None,
+    journal: ResponseExecutionJournal | None = None,
 ) -> SOARConsumer:
     """Compone el consumer vivo con todos sus colaboradores reales.
 
@@ -113,6 +118,9 @@ def build_consumer(
     consumer (gatea `_act`) y al scheduler (gatea el failsafe de timeout)."""
     if executor is None:
         executor = make_executor()
+    if journal is None:
+        journal = execution_journal_from_env()
+        journal.check_ready()
     require_approval = _env_flag("ARGOS_REQUIRE_APPROVAL", True)
 
     sinks = [MemorySink()]
@@ -128,7 +136,13 @@ def build_consumer(
     async def _on_decision(incident: Incident) -> None:
         # Los relojes (scheduler) que fijan final_decision ejecutan la contención; el
         # injector lo hacía a mano, el daemon lo cablea (apply_decision es idempotente).
-        await apply_decision(r, incident.incident_id, executor=executor, audit=audit)
+        await apply_decision(
+            r,
+            incident.incident_id,
+            executor=executor,
+            journal=journal,
+            audit=audit,
+        )
 
     scheduler = WindowScheduler(
         r,
@@ -141,6 +155,7 @@ def build_consumer(
     return SOARConsumer(
         r,
         executor=executor,
+        journal=journal,
         notifier=notifier,
         scheduler=scheduler,
         audit=audit,
@@ -149,9 +164,17 @@ def build_consumer(
     )
 
 
-async def amain(r: redis.Redis | None = None, *, once: bool = False) -> None:
+async def amain(
+    r: redis.Redis | None = None,
+    *,
+    once: bool = False,
+    journal: ResponseExecutionJournal | None = None,
+) -> None:
     """Loop del daemon. `r`/`once` son seams de test (fakeredis + once=True no cuelga)."""
     executor = make_executor()
+    if journal is None:
+        journal = execution_journal_from_env()
+        journal.check_ready()
     close = False
     if r is None:
         r = redis.from_url(
@@ -159,7 +182,7 @@ async def amain(r: redis.Redis | None = None, *, once: bool = False) -> None:
             decode_responses=True,
         )
         close = True
-    consumer = build_consumer(r, executor=executor)
+    consumer = build_consumer(r, executor=executor, journal=journal)
     logger.info("soar-consumer: drenando events:normalized")
     try:
         await consumer.run(once=once)

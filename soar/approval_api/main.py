@@ -47,12 +47,15 @@ from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.containment import apply_decision
 from soar.decision_engine.scheduler import WindowScheduler
+from soar.execution.postgres import execution_journal_from_env
 from soar.playbooks.factory import make_executor
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     executor = make_executor()
+    journal = execution_journal_from_env()
+    journal.check_ready()
     app.state.redis = redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
     # Composicion Fase 3 (ADR-0013): audit fail-soft, executor conmutado por
     # ENVIRONMENT + ARGOS_EXECUTOR (selección explícita; ADR-0017) y los relojes.
@@ -60,6 +63,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # voto nunca era real; ahora honra el env, igual que el daemon consumer (Fase 5a).
     app.state.audit = AuditLogger([MemorySink()])
     app.state.executor = executor
+    app.state.execution_journal = journal
     app.state.scheduler = WindowScheduler(app.state.redis, audit=app.state.audit)
     # Approval providers are disabled unless all authenticity controls exist.
     app.state.signer = ApprovalSigner.from_env()
@@ -69,6 +73,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
+        journal.close()
         await app.state.redis.aclose()
 
 
@@ -105,8 +110,17 @@ async def _after_vote(
     if scheduler is not None:
         await scheduler.ensure_consolidation_started(incident.incident_id)
     executor = getattr(app.state, "executor", None)
+    journal = getattr(app.state, "execution_journal", None)
     if (
         executor is not None
+        and journal is None
+        and incident.final_decision is not None
+        and incident.final_decision.execution_status is None
+    ):
+        raise RuntimeError("execution journal is required before running actions")
+    if (
+        executor is not None
+        and journal is not None
         and incident.final_decision is not None
         and incident.final_decision.execution_status is None
     ):
@@ -118,7 +132,13 @@ async def _after_vote(
                 policy=incident.final_decision.policy_applied,
                 rationale=incident.final_decision.rationale,
             )
-        await apply_decision(r, incident.incident_id, executor=executor, audit=audit)
+        await apply_decision(
+            r,
+            incident.incident_id,
+            executor=executor,
+            journal=journal,
+            audit=audit,
+        )
 
 
 @app.get("/healthz")

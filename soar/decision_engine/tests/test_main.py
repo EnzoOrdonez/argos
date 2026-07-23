@@ -14,6 +14,8 @@ from soar.decision_engine import __main__ as daemon
 from soar.decision_engine.consumer import GROUP, STREAM, SOARConsumer
 from soar.decision_engine.scheduler import WindowScheduler
 from soar.decision_engine.triage_hook import TriageClient
+from soar.execution.journal import MemoryExecutionStore, ResponseExecutionJournal
+from soar.execution.postgres import ExecutionJournalConfigurationError
 from soar.playbooks.factory import ExecutorConfigurationError
 from soar.playbooks.simulated import SimulatedExecutor
 
@@ -38,12 +40,16 @@ def _t3_alert() -> NormalizedAlert:
     )
 
 
+def _journal() -> ResponseExecutionJournal:
+    return ResponseExecutionJournal(MemoryExecutionStore())
+
+
 def test_build_consumer_wires_collaborators(monkeypatch) -> None:
     monkeypatch.delenv("ARGOS_AUDIT_SQL_DSN", raising=False)
     monkeypatch.delenv("ARGOS_REQUIRE_APPROVAL", raising=False)
     r = FakeAsyncRedis(decode_responses=True)
 
-    consumer = daemon.build_consumer(r)
+    consumer = daemon.build_consumer(r, journal=_journal())
 
     assert isinstance(consumer, SOARConsumer)
     assert isinstance(consumer._executor, SimulatedExecutor)
@@ -58,7 +64,9 @@ def test_build_consumer_wires_collaborators(monkeypatch) -> None:
 
 def test_build_consumer_default_only_memory_sink(monkeypatch) -> None:
     monkeypatch.delenv("ARGOS_AUDIT_SQL_DSN", raising=False)
-    consumer = daemon.build_consumer(FakeAsyncRedis(decode_responses=True))
+    consumer = daemon.build_consumer(
+        FakeAsyncRedis(decode_responses=True), journal=_journal()
+    )
     from soar.audit.postgres import PostgresSink
 
     assert not any(isinstance(s, PostgresSink) for s in consumer._audit._sinks)
@@ -66,7 +74,9 @@ def test_build_consumer_default_only_memory_sink(monkeypatch) -> None:
 
 def test_build_consumer_adds_postgres_sink_when_dsn(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_AUDIT_SQL_DSN", "postgresql://x:y@localhost:5432/z")
-    consumer = daemon.build_consumer(FakeAsyncRedis(decode_responses=True))
+    consumer = daemon.build_consumer(
+        FakeAsyncRedis(decode_responses=True), journal=_journal()
+    )
     from soar.audit.postgres import PostgresSink
 
     assert any(isinstance(s, PostgresSink) for s in consumer._audit._sinks)
@@ -74,7 +84,9 @@ def test_build_consumer_adds_postgres_sink_when_dsn(monkeypatch) -> None:
 
 def test_build_consumer_require_approval_off_by_env(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_REQUIRE_APPROVAL", "false")
-    consumer = daemon.build_consumer(FakeAsyncRedis(decode_responses=True))
+    consumer = daemon.build_consumer(
+        FakeAsyncRedis(decode_responses=True), journal=_journal()
+    )
     assert consumer._require_approval is False
     assert consumer._scheduler._require_approval is False
 
@@ -107,7 +119,9 @@ async def test_amain_once_processes_and_returns(monkeypatch) -> None:
     r = FakeAsyncRedis(decode_responses=True)
     await r.xadd(STREAM, {"payload": _t3_alert().model_dump_json()})
 
-    await daemon.amain(r, once=True)  # no cuelga: once=True procesa y retorna
+    await daemon.amain(
+        r, once=True, journal=_journal()
+    )  # no cuelga: once=True procesa y retorna
 
     pending = await r.xpending(STREAM, GROUP)
     assert pending["pending"] == 0  # el entry se procesó y ackeó
@@ -132,7 +146,7 @@ async def test_amain_closes_audit_sinks(monkeypatch) -> None:
 
     monkeypatch.setattr("soar.audit.postgres.PostgresSink", ClosableSink)
 
-    await daemon.amain(r, once=True)
+    await daemon.amain(r, once=True, journal=_journal())
 
     assert closed is True
 
@@ -147,4 +161,16 @@ async def test_amain_rejects_invalid_executor_before_opening_redis(monkeypatch) 
     monkeypatch.setattr(daemon.redis, "from_url", must_not_open_redis)
 
     with pytest.raises(ExecutorConfigurationError):
+        await daemon.amain(once=True)
+
+
+async def test_amain_requires_postgres_journal_before_opening_redis(monkeypatch) -> None:
+    monkeypatch.delenv("ARGOS_EXECUTION_SQL_DSN", raising=False)
+
+    def must_not_open_redis(*_args, **_kwargs):
+        raise AssertionError("Redis opened before journal validation")
+
+    monkeypatch.setattr(daemon.redis, "from_url", must_not_open_redis)
+
+    with pytest.raises(ExecutionJournalConfigurationError):
         await daemon.amain(once=True)

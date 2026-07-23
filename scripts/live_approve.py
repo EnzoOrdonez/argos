@@ -35,6 +35,8 @@ from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.containment import apply_decision
 from soar.decision_engine.scheduler import WindowScheduler
+from soar.execution.journal import ResponseExecutionJournal
+from soar.execution.postgres import execution_journal_from_env
 
 
 async def cast_vote(
@@ -45,6 +47,7 @@ async def cast_vote(
     role: str,
     decision: str,
     executor: object,
+    journal: ResponseExecutionJournal,
     scheduler: WindowScheduler,
     audit: AuditLogger,
     wait: bool = True,
@@ -71,7 +74,13 @@ async def cast_vote(
                 outcome=decision_obj.outcome,
                 policy=decision_obj.policy_applied,
             )
-            return await apply_decision(r, incident_id, executor=executor, audit=audit)
+            return await apply_decision(
+                r,
+                incident_id,
+                executor=executor,
+                journal=journal,
+                audit=audit,
+            )
         return inc
 
     incident = await _execute_if_ready(incident)
@@ -87,6 +96,8 @@ async def cast_vote(
 
 async def run(args: argparse.Namespace) -> int:
     executor = make_executor()
+    journal = execution_journal_from_env()
+    journal.check_ready()
     r = aioredis.from_url(args.redis_url, decode_responses=True)
     try:
         incident_id = args.incident or await latest_incident_id(r)
@@ -109,6 +120,7 @@ async def run(args: argparse.Namespace) -> int:
             role=args.role,
             decision=args.decision,
             executor=executor,
+            journal=journal,
             scheduler=scheduler,
             audit=audit,
             wait=not args.no_wait,
@@ -126,6 +138,7 @@ async def run(args: argparse.Namespace) -> int:
             print(f"   acciones: {[f'{op}:{aid}:{st}' for op, aid, st in history]}")
         return 0
     finally:
+        journal.close()
         await r.aclose()
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
 from fakeredis import FakeAsyncRedis
 
 from argos_contracts.alert import NormalizedAlert
@@ -21,6 +22,7 @@ from soar.approval_api.handlers import save_incident
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.containment import apply_decision
+from soar.execution.journal import MemoryExecutionStore, ResponseExecutionJournal
 from soar.playbooks.builders import build_block_ip, build_snapshot, build_throttle
 from soar.playbooks.simulated import SimulatedExecutor
 
@@ -59,6 +61,10 @@ def _decision(outcome: str) -> FinalDecision:
     )
 
 
+def _journal() -> ResponseExecutionJournal:
+    return ResponseExecutionJournal(MemoryExecutionStore())
+
+
 async def test_execute_isolation_corre_isolation_y_kill(make_incident):
     r = FakeAsyncRedis(decode_responses=True)
     incident = make_incident(tier=Tier.T1, host=_standard_host())
@@ -67,7 +73,11 @@ async def test_execute_isolation_corre_isolation_y_kill(make_incident):
     executor, memory = SimulatedExecutor(), MemorySink()
 
     result = await apply_decision(
-        r, incident.incident_id, executor=executor, audit=AuditLogger([memory])
+        r,
+        incident.incident_id,
+        executor=executor,
+        journal=_journal(),
+        audit=AuditLogger([memory]),
     )
 
     assert result.state == IncidentState.EXECUTED
@@ -91,7 +101,11 @@ async def test_execute_isolation_con_ip_atacante_bloquea_solo_la_ip(make_inciden
     executor, memory = SimulatedExecutor(), MemorySink()
 
     result = await apply_decision(
-        r, incident.incident_id, executor=executor, audit=AuditLogger([memory])
+        r,
+        incident.incident_id,
+        executor=executor,
+        journal=_journal(),
+        audit=AuditLogger([memory]),
     )
 
     assert result.state == IncidentState.EXECUTED
@@ -120,7 +134,9 @@ async def test_reverted_des_bloquea_la_ip(make_incident):
     )
     await save_incident(r, incident)
 
-    result = await apply_decision(r, incident.incident_id, executor=executor)
+    result = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=_journal()
+    )
 
     assert result.state == IncidentState.REVERTED
     assert (ActionType.BLOCK_IP, "web-prod-01") not in executor.applied
@@ -133,8 +149,13 @@ async def test_apply_decision_es_idempotente(make_incident):
     await save_incident(r, incident)
     executor = SimulatedExecutor()
 
-    first = await apply_decision(r, incident.incident_id, executor=executor)
-    second = await apply_decision(r, incident.incident_id, executor=executor)
+    journal = _journal()
+    first = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=journal
+    )
+    second = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=journal
+    )
 
     assert len(first.proposed_actions) == 2
     assert len(second.proposed_actions) == 2  # no duplica acciones
@@ -148,7 +169,9 @@ async def test_fallo_parcial_queda_como_partial_sin_lanzar(make_incident):
     await save_incident(r, incident)
     executor = SimulatedExecutor(fail_on={ActionType.HOST_ISOLATION})
 
-    result = await apply_decision(r, incident.incident_id, executor=executor)
+    result = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=_journal()
+    )
 
     assert result.final_decision is not None
     assert result.final_decision.execution_status == "partial"  # kill si entro
@@ -163,7 +186,9 @@ async def test_fallo_total_queda_como_failed(make_incident):
         fail_on={ActionType.HOST_ISOLATION, ActionType.PROCESS_KILL}
     )
 
-    result = await apply_decision(r, incident.incident_id, executor=executor)
+    result = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=_journal()
+    )
 
     assert result.final_decision is not None
     assert result.final_decision.execution_status == "failed"
@@ -183,7 +208,11 @@ async def test_no_action_revierte_el_throttle_y_conserva_snapshot(make_incident)
     await save_incident(r, incident)
 
     result = await apply_decision(
-        r, incident.incident_id, executor=executor, audit=AuditLogger([memory])
+        r,
+        incident.incident_id,
+        executor=executor,
+        journal=_journal(),
+        audit=AuditLogger([memory]),
     )
 
     assert result.final_decision is not None
@@ -208,7 +237,9 @@ async def test_reverted_des_aisla_y_transiciona(make_incident):
     )
     await save_incident(r, incident)
 
-    result = await apply_decision(r, incident.incident_id, executor=executor)
+    result = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=_journal()
+    )
 
     assert result.state == IncidentState.REVERTED
     assert (ActionType.HOST_ISOLATION, "WIN-VICTIM-01") not in executor.applied
@@ -220,7 +251,44 @@ async def test_sin_decision_no_hace_nada(make_incident):
     await save_incident(r, incident)
     executor = SimulatedExecutor()
 
-    result = await apply_decision(r, incident.incident_id, executor=executor)
+    result = await apply_decision(
+        r, incident.incident_id, executor=executor, journal=_journal()
+    )
 
     assert result.final_decision is None
     assert executor.history == []
+
+
+async def test_redis_projection_recovers_from_durable_receipts_without_double_effect(
+    make_incident, monkeypatch
+):
+    r = FakeAsyncRedis(decode_responses=True)
+    incident = make_incident(tier=Tier.T1, host=_standard_host())
+    incident.final_decision = _decision("EXECUTE_ISOLATION")
+    await save_incident(r, incident)
+    executor = SimulatedExecutor()
+    journal = ResponseExecutionJournal(MemoryExecutionStore(), owner="worker-a")
+
+    async def fail_projection(*_args, **_kwargs):
+        raise RuntimeError("redis temporarily unavailable")
+
+    monkeypatch.setattr("soar.decision_engine.containment.save_incident", fail_projection)
+    with pytest.raises(RuntimeError, match="redis temporarily unavailable"):
+        await apply_decision(
+            r,
+            incident.incident_id,
+            executor=executor,
+            journal=journal,
+        )
+    assert len(executor.history) == 2
+
+    monkeypatch.undo()
+    recovered = await apply_decision(
+        r,
+        incident.incident_id,
+        executor=executor,
+        journal=journal,
+    )
+    assert recovered.final_decision is not None
+    assert recovered.final_decision.execution_status == "success"
+    assert len(executor.history) == 2

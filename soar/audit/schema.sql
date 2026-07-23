@@ -69,3 +69,32 @@ CREATE TABLE IF NOT EXISTS audit_events (
 );
 CREATE INDEX IF NOT EXISTS idx_audit_events_incident
     ON audit_events(incident_id, ts);
+
+-- Authoritative execution journal (PR-01B2). An expired executing lease
+-- becomes ambiguous and is never retried automatically.
+CREATE TABLE IF NOT EXISTS execution_journal (
+    incident_id       varchar(20) NOT NULL,
+    action_id         varchar(80) NOT NULL,
+    operation         varchar(10) NOT NULL CHECK (operation IN ('run','revert')),
+    action_payload    jsonb NOT NULL,
+    actor             varchar(120) NOT NULL,
+    state             varchar(12) NOT NULL
+                      CHECK (state IN ('prepared','executing','succeeded','failed','ambiguous')),
+    attempt           integer NOT NULL DEFAULT 0 CHECK (attempt >= 0),
+    prepared_at       timestamptz NOT NULL,
+    updated_at        timestamptz NOT NULL,
+    lease_owner       varchar(120),
+    lease_expires_at  timestamptz,
+    result_status     varchar(10)
+                      CHECK (result_status IN ('success','failed','partial')),
+    result_detail     text,
+    result_latency_ms integer CHECK (result_latency_ms >= 0),
+    PRIMARY KEY (incident_id, action_id, operation),
+    CHECK (
+        (state = 'executing' AND lease_owner IS NOT NULL AND lease_expires_at IS NOT NULL)
+        OR (state <> 'executing' AND lease_owner IS NULL AND lease_expires_at IS NULL)
+    )
+);
+CREATE INDEX IF NOT EXISTS idx_execution_journal_recovery
+    ON execution_journal (state, lease_expires_at)
+    WHERE state = 'executing';

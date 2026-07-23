@@ -20,6 +20,7 @@ from argos_contracts.triage import TriageResponse
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.consumer import GROUP, STREAM, SOARConsumer, build_signal
+from soar.execution.journal import MemoryExecutionStore, ResponseExecutionJournal
 from soar.inventory import HOST_INVENTORY, resolve_host
 from soar.playbooks.simulated import SimulatedExecutor
 
@@ -104,6 +105,7 @@ def _consumer(
     return SOARConsumer(
         r,
         executor=executor or SimulatedExecutor(),
+        journal=ResponseExecutionJournal(MemoryExecutionStore()),
         notifier=notifier,  # type: ignore[arg-type]
         scheduler=scheduler,  # type: ignore[arg-type]
         audit=AuditLogger([memory]) if memory else None,
@@ -346,6 +348,7 @@ async def test_require_approval_rail_blocks_t0_auto_execute():
     consumer = SOARConsumer(
         r,
         executor=executor,
+        journal=ResponseExecutionJournal(MemoryExecutionStore()),
         notifier=notifier,
         scheduler=scheduler,
         require_approval=True,
@@ -371,6 +374,7 @@ async def test_require_approval_rail_blocks_t1_auto_execute():
     consumer = SOARConsumer(
         r,
         executor=executor,
+        journal=ResponseExecutionJournal(MemoryExecutionStore()),
         notifier=notifier,
         scheduler=scheduler,
         require_approval=True,

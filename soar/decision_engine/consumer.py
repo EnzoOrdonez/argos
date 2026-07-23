@@ -40,11 +40,12 @@ from soar.approval_api.handlers import (
     save_incident,
 )
 from soar.audit.logger import AuditLogger
-from soar.decision_engine.containment import apply_decision
+from soar.decision_engine.containment import _execute_effect, apply_decision
 from soar.decision_engine.policies import AUTO_T0_TECHNIQUES
 from soar.decision_engine.scheduler import WindowScheduler
 from soar.decision_engine.tier_router import RoutingSignal, route
 from soar.decision_engine.triage_hook import TriageClient
+from soar.execution.journal import ResponseExecutionJournal
 from soar.notifications.service import NotificationService
 from soar.playbooks.base import ResponseExecutor
 from soar.playbooks.builders import build_snapshot, build_throttle
@@ -112,6 +113,7 @@ class SOARConsumer:
         r: redis.Redis,
         *,
         executor: ResponseExecutor,
+        journal: ResponseExecutionJournal,
         notifier: NotificationService | None = None,
         scheduler: WindowScheduler | None = None,
         audit: AuditLogger | None = None,
@@ -122,6 +124,7 @@ class SOARConsumer:
     ) -> None:
         self._r = r
         self._executor = executor
+        self._journal = journal
         self._notifier = notifier
         self._scheduler = scheduler
         self._audit = audit
@@ -145,6 +148,7 @@ class SOARConsumer:
 
     def close(self) -> None:
         """Release resources owned by runtime collaborators."""
+        self._journal.close()
         if self._audit is not None:
             self._audit.close()
 
@@ -342,7 +346,11 @@ class SOARConsumer:
             rationale=incident.final_decision.rationale,
         )
         incident = await apply_decision(
-            self._r, incident.incident_id, executor=self._executor, audit=self._audit
+            self._r,
+            incident.incident_id,
+            executor=self._executor,
+            journal=self._journal,
+            audit=self._audit,
         )
         self._dispatch(incident)
         return incident
@@ -375,7 +383,13 @@ class SOARConsumer:
             )
             incident.proposed_actions.append(snapshot)
             for action in (throttle, snapshot):
-                result = self._executor.run(action)
+                result = await _execute_effect(
+                    self._journal,
+                    self._executor,
+                    incident.incident_id,
+                    action,
+                    "run",
+                )
                 kind = "action_failed" if result.status == "failed" else "action_executed"
                 self._emit(
                     kind,

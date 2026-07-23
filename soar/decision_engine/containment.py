@@ -14,16 +14,18 @@ audit, nunca como excepción hacia el orquestador (ADR-0012 §2.4).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 
 import redis.asyncio as redis
 
 from argos_contracts.enums import ActionType, IncidentState
-from argos_contracts.incident import Incident
+from argos_contracts.incident import Incident, ProposedAction
 from soar.approval_api.handlers import load_incident, save_incident
 from soar.audit.logger import AuditLogger
-from soar.playbooks.base import ExecutionResult, ResponseExecutor
+from soar.execution.journal import Operation, ResponseExecutionJournal
+from soar.playbooks.base import ExecutionResult, ResponseExecutor, ResultStatus
 from soar.playbooks.builders import build_block_ip, build_isolation, build_kill
 
 logger = logging.getLogger(__name__)
@@ -49,7 +51,7 @@ def _attacker_ip(incident: Incident) -> str | None:
     return str(src_ip) if src_ip else None
 
 
-def _combined_status(results: list[ExecutionResult]) -> str:
+def _combined_status(results: list[ExecutionResult]) -> ResultStatus:
     if all(r.status == "success" for r in results):
         return "success"
     if any(r.status in ("success", "partial") for r in results):
@@ -72,11 +74,30 @@ def _audit_result(
     )
 
 
+async def _execute_effect(
+    journal: ResponseExecutionJournal,
+    executor: ResponseExecutor,
+    incident_id: str,
+    action: ProposedAction,
+    operation: Operation,
+) -> ExecutionResult:
+    effect = executor.run if operation == "run" else executor.revert
+    return await asyncio.to_thread(
+        journal.execute,
+        incident_id,
+        action,
+        operation=operation,
+        actor="decision-engine",
+        effect=lambda: effect(action),
+    )
+
+
 async def apply_decision(
     r: redis.Redis,
     incident_id: str,
     *,
     executor: ResponseExecutor,
+    journal: ResponseExecutionJournal,
     audit: AuditLogger | None = None,
 ) -> Incident:
     """Ejecuta lo que la `FinalDecision` ordena. Idempotente y fail-soft."""
@@ -98,7 +119,9 @@ async def apply_decision(
             )
             incident.proposed_actions.append(block)
             incident.state = IncidentState.EXECUTING
-            results = [executor.run(block)]
+            results = [
+                await _execute_effect(journal, executor, incident_id, block, "run")
+            ]
         else:
             # Sin IP de origen: contencion por host (aislar + matar proceso).
             isolation = build_isolation(incident.host.id, action_id=_next_action_id(incident))
@@ -106,34 +129,41 @@ async def apply_decision(
             kill = build_kill(incident.host.id, action_id=_next_action_id(incident))
             incident.proposed_actions.append(kill)
             incident.state = IncidentState.EXECUTING
-            results = [executor.run(isolation), executor.run(kill)]
+            results = [
+                await _execute_effect(journal, executor, incident_id, isolation, "run"),
+                await _execute_effect(journal, executor, incident_id, kill, "run"),
+            ]
         for result in results:
             _audit_result(audit, incident_id, "executed", result)
-        decision.execution_status = _combined_status(results)  # type: ignore[assignment]
+        decision.execution_status = _combined_status(results)
         incident.state = IncidentState.EXECUTED
 
     elif decision.outcome == "NO_ACTION":
         results = []
         for action in incident.proposed_actions:
             if action.type in _PROTECTIVE_REVERT_TYPES:
-                result = executor.revert(action)
+                result = await _execute_effect(
+                    journal, executor, incident_id, action, "revert"
+                )
                 results.append(result)
                 _audit_result(audit, incident_id, "reverted", result)
         decision.execution_status = (
             _combined_status(results) if results else "success"
-        )  # type: ignore[assignment]
+        )
         # El estado (REJECTED) ya lo fijo quien escribio la decision.
 
     else:  # REVERTED: des-aislar / des-bloquear (boton "Revert if false alarm", ADR-0003)
         results = []
         for action in incident.proposed_actions:
             if action.type in _CONTAINMENT_REVERT_TYPES:
-                result = executor.revert(action)
+                result = await _execute_effect(
+                    journal, executor, incident_id, action, "revert"
+                )
                 results.append(result)
                 _audit_result(audit, incident_id, "reverted", result)
         decision.execution_status = (
             _combined_status(results) if results else "success"
-        )  # type: ignore[assignment]
+        )
         incident.state = IncidentState.REVERTED
 
     decision.executed_at = now
