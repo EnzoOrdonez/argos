@@ -17,7 +17,8 @@ El `docker-compose.yml` y el `Dockerfile` viven en la **raíz** (para `docker co
   `MiniMax_M3_API_KEY`/`Kimi2_6_API_KEY`/`DeepSeek_V4_PRO_API_KEY` que aparezca en `.env.example`: son
   restos huérfanos de backends anteriores, ningún código las lee. Para reproducir sin depender del LLM
   real (Track B tal como se demuestra hoy), poner `DEMO_MODE=true` — usa las respuestas cacheadas en
-  `demo/cached-responses/`.
+  `demo/cached-responses/`. `ENVIRONMENT` y `ARGOS_EXECUTOR` son obligatorios: use
+  `development + simulated` para demo local; staging/production solo aceptan `wazuh`.
 
 ## Camino simulado (garantizado, el del video)
 ```bash
@@ -30,13 +31,15 @@ python scripts/demo_injector.py uc04 --redis-url redis://localhost:6379/0   # in
 ## Camino real (Wazuh + víctimas)
 Requiere Wazuh manager instalado en la VM core (systemd) — ver `detection/p3_deployment_guide.md`.
 ```bash
-ARGOS_EXECUTOR=wazuh docker compose --profile real up -d   # + bridge (tailea /var/ossec/logs/alerts del host)
+# En .env: ENVIRONMENT=staging (o production), ARGOS_EXECUTOR=wazuh
+docker compose --profile real up -d   # + bridge (tailea /var/ossec/logs/alerts del host)
 # atacar la víctima -> alerta Wazuh -> bridge -> events:normalized -> SOAR -> aprobación (Telegram) ->
 #   argos-isolate aísla la víctima SIN perder el manager (whitelist 1514/1515) -> audit
 ```
 
 ## Swap simulado ↔ real
-- `ARGOS_EXECUTOR=simulated` (default) → `SimulatedExecutor` (no toca VMs). `=wazuh` → active-response real.
+- `ARGOS_EXECUTOR=simulated` solo con `ENVIRONMENT=development|test`; nunca es fallback.
+- `ENVIRONMENT=staging|production` exige `ARGOS_EXECUTOR=wazuh`; cualquier error bloquea el arranque.
 - Feeder: sin `--profile real`, el demo se alimenta con `demo_injector`; con `--profile real`, con el `bridge`.
 
 ## Servicios / puertos / health

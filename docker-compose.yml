@@ -8,7 +8,7 @@
 #   docker compose --profile real up -d      # + bridge (camino real; requiere Wazuh en la VM core)
 #   docker compose --profile fallback up -d  # + streamlit (consola de respaldo)
 #
-# Secretos: .env (gitignored). Nada hardcodeado acá. Default ARGOS_EXECUTOR=simulated.
+# Secretos y selección de runtime: .env (gitignored). Nada hardcodeado acá.
 
 x-argos-image: &argos-image
   image: argos-core:latest
@@ -53,7 +53,8 @@ services:
     env_file: .env
     environment:
       REDIS_URL: redis://redis:6379/0
-      ARGOS_EXECUTOR: ${ARGOS_EXECUTOR:-simulated}
+      ENVIRONMENT: ${ENVIRONMENT:?set ENVIRONMENT in .env}
+      ARGOS_EXECUTOR: ${ARGOS_EXECUTOR:?set ARGOS_EXECUTOR in .env}
     ports: ["8003:8003"]
     depends_on:
       redis:
@@ -74,7 +75,8 @@ services:
     env_file: .env
     environment:
       REDIS_URL: redis://redis:6379/0
-      ARGOS_EXECUTOR: ${ARGOS_EXECUTOR:-simulated}
+      ENVIRONMENT: ${ENVIRONMENT:?set ENVIRONMENT in .env}
+      ARGOS_EXECUTOR: ${ARGOS_EXECUTOR:?set ARGOS_EXECUTOR in .env}
       ARGOS_AUDIT_SQL_DSN: postgresql://${POSTGRES_USER:-argos}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-argos_audit}
       ARGOS_REQUIRE_APPROVAL: ${ARGOS_REQUIRE_APPROVAL:-true}
     depends_on:

@@ -20,7 +20,7 @@ Un comando por UC:
 Modo `--live` (Fase 1, HITL real): inyecta la(s) alerta(s) y NO castea los votos
 del escenario; deja el incidente para que un humano apruebe/rechace por
 `scripts/live_approve.py` (trigger local) o por Telegram real. El executor pasa a
-elegirse por `ARGOS_EXECUTOR` (default simulated). Sin `--live`, el comportamiento
+elegirse por `ENVIRONMENT` + `ARGOS_EXECUTOR`. Sin `--live`, el comportamiento
 del demo simulado es idéntico.
 
 Escenarios (capas per matriz ADR-0009 §2.6):
@@ -251,6 +251,7 @@ def build_runtime(r: object, *, live: bool, fast_window: bool = False):
     `fast_window`: comprime la ventana de consolidacion a 0s con sleep instantaneo
     (uc03 en --in-process/tests). Con Redis real la ventana la fija el env
     APPROVAL_CONSOLIDATION_WINDOW_SECONDS (ej. 5s para que el countdown se vea)."""
+    executor = make_executor() if live else SimulatedExecutor()
     memory = MemorySink()
     sinks = [memory]
     # Sink SQL opcional: si ARGOS_AUDIT_SQL_DSN está, persiste a Postgres argos_audit
@@ -261,7 +262,6 @@ def build_runtime(r: object, *, live: bool, fast_window: bool = False):
 
         sinks.append(PostgresSink(dsn))
     audit = AuditLogger(sinks)
-    executor = make_executor() if live else SimulatedExecutor()
     notifier = _build_notifier()
     scheduler = WindowScheduler(r, notifier=notifier, audit=audit)
     if fast_window:

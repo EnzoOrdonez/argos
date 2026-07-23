@@ -4,7 +4,7 @@ Castea un voto REAL sobre un incidente que quedó en `AWAITING_APPROVAL` (lo dej
 `demo_injector.py --live`), replicando exactamente el path de `/telegram/callback`:
 record_approval_response -> build_final_decision_if_ready -> ventana de
 consolidación -> apply_decision si hay decisión. No toca soar/: reusa sus
-handlers. El executor lo elige `ARGOS_EXECUTOR` (default simulated).
+handlers. El executor exige `ENVIRONMENT` y `ARGOS_EXECUTOR` explícitos (ADR-0017).
 
     python scripts/live_approve.py --latest  --decision approve --email telegram:soc-lead
     python scripts/live_approve.py --incident INC-2026-06-26-001 --decision reject
@@ -86,6 +86,7 @@ async def cast_vote(
 
 
 async def run(args: argparse.Namespace) -> int:
+    executor = make_executor()
     r = aioredis.from_url(args.redis_url, decode_responses=True)
     try:
         incident_id = args.incident or await latest_incident_id(r)
@@ -99,7 +100,6 @@ async def run(args: argparse.Namespace) -> int:
             return 2
 
         audit = AuditLogger([MemorySink()])
-        executor = make_executor()
         scheduler = WindowScheduler(r, audit=audit)
         print(f"== voto live: {args.email} -> {args.decision} sobre {incident_id}")
         incident = await cast_vote(
