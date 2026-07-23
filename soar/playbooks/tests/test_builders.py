@@ -33,7 +33,7 @@ def test_builders_arman_los_cuatro_tipos_del_catalogo():
     assert all(a.target == "LIN-DB-01" for a in (throttle, snapshot, isolation, kill))
 
 
-def test_reversible_true_en_los_cuatro_para_no_activar_two_person_por_accion():
+def test_reversibility_is_honest_about_irreversible_effects():
     # ADR-0012 §7.3: requires_two_person() solo se activa por criticidad del host.
     actions = [
         build_throttle("h", action_id="act-001"),
@@ -41,7 +41,10 @@ def test_reversible_true_en_los_cuatro_para_no_activar_two_person_por_accion():
         build_isolation("h", action_id="act-003"),
         build_kill("h", action_id="act-004"),
     ]
-    assert all(a.reversible for a in actions)
+    assert actions[0].reversible is True
+    assert actions[1].reversible is False
+    assert actions[2].reversible is True
+    assert actions[3].reversible is False
 
 
 def test_throttle_lee_parametros_del_env(monkeypatch: pytest.MonkeyPatch):

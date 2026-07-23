@@ -34,6 +34,7 @@ Rejected decisions are documented too — they show that the team evaluated alte
 | [0016](./0016-authenticated-approval-callbacks.md) | Authenticated approval callbacks | ✅ Accepted | Removes unsigned legacy voting; Telegram requires provider secret, signed single-use token and user allowlist; Twilio requires provider signature, CallSid binding and one-vote replay protection. |
 | [0017](./0017-executor-runtime-fail-closed.md) | Executor runtime fail-closed | ✅ Accepted | Requires explicit environment and executor selection; simulation is limited to development/test and live configuration failures block startup. |
 | [0018](./0018-durable-execution-journal.md) | PostgreSQL authoritative execution journal | ✅ Accepted | Persists prepared/executing/terminal states around effects; expired leases become ambiguous and are never retried automatically. |
+| [0019](./0019-wazuh-dispatch-contract.md) | Wazuh dispatch contract without endpoint receipts | ✅ Accepted | Propagates stable execution identity, maps assets fail-closed, preflights agents, and records dispatch without an endpoint receipt as ambiguous; E2E verification and rollback remain PR-01B3b gates. |
 
 ---
 

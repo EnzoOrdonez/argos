@@ -180,7 +180,12 @@ def test_make_executor_without_mode_fails_closed(monkeypatch) -> None:
 
 def test_make_executor_wazuh_without_config_fails_closed(monkeypatch) -> None:
     monkeypatch.setenv("ARGOS_EXECUTOR", "wazuh")
-    for key in ("WAZUH_API_URL", "WAZUH_API_USER", "WAZUH_API_PASSWORD"):
+    for key in (
+        "WAZUH_API_URL",
+        "WAZUH_API_USER",
+        "WAZUH_API_PASSWORD",
+        "WAZUH_AGENT_MAP",
+    ):
         monkeypatch.delenv(key, raising=False)
     with pytest.raises(ExecutorConfigurationError):
         _runtime.make_executor()
@@ -191,6 +196,7 @@ def test_make_executor_wazuh_with_config(monkeypatch) -> None:
     monkeypatch.setenv("WAZUH_API_URL", "https://wazuh.lab:55000")
     monkeypatch.setenv("WAZUH_API_USER", "argos")
     monkeypatch.setenv("WAZUH_API_PASSWORD", "secret")
+    monkeypatch.setenv("WAZUH_AGENT_MAP", '{"asset-001":"001"}')
     assert isinstance(_runtime.make_executor(), WazuhActiveResponseExecutor)
 
 

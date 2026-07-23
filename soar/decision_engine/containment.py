@@ -24,6 +24,7 @@ from argos_contracts.enums import ActionType, IncidentState
 from argos_contracts.incident import Incident, ProposedAction
 from soar.approval_api.handlers import load_incident, save_incident
 from soar.audit.logger import AuditLogger
+from soar.execution.identity import ExecutionIdentity
 from soar.execution.journal import Operation, ResponseExecutionJournal
 from soar.playbooks.base import ExecutionResult, ResponseExecutor, ResultStatus
 from soar.playbooks.builders import build_block_ip, build_isolation, build_kill
@@ -82,13 +83,14 @@ async def _execute_effect(
     operation: Operation,
 ) -> ExecutionResult:
     effect = executor.run if operation == "run" else executor.revert
+    execution = ExecutionIdentity(incident_id, action.id, operation)
     return await asyncio.to_thread(
         journal.execute,
         incident_id,
         action,
         operation=operation,
         actor="decision-engine",
-        effect=lambda: effect(action),
+        effect=lambda: effect(action, execution=execution),
     )
 
 

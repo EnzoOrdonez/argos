@@ -44,13 +44,17 @@ Editá `.env` y seteá, como mínimo:
 - `POSTGRES_PASSWORD` — password de la DB de auditoría.
 - `CONSOLE_BASIC_USER` / `CONSOLE_BASIC_PASS` — credencial de la consola web (RF-7). Sin ambas, la
   consola corre **sin** auth (solo aceptable en localhost).
-- `WAZUH_API_URL=https://wazuh-manager:55000`, `WAZUH_API_USER`, `WAZUH_API_PASSWORD` — para que el
-  SOAR ejecute la contención real vía la API del manager. `WAZUH_VERIFY_SSL=false` para el cert
-  autofirmado del manager contenido.
+- `WAZUH_API_URL=https://wazuh-manager:55000`, `WAZUH_API_USER`, `WAZUH_API_PASSWORD`,
+  `WAZUH_AGENT_MAP={"asset-id":"001"}` y `WAZUH_API_TIMEOUT_SECONDS=5` — configuración
+  fail-closed del manager, mapping uno-a-uno y timeout acotado.
 - `ARGOS_EXECUTOR=wazuh` — activa el active-response REAL (default `simulated` no toca el host).
 - `ARGOS_REQUIRE_APPROVAL=true` — (default) ninguna contención se auto-ejecuta sin aprobación humana.
 - (Opcional) `OPENAI_API_KEY` para el LLM; `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` para aprobar
   desde Telegram.
+
+> **Límite PR-01B3a:** una aceptación HTTP del manager no confirma el efecto en el endpoint y se
+> registra como `ambiguous`. No hay rollback remoto ni soporte E2E Windows/Linux validado hasta
+> PR-01B3b. Este camino no está listo para producción (ADR-0019).
 
 Inventario del host defendido (decide la criticidad / two-person rule):
 

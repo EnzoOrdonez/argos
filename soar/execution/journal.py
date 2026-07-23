@@ -15,9 +15,9 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal, Protocol
 
 from argos_contracts.incident import ProposedAction
+from soar.execution.identity import Operation as Operation
 from soar.playbooks.base import ExecutionResult
 
-Operation = Literal["run", "revert"]
 JournalState = Literal["prepared", "executing", "succeeded", "failed", "ambiguous"]
 
 
