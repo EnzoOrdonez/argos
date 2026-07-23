@@ -38,3 +38,14 @@ class AuditLogger:
                     kind,
                 )
         return event
+
+    def close(self) -> None:
+        """Close sinks that own external resources without breaking shutdown."""
+        for sink in self._sinks:
+            close = getattr(sink, "close", None)
+            if close is None:
+                continue
+            try:
+                close()
+            except Exception:
+                logger.warning("audit sink %s close failed", type(sink).__name__)

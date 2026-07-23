@@ -422,6 +422,7 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = F
                   f"({incident.final_decision.outcome}); sin HITL (T0/T1 auto).")
         if not in_process:
             await r.aclose()
+        audit.close()
         return 0
 
     ok = incident.state.value == scenario.expected_state
@@ -433,6 +434,7 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = F
     print(f"== desenlace {'ESPERADO' if ok else 'INESPERADO'} para {uc.upper()}")
     if not in_process:
         await r.aclose()
+    audit.close()
     return 0 if ok else 1
 
 

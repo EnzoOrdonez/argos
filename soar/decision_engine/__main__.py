@@ -164,6 +164,7 @@ async def amain(r: redis.Redis | None = None, *, once: bool = False) -> None:
     try:
         await consumer.run(once=once)
     finally:
+        consumer.close()
         if close:
             await r.aclose()
 

@@ -143,6 +143,11 @@ class SOARConsumer:
         if self._notifier is not None:
             self._notifier.dispatch_for_tier(incident)
 
+    def close(self) -> None:
+        """Release resources owned by runtime collaborators."""
+        if self._audit is not None:
+            self._audit.close()
+
     async def ensure_group(self) -> None:
         try:
             await self._r.xgroup_create(STREAM, GROUP, id="0", mkstream=True)
