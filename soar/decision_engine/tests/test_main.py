@@ -113,6 +113,30 @@ async def test_amain_once_processes_and_returns(monkeypatch) -> None:
     assert pending["pending"] == 0  # el entry se procesó y ackeó
 
 
+async def test_amain_closes_audit_sinks(monkeypatch) -> None:
+    monkeypatch.setenv("ARGOS_AUDIT_SQL_DSN", "postgresql://unused")
+    r = FakeAsyncRedis(decode_responses=True)
+    await r.xadd(STREAM, {"payload": _t3_alert().model_dump_json()})
+    closed = False
+
+    class ClosableSink:
+        def __init__(self, _dsn: str) -> None:
+            pass
+
+        def emit(self, _event) -> None:
+            pass
+
+        def close(self) -> None:
+            nonlocal closed
+            closed = True
+
+    monkeypatch.setattr("soar.audit.postgres.PostgresSink", ClosableSink)
+
+    await daemon.amain(r, once=True)
+
+    assert closed is True
+
+
 async def test_amain_rejects_invalid_executor_before_opening_redis(monkeypatch) -> None:
     monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")

@@ -19,6 +19,9 @@ El `docker-compose.yml` y el `Dockerfile` viven en la **raíz** (para `docker co
   real (Track B tal como se demuestra hoy), poner `DEMO_MODE=true` — usa las respuestas cacheadas en
   `demo/cached-responses/`. `ENVIRONMENT` y `ARGOS_EXECUTOR` son obligatorios: use
   `development + simulated` para demo local; staging/production solo aceptan `wazuh`.
+  Si se habilita `ARGOS_AUDIT_SQL_DSN`, el sink conecta de forma lazy con
+  `ARGOS_AUDIT_SQL_CONNECT_TIMEOUT_SECONDS` (default 5, rango 1..60), registra cada
+  evento no persistido y reintenta en el evento siguiente.
 
 ## Camino simulado (garantizado, el del video)
 ```bash
