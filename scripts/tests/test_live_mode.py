@@ -29,6 +29,7 @@ from soar.approval_api.handlers import load_incident, save_incident
 from soar.audit.logger import AuditLogger
 from soar.audit.memory import MemorySink
 from soar.decision_engine.scheduler import WindowScheduler
+from soar.execution.journal import MemoryExecutionStore, ResponseExecutionJournal
 from soar.playbooks.factory import ExecutorConfigurationError
 from soar.playbooks.simulated import SimulatedExecutor
 from soar.playbooks.wazuh import WazuhActiveResponseExecutor
@@ -44,6 +45,10 @@ async def _instant_sleep(_seconds: float) -> None:
     return None
 
 
+def _journal() -> ResponseExecutionJournal:
+    return ResponseExecutionJournal(MemoryExecutionStore())
+
+
 def _fast_scheduler(r: FakeAsyncRedis) -> WindowScheduler:
     """Scheduler con sleep instantáneo y ventana 0s: cierra la ventana sin dormir."""
     return WindowScheduler(
@@ -56,7 +61,9 @@ def _fast_scheduler(r: FakeAsyncRedis) -> WindowScheduler:
 
 async def _awaiting_uc04(r: FakeAsyncRedis) -> str:
     """Inyecta uc04 en modo live (sin votos) y devuelve el incident_id en espera."""
-    consumer, _, scheduler, _, _ = demo_injector.build_runtime(r, live=True)
+    consumer, _, scheduler, _, _ = demo_injector.build_runtime(
+        r, live=True, executor=SimulatedExecutor(), journal=_journal()
+    )
     incident_id = await demo_injector.inject_scenario(
         r, demo_injector._scenarios()["uc04"], consumer
     )
@@ -87,11 +94,13 @@ async def test_cast_vote_two_person_two_approvals_execute() -> None:
 
     await live_approve.cast_vote(
         r, incident_id, email="telegram:a", role="approver",
-        decision="approve", executor=executor, scheduler=scheduler, audit=audit, wait=False,
+        decision="approve", executor=executor, journal=_journal(),
+        scheduler=scheduler, audit=audit, wait=False,
     )
     incident = await live_approve.cast_vote(
         r, incident_id, email="telegram:b", role="approver",
-        decision="approve", executor=executor, scheduler=scheduler, audit=audit, wait=False,
+        decision="approve", executor=executor, journal=_journal(),
+        scheduler=scheduler, audit=audit, wait=False,
     )
 
     assert incident.final_decision is not None
@@ -109,7 +118,7 @@ async def test_cast_vote_two_person_reject_cancels() -> None:
 
     incident = await live_approve.cast_vote(
         r, incident_id, email="telegram:a", role="approver",
-        decision="reject", executor=executor, scheduler=_fast_scheduler(r),
+        decision="reject", executor=executor, journal=_journal(), scheduler=_fast_scheduler(r),
         audit=AuditLogger([MemorySink()]), wait=False,
     )
 
@@ -151,7 +160,8 @@ async def test_cast_vote_conservative_reject_waits_window() -> None:
 
     result = await live_approve.cast_vote(
         r, incident.incident_id, email="local:op", role="approver",
-        decision="reject", executor=SimulatedExecutor(), scheduler=_fast_scheduler(r),
+        decision="reject", executor=SimulatedExecutor(), journal=_journal(),
+        scheduler=_fast_scheduler(r),
         audit=AuditLogger([MemorySink()]), wait=True,
     )
 

@@ -22,6 +22,20 @@ El `docker-compose.yml` y el `Dockerfile` viven en la **raíz** (para `docker co
   Si se habilita `ARGOS_AUDIT_SQL_DSN`, el sink conecta de forma lazy con
   `ARGOS_AUDIT_SQL_CONNECT_TIMEOUT_SECONDS` (default 5, rango 1..60), registra cada
   evento no persistido y reintenta en el evento siguiente.
+  'ARGOS_EXECUTION_SQL_DSN' es obligatorio para Approval API, consumer y scripts
+  live; el journal falla cerrado y no comparte la degradacion fail-soft del audit.
+
+## Migracion PR-01B2
+
+Una instalacion nueva aplica 'soar/audit/schema.sql' al inicializar PostgreSQL.
+Para un volumen existente, antes de iniciar procesos capaces de ejecutar:
+
+    docker compose up -d postgres
+    docker compose exec -T postgres psql -U argos -d argos_audit -f /docker-entrypoint-initdb.d/01-argos-audit.sql
+
+La migracion solo agrega 'argos_audit.execution_journal' y un indice. Para
+rollback, detener 'soar' y 'soar-consumer', restaurar la version anterior y
+conservar la tabla como evidencia; no es necesario ni recomendable borrarla.
 
 ## Camino simulado (garantizado, el del video)
 ```bash
@@ -57,8 +71,9 @@ docker compose --profile real up -d   # + bridge (tailea /var/ossec/logs/alerts 
 | streamlit (fallback) | 8501 | — | `fallback` |
 
 ## Notas
-- **postgres provisto pero no escrito** por el SOAR hoy (usa `MemorySink`); queda listo (schema `argos_audit`,
-  `soar/audit/schema.sql`) para cuando P4 cablee el sink. No bloquea el demo.
+- PostgreSQL persiste audit cuando 'ARGOS_AUDIT_SQL_DSN' esta configurado y es
+  autoridad fail-closed del journal para rutas de ejecucion. Esto no implica
+  HA, TLS, backup/restore ni readiness productivo.
 - **Sin OpenSearch** (Perfil A manager-only). Los 3 dashboards SOC = Perfil B (F7, diferido).
 - `ml` no es servicio (librería; vive en la imagen para el bridge Camino B).
 - **Secretos solo en `.env`** (gitignored). El `docker-compose.yml` no tiene ningún secreto literal (un test lo verifica).

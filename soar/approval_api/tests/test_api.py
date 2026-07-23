@@ -9,11 +9,13 @@ from fakeredis import FakeAsyncRedis
 from fastapi import FastAPI
 from httpx import ASGITransport
 
-from argos_contracts.incident import Incident
+from argos_contracts.incident import FinalDecision, Incident
 from soar.approval_api import main as approval_main
 from soar.approval_api.handlers import save_incident
 from soar.approval_api.main import app, get_redis
+from soar.execution.postgres import ExecutionJournalConfigurationError
 from soar.playbooks.factory import ExecutorConfigurationError
+from soar.playbooks.simulated import SimulatedExecutor
 
 
 @pytest_asyncio.fixture
@@ -46,6 +48,43 @@ async def test_lifespan_rejects_invalid_executor_before_opening_redis(monkeypatc
     with pytest.raises(ExecutorConfigurationError):
         async with approval_main.lifespan(FastAPI()):
             pytest.fail("invalid configuration reached application startup")
+
+
+async def test_lifespan_requires_execution_journal_before_opening_redis(monkeypatch) -> None:
+    monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("ARGOS_EXECUTOR", "simulated")
+    monkeypatch.delenv("ARGOS_EXECUTION_SQL_DSN", raising=False)
+    monkeypatch.setenv("REDIS_URL", "redis://must-not-open")
+
+    def must_not_open_redis(*_args, **_kwargs):
+        raise AssertionError("Redis opened before journal validation")
+
+    monkeypatch.setattr(approval_main.redis, "from_url", must_not_open_redis)
+
+    with pytest.raises(ExecutionJournalConfigurationError):
+        async with approval_main.lifespan(FastAPI()):
+            pytest.fail("missing journal reached application startup")
+
+
+async def test_after_vote_never_executes_without_a_journal(make_incident) -> None:
+    isolated_app = FastAPI()
+    isolated_app.state.executor = SimulatedExecutor()
+    incident = make_incident()
+    incident.final_decision = FinalDecision(
+        outcome="EXECUTE_ISOLATION",
+        policy_applied="auto-execute",
+        rationale="test",
+    )
+
+    with pytest.raises(RuntimeError, match="execution journal"):
+        await approval_main._after_vote(
+            isolated_app,
+            FakeAsyncRedis(decode_responses=True),
+            incident,
+            email="telegram:1",
+            decision="approve",
+            channel="telegram",
+        )
 
 
 async def test_telegram_callback_without_provider_auth_is_rejected(api, make_incident):

@@ -63,8 +63,14 @@ from soar.decision_engine.consumer import STREAM, SOARConsumer
 from soar.decision_engine.containment import apply_decision
 from soar.decision_engine.scheduler import WindowScheduler
 from soar.decision_engine.triage_hook import TriageClient
+from soar.execution.journal import (
+    MemoryExecutionStore,
+    ResponseExecutionJournal,
+)
+from soar.execution.postgres import execution_journal_from_env
 from soar.notifications.base import NotificationChannel
 from soar.notifications.service import NotificationService
+from soar.playbooks.base import ResponseExecutor
 from soar.playbooks.simulated import SimulatedExecutor
 
 
@@ -244,14 +250,28 @@ def _build_notifier() -> NotificationService:
     return NotificationService(channels)
 
 
-def build_runtime(r: object, *, live: bool, fast_window: bool = False):
+def build_runtime(
+    r: object,
+    *,
+    live: bool,
+    fast_window: bool = False,
+    executor: ResponseExecutor | None = None,
+    journal: ResponseExecutionJournal | None = None,
+):
     """Arma el pipeline P1 (consumer + colaboradores). En --live el executor lo
     elige `ARGOS_EXECUTOR`; en el demo simulado es siempre `SimulatedExecutor`.
 
     `fast_window`: comprime la ventana de consolidacion a 0s con sleep instantaneo
     (uc03 en --in-process/tests). Con Redis real la ventana la fija el env
     APPROVAL_CONSOLIDATION_WINDOW_SECONDS (ej. 5s para que el countdown se vea)."""
-    executor = make_executor() if live else SimulatedExecutor()
+    if executor is None:
+        executor = make_executor() if live else SimulatedExecutor()
+    if journal is None:
+        if live:
+            journal = execution_journal_from_env()
+            journal.check_ready()
+        else:
+            journal = ResponseExecutionJournal(MemoryExecutionStore())
     memory = MemorySink()
     sinks = [memory]
     # Sink SQL opcional: si ARGOS_AUDIT_SQL_DSN está, persiste a Postgres argos_audit
@@ -275,6 +295,7 @@ def build_runtime(r: object, *, live: bool, fast_window: bool = False):
     consumer = SOARConsumer(
         r,
         executor=executor,
+        journal=journal,
         notifier=notifier,
         scheduler=scheduler,
         audit=audit,
@@ -295,7 +316,14 @@ async def inject_scenario(r: object, scenario: Scenario, consumer: SOARConsumer)
 
 
 async def drive_window_scenario(
-    r: object, incident_id: str, scenario: Scenario, *, scheduler, executor, audit
+    r: object,
+    incident_id: str,
+    scenario: Scenario,
+    *,
+    scheduler,
+    executor,
+    journal,
+    audit,
 ) -> None:
     """uc03 split-brain: registra los votos SIN resolver per-voto, siembra el aprobador
     PENDING, y resuelve por el CIERRE de la ventana de consolidacion (conservative-wins,
@@ -337,11 +365,23 @@ async def drive_window_scenario(
             outcome=incident.final_decision.outcome,
             policy=incident.final_decision.policy_applied,
         )
-        await apply_decision(r, incident_id, executor=executor, audit=audit)
+        await apply_decision(
+            r,
+            incident_id,
+            executor=executor,
+            journal=journal,
+            audit=audit,
+        )
 
 
 async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = False) -> int:
     scenario = _scenarios()[uc]
+    executor_override = None
+    journal_override = None
+    if live:
+        executor_override = make_executor()
+        journal_override = execution_journal_from_env()
+        journal_override.check_ready()
     if in_process:
         from fakeredis import FakeAsyncRedis
 
@@ -352,7 +392,11 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = F
         r = redis.from_url(redis_url, decode_responses=True)
 
     consumer, executor, scheduler, audit, memory = build_runtime(
-        r, live=live, fast_window=scenario.use_window and in_process
+        r,
+        live=live,
+        fast_window=scenario.use_window and in_process,
+        executor=executor_override,
+        journal=journal_override,
     )
 
     print(f"== {uc.upper()}: {scenario.description}{' [LIVE]' if live else ''}")
@@ -360,7 +404,13 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = F
 
     if not live and scenario.use_window:
         await drive_window_scenario(
-            r, incident_id, scenario, scheduler=scheduler, executor=executor, audit=audit
+            r,
+            incident_id,
+            scenario,
+            scheduler=scheduler,
+            executor=executor,
+            journal=consumer._journal,
+            audit=audit,
         )
     elif not live:
         for email, decision in scenario.votes:
@@ -386,7 +436,13 @@ async def run_scenario(uc: str, redis_url: str, in_process: bool, live: bool = F
                     outcome=incident.final_decision.outcome,
                     policy=incident.final_decision.policy_applied,
                 )
-                await apply_decision(r, incident_id, executor=executor, audit=audit)
+                await apply_decision(
+                    r,
+                    incident_id,
+                    executor=executor,
+                    journal=consumer._journal,
+                    audit=audit,
+                )
 
     incident = await load_incident(r, incident_id)
     for task in list(scheduler._tasks):  # relojes pendientes: el proceso termina
